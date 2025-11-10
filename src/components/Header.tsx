@@ -41,6 +41,24 @@ export default function Header() {
               </a>
             </li>
           ))}
+
+          {/* New Register / Login links */}
+          <li>
+            <Link
+              href="/onboard"
+              className="text-sm text-amber-400 hover:text-white transition"
+            >
+              Register
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/login"
+              className="text-sm border border-amber-400 px-3 py-1 rounded hover:bg-amber-400 hover:text-black transition"
+            >
+              Login
+            </Link>
+          </li>
         </ul>
 
         {/* Mobile menu button */}
@@ -59,7 +77,7 @@ export default function Header() {
       {/* Mobile dropdown */}
       <div
         className={`md:hidden transition-[max-height] duration-300 overflow-hidden ${
-          open ? "max-h-64" : "max-h-0"
+          open ? "max-h-96" : "max-h-0"
         }`}
       >
         <ul className="mx-auto max-w-screen-xl px-4 sm:px-6 md:px-8 py-2 space-y-2">
@@ -74,6 +92,26 @@ export default function Header() {
               </a>
             </li>
           ))}
+
+          {/* New mobile links */}
+          <li>
+            <Link
+              href="/onboard"
+              onClick={close}
+              className="block rounded-md px-3 py-3 text-base text-amber-400 hover:bg-neutral-800"
+            >
+              Register
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/login"
+              onClick={close}
+              className="block rounded-md px-3 py-3 text-base border border-amber-400 text-amber-400 rounded hover:bg-amber-400 hover:text-black"
+            >
+              Login
+            </Link>
+          </li>
         </ul>
       </div>
     </header>
