@@ -1,0 +1,777 @@
+{
+  "$schema": "https://sitara.ai/schemas/onboarding/v1",
+  "meta": {
+    "name": "Sitara/Kora Onboarding Schema",
+    "version": "1.0.0",
+    "updated_at": "2025-11-10T22:11:05.882524Z",
+    "description": "Data-driven, role-conditional onboarding schema with smart auto-fill from uploaded documents (trade license, TRN, passports, corporate docs) using OCR/metadata extraction. Includes baseline DPMS/goAML blocks and service-specific blocks for Trader, Supplier, Jewellery, Institutional, Refining."
+  },
+  "settings": {
+    "confidence_thresholds": {
+      "high": 0.85,
+      "medium": 0.6
+    },
+    "prefill_strategy_order": [
+      "document_extraction",
+      "previous_answers",
+      "manual_entry"
+    ],
+    "verified_behavior": "lock_with_edit_override",
+    "confirmation_behavior": "show_with_confirm_toggle"
+  },
+  "documents": {
+    "trade_license": {
+      "title": "UAE Trade License",
+      "mime_types": [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+      ],
+      "extractors": [
+        {
+          "field": "company.legal_name",
+          "method": "regex",
+          "pattern": "(?i)legal\\s*name[:\\s]+(.+)",
+          "post": "trim"
+        },
+        {
+          "field": "company.license_number",
+          "method": "regex",
+          "pattern": "(?i)(license no\\.|licence no\\.|lic\\.? no\\.?)[\\s:]*([A-Z0-9/-]+)",
+          "group": 2
+        },
+        {
+          "field": "company.activity_codes",
+          "method": "regex",
+          "pattern": "(?i)(activity|activities)[:\\s]+(.+)",
+          "group": 2,
+          "post": "csv_split"
+        },
+        {
+          "field": "company.issue_date",
+          "method": "date_infer"
+        },
+        {
+          "field": "company.expiry_date",
+          "method": "date_infer"
+        },
+        {
+          "field": "company.registered_address",
+          "method": "regex",
+          "pattern": "(?i)address[:\\s]+(.+)",
+          "post": "trim"
+        }
+      ]
+    },
+    "trn_certificate": {
+      "title": "Tax Registration (TRN) Certificate",
+      "mime_types": [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+      ],
+      "extractors": [
+        {
+          "field": "tax.trn",
+          "method": "regex",
+          "pattern": "(?i)TRN[:\\s]*([0-9]{15})",
+          "group": 1
+        },
+        {
+          "field": "tax.registration_date",
+          "method": "date_infer"
+        },
+        {
+          "field": "company.legal_name",
+          "method": "fuzzy_name_match"
+        }
+      ]
+    },
+    "passport": {
+      "title": "Passport (MRZ)",
+      "mime_types": [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+      ],
+      "extractors": [
+        {
+          "field": "person.full_name",
+          "method": "mrz_name"
+        },
+        {
+          "field": "person.nationality",
+          "method": "mrz_country"
+        },
+        {
+          "field": "person.dob",
+          "method": "mrz_date"
+        },
+        {
+          "field": "person.passport_number",
+          "method": "mrz_doc_number"
+        },
+        {
+          "field": "person.expiry_date",
+          "method": "mrz_date"
+        }
+      ]
+    },
+    "share_register": {
+      "title": "Shareholders Register",
+      "mime_types": [
+        "application/pdf",
+        "image/*"
+      ],
+      "extractors": [
+        {
+          "field": "ownership.shareholders[]",
+          "method": "table_detect"
+        },
+        {
+          "field": "ownership.ubos[]",
+          "method": "ubo_infer",
+          "params": {
+            "threshold_pct": 10
+          }
+        }
+      ]
+    },
+    "board_resolution": {
+      "title": "Board Resolution (Authorized Signatories)",
+      "mime_types": [
+        "application/pdf",
+        "image/*"
+      ],
+      "extractors": [
+        {
+          "field": "company.authorised_signatories[]",
+          "method": "nlp_list"
+        }
+      ]
+    }
+  },
+  "blocks": {
+    "baseline_identity": {
+      "title": "Identity & Registration",
+      "questions": [
+        {
+          "id": "company.legal_name",
+          "label": "Company legal name",
+          "type": "text",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trade_license",
+                "field": "company.legal_name"
+              }
+            ],
+            "lock_if_confidence": "high"
+          }
+        },
+        {
+          "id": "company.trade_name",
+          "label": "Trade name (if different)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "company.license_number",
+          "label": "License number",
+          "type": "text",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trade_license",
+                "field": "company.license_number"
+              }
+            ],
+            "lock_if_confidence": "high"
+          }
+        },
+        {
+          "id": "company.activity_codes",
+          "label": "Activities / activity codes",
+          "type": "chips",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trade_license",
+                "field": "company.activity_codes"
+              }
+            ]
+          }
+        },
+        {
+          "id": "company.registered_address",
+          "label": "Registered address",
+          "type": "textarea",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trade_license",
+                "field": "company.registered_address"
+              }
+            ]
+          }
+        },
+        {
+          "id": "tax.trn",
+          "label": "TRN (Tax Registration Number)",
+          "type": "text",
+          "mask": "###################",
+          "required": true,
+          "validation": {
+            "regex": "^[0-9]{15}$"
+          },
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trn_certificate",
+                "field": "tax.trn"
+              }
+            ],
+            "lock_if_confidence": "high"
+          }
+        },
+        {
+          "id": "company.expiry_date",
+          "label": "License expiry date",
+          "type": "date",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "trade_license",
+                "field": "company.expiry_date"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "baseline_ownership": {
+      "title": "Ownership & Control",
+      "questions": [
+        {
+          "id": "ownership.shareholders",
+          "label": "Shareholders (name, % ownership)",
+          "type": "table",
+          "columns": [
+            "name",
+            "percentage",
+            "id_number",
+            "address"
+          ],
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "share_register",
+                "field": "ownership.shareholders[]"
+              }
+            ],
+            "merge_strategy": "append_unique_by_name"
+          }
+        },
+        {
+          "id": "ownership.ubos",
+          "label": "Beneficial owners (\u226510%)",
+          "type": "table",
+          "columns": [
+            "name",
+            "percentage",
+            "id_number",
+            "address",
+            "pep_status"
+          ],
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "share_register",
+                "field": "ownership.ubos[]"
+              }
+            ],
+            "merge_strategy": "append_unique_by_name"
+          }
+        },
+        {
+          "id": "company.authorised_signatories",
+          "label": "Authorised signatories",
+          "type": "list",
+          "required": true,
+          "auto_populate": {
+            "sources": [
+              {
+                "doc_type": "board_resolution",
+                "field": "company.authorised_signatories[]"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "baseline_contact_reporting": {
+      "title": "Compliance Contacts & Reporting",
+      "questions": [
+        {
+          "id": "aml.mlro_name",
+          "label": "Compliance/MLRO full name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "aml.goaml_registered",
+          "label": "Registered on goAML?",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No",
+            "In progress"
+          ],
+          "required": true
+        },
+        {
+          "id": "aml.str_escalation_path",
+          "label": "STR/DPMSR escalation path",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    "baseline_payments": {
+      "title": "Payments & Cash Policy",
+      "questions": [
+        {
+          "id": "payments.accept_cash",
+          "label": "Do you accept cash?",
+          "type": "radio",
+          "options": [
+            "No",
+            "Yes (with limits)"
+          ],
+          "required": true
+        },
+        {
+          "id": "payments.currencies",
+          "label": "Payment currencies",
+          "type": "chips",
+          "options": [
+            "AED",
+            "USD",
+            "EUR",
+            "GBP"
+          ],
+          "required": true
+        },
+        {
+          "id": "payments.bank_accounts",
+          "label": "Bank account(s) for settlement",
+          "type": "table",
+          "columns": [
+            "bank",
+            "iban",
+            "beneficiary_name",
+            "currency"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "supplier_oecd": {
+      "title": "Supplier - OECD Supply Chain",
+      "questions": [
+        {
+          "id": "supply.origin_country",
+          "label": "Country of origin",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "supply.mine_site",
+          "label": "Mine/Site name (ASM/LSM)",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "supply.export_permits",
+          "label": "Upload export permits/licences",
+          "type": "file",
+          "required": true,
+          "accept": [
+            "application/pdf",
+            "image/*"
+          ]
+        },
+        {
+          "id": "supply.chain_of_custody",
+          "label": "Upload chain-of-custody docs (AWB, invoice, packing list)",
+          "type": "file",
+          "multiple": true,
+          "required": true
+        },
+        {
+          "id": "supply.cahra_assessment",
+          "label": "CAHRA assessment summary",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "supply.grievance_mechanism",
+          "label": "Grievance mechanism & contact",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    "trader_profile": {
+      "title": "Trader Profile",
+      "questions": [
+        {
+          "id": "trade.products",
+          "label": "Products traded",
+          "type": "chips",
+          "options": [
+            "Bars",
+            "Coins",
+            "Scrap",
+            "Dor\u00e9"
+          ],
+          "required": true
+        },
+        {
+          "id": "trade.expected_volume_value",
+          "label": "Expected monthly volume (kg) & value (AED)",
+          "type": "composite",
+          "fields": [
+            {
+              "id": "kg",
+              "type": "number"
+            },
+            {
+              "id": "aed",
+              "type": "number"
+            }
+          ],
+          "required": true
+        },
+        {
+          "id": "trade.counterparties",
+          "label": "Regular counterparties",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "trade.vaults",
+          "label": "Vault/storage providers",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    "jewellery_controls": {
+      "title": "Jewellery Controls",
+      "questions": [
+        {
+          "id": "jewellery.scrap_intake",
+          "label": "Do you buy scrap from public?",
+          "type": "radio",
+          "options": [
+            "No",
+            "Yes"
+          ],
+          "required": true
+        },
+        {
+          "id": "jewellery.scrap_kyc",
+          "label": "Scrap intake KYC procedure",
+          "type": "textarea",
+          "required": false,
+          "displayConditions": [
+            {
+              "when": "jewellery.scrap_intake",
+              "is": "Yes"
+            }
+          ]
+        },
+        {
+          "id": "jewellery.cash_sales",
+          "label": "Cash sales policy & thresholds",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    "institutional_controls": {
+      "title": "Institutional Controls",
+      "questions": [
+        {
+          "id": "inst.regulatory_status",
+          "label": "Regulatory status (license #)",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "inst.custody",
+          "label": "Custodian/Vault details (allocated/unallocated)",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "inst.sof",
+          "label": "Source of funds documentation",
+          "type": "file",
+          "required": true
+        }
+      ]
+    },
+    "refining_responsible_sourcing": {
+      "title": "Refining - Responsible Sourcing",
+      "questions": [
+        {
+          "id": "ref.policy",
+          "label": "Responsible sourcing policy (upload)",
+          "type": "file",
+          "required": true
+        },
+        {
+          "id": "ref.audit_report",
+          "label": "Latest independent assurance/audit (upload)",
+          "type": "file",
+          "required": true
+        },
+        {
+          "id": "ref.feedstock_map",
+          "label": "Feedstock mapping (suppliers, CAHRA flags)",
+          "type": "file",
+          "required": true
+        },
+        {
+          "id": "ref.kyc_pack",
+          "label": "Supplier KYC/EDD packs (zip)",
+          "type": "file",
+          "required": true
+        },
+        {
+          "id": "ref.bar_controls",
+          "label": "Bar controls & serialisation method",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    }
+  },
+  "flows": {
+    "AccountType": {
+      "title": "Account Type",
+      "steps": [
+        {
+          "id": "select_actor",
+          "title": "You are applying as",
+          "questions": [
+            {
+              "id": "actor.type",
+              "label": "Applicant type",
+              "type": "radio",
+              "required": true,
+              "options": [
+                "Corporate",
+                "Individual"
+              ]
+            },
+            {
+              "id": "actor.service",
+              "label": "Service needed",
+              "type": "select",
+              "required": true,
+              "options": [
+                "Trader",
+                "Supplier",
+                "Jewellery",
+                "Institutional",
+                "Refining"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Corporate": {
+      "title": "Corporate Onboarding",
+      "steps": [
+        {
+          "ref_block": "baseline_identity"
+        },
+        {
+          "ref_block": "baseline_ownership"
+        },
+        {
+          "ref_block": "baseline_contact_reporting"
+        },
+        {
+          "ref_block": "baseline_payments"
+        },
+        {
+          "id": "branch_service",
+          "branch": [
+            {
+              "when": {
+                "actor.service": "Trader"
+              },
+              "include": [
+                {
+                  "ref_block": "trader_profile"
+                }
+              ]
+            },
+            {
+              "when": {
+                "actor.service": "Supplier"
+              },
+              "include": [
+                {
+                  "ref_block": "supplier_oecd"
+                }
+              ]
+            },
+            {
+              "when": {
+                "actor.service": "Jewellery"
+              },
+              "include": [
+                {
+                  "ref_block": "jewellery_controls"
+                }
+              ]
+            },
+            {
+              "when": {
+                "actor.service": "Institutional"
+              },
+              "include": [
+                {
+                  "ref_block": "institutional_controls"
+                }
+              ]
+            },
+            {
+              "when": {
+                "actor.service": "Refining"
+              },
+              "include": [
+                {
+                  "ref_block": "refining_responsible_sourcing"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Individual": {
+      "title": "Individual Onboarding",
+      "steps": [
+        {
+          "id": "personal_kyc",
+          "title": "Personal KYC",
+          "questions": [
+            {
+              "id": "person.full_name",
+              "label": "Full name (per passport)",
+              "type": "text",
+              "required": true,
+              "auto_populate": {
+                "sources": [
+                  {
+                    "doc_type": "passport",
+                    "field": "person.full_name"
+                  }
+                ],
+                "lock_if_confidence": "high"
+              }
+            },
+            {
+              "id": "person.nationality",
+              "label": "Nationality",
+              "type": "text",
+              "required": true,
+              "auto_populate": {
+                "sources": [
+                  {
+                    "doc_type": "passport",
+                    "field": "person.nationality"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "person.dob",
+              "label": "Date of birth",
+              "type": "date",
+              "required": true,
+              "auto_populate": {
+                "sources": [
+                  {
+                    "doc_type": "passport",
+                    "field": "person.dob"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "person.passport_number",
+              "label": "Passport number",
+              "type": "text",
+              "required": true,
+              "auto_populate": {
+                "sources": [
+                  {
+                    "doc_type": "passport",
+                    "field": "person.passport_number"
+                  }
+                ],
+                "lock_if_confidence": "high"
+              }
+            }
+          ]
+        },
+        {
+          "id": "individual_service_branch",
+          "branch": [
+            {
+              "when": {
+                "actor.service": "Trader"
+              },
+              "include": [
+                {
+                  "ref_block": "trader_profile"
+                }
+              ]
+            },
+            {
+              "when": {
+                "actor.service": "Jewellery"
+              },
+              "include": [
+                {
+                  "ref_block": "jewellery_controls"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "runtime_rules": {
+    "should_ask_field": {
+      "description": "Decide whether to show a question based on extracted data and confidence thresholds.",
+      "pseudocode": "function shouldAsk(fieldId, context) {\n  const field = getFieldById(fieldId);\n  const extracted = context.extracted[fieldId]; // { value, confidence, sourceDoc }\n  if (!extracted) return true; // nothing extracted -> ask user\n  const c = extracted.confidence;\n  if (c >= settings.confidence_thresholds.high) {\n    // high confidence: prefill + lock (unless user chooses to edit)\n    prefill(fieldId, extracted.value, {locked: true, source: extracted.sourceDoc});\n    return false;\n  }\n  if (c >= settings.confidence_thresholds.medium) {\n    // medium confidence: prefill but request confirmation\n    prefill(fieldId, extracted.value, {locked: false, needsConfirm: true, source: extracted.sourceDoc});\n    return true; // still ask to confirm\n  }\n  // low confidence: do not prefill, ask normally\n  return true;\n}\n"
+    }
+  }
+}
