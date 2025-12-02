@@ -7,11 +7,9 @@ import {
   type IdAutoFill,
   type IdExtractStatus,
 } from "@/components/IdDocumentUploader";
+import { ProofOfAddressUploader } from "@/components/ProofOfAddressUploader";
 import type { IdExtracted } from "@/types/IdExtracted";
-import {
-  createApplication,
-  type AccountType,
-} from "@/lib/koraClient";
+import { createApplication, type AccountType } from "@/lib/koraClient";
 
 /** ---------- Types ---------- */
 type Option = { value: string; label: string; group?: string };
@@ -140,7 +138,8 @@ function Label({
       htmlFor={htmlFor}
       className="block text-sm font-medium mb-1 text-neutral-100"
     >
-      {children} {required ? <span className="text-[--gold-color]"> *</span> : null}
+      {children}{" "}
+      {required ? <span className="text-[--gold-color]"> *</span> : null}
       <style>{`:root{--gold-color:${GOLD}}`}</style>
     </label>
   );
@@ -1215,39 +1214,55 @@ export default function OnboardingRenderer({
                 <OwnershipPanel answers={answers} setValue={setValue} />
               ) : step.id === "identity" ? (
                 <div className="space-y-5">
-    {/* 1. Passport / ID – smart Azure extraction card at the top */}
-    <IdDocumentUploader
-      tenantId={answers.koraTenantId}
-      applicationId={answers.koraApplicationId}
-      applicantId={answers.koraApplicantId}
-      onStatusChange={(status: IdExtractStatus) => {
-        setValue("idExtractStatus", status);
-      }}
-      onExtracted={(extracted: IdExtracted) => {
-        setValue("idExtractPrimary", extracted);
-      }}
-      onAutoFill={(values: IdAutoFill) => {
-        if (values.fullName) {
-          setValue("fullName", values.fullName);
-        }
-        if (values.nationality) {
-          setValue("nationality", values.nationality);
-        }
-        if (values.dateOfBirth) {
-          setValue("dateOfBirth", values.dateOfBirth);
-        }
-      }}
-    />
+                  {/* 1. Passport / ID – smart Azure extraction card at the top */}
+                  <IdDocumentUploader
+                    tenantId={answers.koraTenantId}
+                    applicationId={answers.koraApplicationId}
+                    applicantId={answers.koraApplicantId}
+                    onStatusChange={(status: IdExtractStatus) => {
+                      setValue("idExtractStatus", status);
+                    }}
+                    onExtracted={(extracted: IdExtracted) => {
+                      setValue("idExtractPrimary", extracted);
+                    }}
+                    onAutoFill={(values: IdAutoFill) => {
+                      if (values.fullName) {
+                        setValue("fullName", values.fullName);
+                      }
+                      if (values.nationality) {
+                        setValue("nationality", values.nationality);
+                      }
+                      if (values.dateOfBirth) {
+                        setValue("dateOfBirth", values.dateOfBirth);
+                      }
+                    }}
+                  />
 
-                  {/* 2. Remaining identity fields */}
-                  {step.fields.map((f) => (
-                    <FieldRenderer
-                      key={f.id}
-                      f={f}
-                      answers={answers}
-                      setValue={setValue}
-                    />
-                  ))}
+                  {/* 2. Proof of Address – smart uploader (minimalistic) */}
+                  <ProofOfAddressUploader
+                    tenantId={answers.koraTenantId}
+                    applicationId={answers.koraApplicationId}
+                    applicantId={answers.koraApplicantId}
+                    onUploaded={(doc) => {
+                      setValue("proofOfAddressDocId", doc.id);
+                      setValue(
+                        "proofOfAddressStatus",
+                        (doc.verified_status as any) ?? "pending"
+                      );
+                    }}
+                  />
+
+                  {/* 3. Any non-file identity fields from spec (e.g. notes/checkboxes) */}
+                  {step.fields
+                    .filter((f) => f.type !== "file")
+                    .map((f) => (
+                      <FieldRenderer
+                        key={f.id}
+                        f={f}
+                        answers={answers}
+                        setValue={setValue}
+                      />
+                    ))}
                 </div>
               ) : (
                 <div className="space-y-5">
