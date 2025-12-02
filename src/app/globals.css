@@ -8,10 +8,6 @@
   --color-bronze: #C6A25B;      /* champagne gold */
   --color-bronze-dim: #a88a4b;  /* muted bronze */
 
-  /* Optional fonts (hook these up later if you add @next/font): */
-  /* --font-sans: var(--font-geist-sans); */
-  /* --font-mono: var(--font-geist-mono); */
-
   /* Shadows */
   --shadow-soft: 0 6px 30px rgba(0,0,0,0.25);
 }
@@ -21,8 +17,7 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* Light/Dark surface variables (optional). 
-   Keep these if you want OS-level theme switching. */
+/* Light/Dark surface variables */
 :root {
   --background: var(--color-background);
   --foreground: var(--color-foreground);
@@ -41,13 +36,49 @@ body {
   color: var(--foreground);
   background: var(--background);
   @apply bg-background text-foreground antialiased;
-  /* font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"); */
 }
 
+/* iOS safe area helper */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0); }
 
-/* Give the bottom sections some extra room on iOS */
-#contact, footer {
-  padding-bottom: calc(1.25rem + var(--safe-bottom));
+#contact, footer { padding-bottom: calc(1.25rem + var(--safe-bottom)); }
+
+/* ---------- Sitara gold tokens (global) ---------- */
+:root{
+  --gold-color:#bfa76f;
+  --gold-hover:#a9915c;
+  --gold-bg-soft:rgba(191,167,111,.10);
+  --gold-shadow:rgba(191,167,111,.28);
 }
 
+/* ---------- Reusable UI Utilities ---------- */
+
+/* Gradient heading with a visible fallback color */
+.heading-gold{
+  color: var(--color-bronze); /* fallback if clip not supported */
+  background-image: linear-gradient(90deg, var(--gold-color), #d7c89a, var(--gold-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 6px var(--gold-shadow);
+}
+
+/* Filled primary gold button */
+.btn-gold{
+  @apply inline-flex items-center justify-center rounded-lg font-medium px-5 py-2 transition;
+  background: var(--gold-color);
+  color: #0c0c0c;
+  box-shadow: 0 0 18px var(--gold-shadow);
+}
+.btn-gold:hover{ background: var(--gold-hover); }
+
+/* Outlined subtle gold button */
+.btn-outline-gold{
+  @apply inline-flex items-center justify-center rounded-lg px-3 py-2 border transition;
+  border-color: var(--gold-color);
+  color: var(--gold-color);
+  background: transparent;
+}
+.btn-outline-gold:hover{
+  background: var(--gold-bg-soft);
+}

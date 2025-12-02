@@ -13,13 +13,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",                         // ← add this line
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"]                    // already correct
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
