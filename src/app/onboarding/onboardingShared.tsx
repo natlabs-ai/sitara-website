@@ -1,3 +1,5 @@
+//src\app\onboarding\onboardingShared.tsx
+
 "use client";
 
 import React from "react";

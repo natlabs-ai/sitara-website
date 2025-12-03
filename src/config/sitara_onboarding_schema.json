@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "1.7",
+    "version": "1.8",
     "title": "Sitara Onboarding"
   },
   "steps": [
@@ -31,21 +31,30 @@
           "type": "otp",
           "showIf": [{ "field": "email", "exists": true }]
         },
-        { "id": "phone", "label": "Phone E.164", "type": "tel", "required": true },
+        {
+          "id": "phone",
+          "label": "Phone E.164",
+          "type": "tel",
+          "required": true
+        },
         {
           "id": "phoneOtp",
           "label": "Phone OTP",
           "type": "otp",
           "showIf": [{ "field": "phone", "exists": true }]
         },
-        { "id": "password", "label": "Set Password", "type": "password", "required": true }
+        {
+          "id": "password",
+          "label": "Set Password",
+          "type": "password",
+          "required": true
+        }
       ]
     },
     {
       "id": "identity",
       "label": "Identity",
       "fields": [
-
         {
           "id": "proofAddress",
           "label": "Proof of Address (Utility bill, Bank statement, Tenancy/Ejari)",
@@ -70,35 +79,92 @@
       "fields": [
         {
           "id": "fullName",
-          "label": "Full Name (auto-filled from passport)",
+          "label": "Full name",
           "type": "text",
           "required": true
         },
         {
           "id": "nationality",
-          "label": "Nationality (auto-filled)",
+          "label": "Nationality",
           "type": "text",
           "required": true
         },
         {
           "id": "occupation",
-          "label": "Occupation / Source of Income",
+          "label": "Occupation",
           "type": "text",
           "required": true
         },
         {
-          "id": "selectedServices",
-          "label": "Select Services",
-          "type": "multiselect",
+          "id": "sourceOfIncome",
+          "label": "Source of income",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "expectedFrequency",
+          "label": "How often do you expect to transact with Sitara?",
+          "type": "select",
+          "required": false,
           "options": [
-            { "value": "buy_gold", "label": "Buy Gold", "group": "individual" },
-            { "value": "sell_gold", "label": "Sell Gold", "group": "individual" },
-            { "value": "deposit_gold", "label": "Deposit Gold", "group": "individual" },
-            { "value": "storage_logistics", "label": "Storage / Logistics", "group": "individual" }
+            {
+              "value": "occasional",
+              "label": "Occasional (up to 2 times per year)"
+            },
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "weekly", "label": "Weekly" },
+            {
+              "value": "high_frequency",
+              "label": "High frequency (several times per week)"
+            },
+            { "value": "unsure", "label": "Not sure yet" }
+          ]
+        },
+        {
+          "id": "expectedValue",
+          "label": "What is the typical value of your transactions?",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "lt_50k", "label": "Up to AED 50,000" },
+            { "value": "50k_250k", "label": "AED 50,000 – 250,000" },
+            { "value": "250k_1m", "label": "AED 250,000 – 1,000,000" },
+            { "value": "gt_1m", "label": "Above AED 1,000,000" },
+            { "value": "unsure", "label": "Not sure yet" }
+          ]
+        },
+        {
+          "id": "selectedServices",
+          "label": "Service categories",
+          "type": "multiselect",
+          "required": true,
+          "options": [
+            {
+              "value": "buy_gold",
+              "label": "Buy gold",
+              "group": "individual"
+            },
+            {
+              "value": "sell_gold",
+              "label": "Sell gold",
+              "group": "individual"
+            },
+            {
+              "value": "deposit_gold",
+              "label": "Deposit / store gold",
+              "group": "individual"
+            },
+            {
+              "value": "storage_logistics",
+              "label": "Storage / logistics only",
+              "group": "individual"
+            }
           ],
           "filterBy": {
             "field": "accountType",
-            "map": { "individual": "individual", "business": "business" }
+            "map": {
+              "individual": "individual"
+            }
           }
         }
       ]
@@ -177,7 +243,11 @@
             { "value": "otc", "label": "OTC / Forward", "group": "trader" },
 
             { "value": "mine", "label": "Mine", "group": "supplier" },
-            { "value": "producer", "label": "Producer / Smelter", "group": "supplier" },
+            {
+              "value": "producer",
+              "label": "Producer / Smelter",
+              "group": "supplier"
+            },
             {
               "value": "aggregator",
               "label": "Aggregator / Cooperative",
@@ -185,7 +255,11 @@
             },
 
             { "value": "retail", "label": "Retail", "group": "jewellery" },
-            { "value": "wholesale", "label": "Wholesale", "group": "jewellery" },
+            {
+              "value": "wholesale",
+              "label": "Wholesale",
+              "group": "jewellery"
+            },
             {
               "value": "manufacturer",
               "label": "Manufacturer",
@@ -417,6 +491,70 @@
   ],
   "questionBank": [
     {
+      "id": "ind_pepSelf",
+      "label": "Are you, the applicant, a Politically Exposed Person (PEP) or closely related/associated with a PEP?",
+      "type": "radio",
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_pepSelf_details",
+      "label": "If Yes, please provide details of the PEP role, country, organisation, and your relationship.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_pepSelf", "equals": "yes" }
+      ]
+    },
+    {
+      "id": "ind_sanctionsSelf",
+      "label": "Are you currently subject to any sanctions or restrictions by any government or international body?",
+      "type": "radio",
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_sanctionsSelf_details",
+      "label": "If Yes, please provide details of the sanctions or restrictions, including the issuing authority, reference (if known), and dates.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_sanctionsSelf", "equals": "yes" }
+      ]
+    },
+    {
+      "id": "ind_thirdPartyUse",
+      "label": "Will you be using this account on behalf of, or funded by, any third party?",
+      "type": "radio",
+      "required": true,
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "helperText": "This includes if another individual or company is providing funds, directing transactions, or is the ultimate beneficiary.",
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_thirdPartyUse_details",
+      "label": "If Yes, please provide the name of the third party and the nature of the relationship.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_thirdPartyUse", "equals": "yes" }
+      ]
+    },
+    {
       "id": "pepExposure",
       "label": "Are any applicants, UBOs, directors, or signatories PEPs or related to PEPs?",
       "type": "radio",
@@ -424,7 +562,8 @@
         { "value": "no", "label": "No" },
         { "value": "yes", "label": "Yes" }
       ],
-      "required": true
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "business" }]
     },
     {
       "id": "sanctionsScreening",
@@ -434,7 +573,8 @@
         { "value": "yes", "label": "Yes" },
         { "value": "no", "label": "No" }
       ],
-      "required": true
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "business" }]
     },
     {
       "id": "uboTransparency",
@@ -507,7 +647,7 @@
       "showIf": [{ "field": "accountType", "equals": "business" }]
     },
     {
-      "id": "doréAssayMethod",
+      "id": "doreAssayMethod",
       "label": "Preferred doré assay method",
       "type": "select",
       "options": [

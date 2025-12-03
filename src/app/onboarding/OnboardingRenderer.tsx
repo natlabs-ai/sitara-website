@@ -2,7 +2,11 @@
 "use client";
 
 import React from "react";
-import { createApplication, type AccountType } from "@/lib/koraClient";
+import {
+  createApplication,
+  createApplicantProfile,
+  type AccountType,
+} from "@/lib/koraClient";
 
 import {
   GOLD,
@@ -17,6 +21,7 @@ import { FieldRenderer } from "./FieldRenderer";
 import { AccountStep } from "./steps/AccountStep";
 import { OwnershipStep } from "./steps/OwnershipStep";
 import { IdentityStep } from "./steps/IdentityStep";
+import { ProfileStep } from "./steps/ProfileStep";
 
 /** ---------- Main Component ---------- */
 export default function OnboardingRenderer({
@@ -149,6 +154,21 @@ export default function OnboardingRenderer({
       );
     }
 
+    if (step.id === "profile") {
+      const hasOccupation =
+        typeof answers.occupation === "string" &&
+        answers.occupation.trim().length > 0;
+      const hasSource =
+        typeof answers.sourceOfIncome === "string" &&
+        answers.sourceOfIncome.trim().length > 0;
+      const services = Array.isArray(answers.selectedServices)
+        ? (answers.selectedServices as unknown[])
+        : [];
+      const hasServices = services.length > 0;
+
+      return hasOccupation && hasSource && hasServices && !isSubmittingStep;
+    }
+
     return !isSubmittingStep;
   })();
 
@@ -160,7 +180,7 @@ export default function OnboardingRenderer({
     );
   }, [answers.owners]);
 
-  /** ---------- Next click (login + identity handling) ---------- */
+  /** ---------- Next click (login + identity + profile handling) ---------- */
   async function handleNextClick() {
     setGlobalError(null);
 
@@ -285,7 +305,61 @@ export default function OnboardingRenderer({
       return;
     }
 
-    // 3) All other steps – just move forward
+    // 3) PROFILE step → POST applicant profile to Kora
+    if (step.id === "profile") {
+      if (
+        !answers.koraTenantId ||
+        !answers.koraApplicationId ||
+        !answers.koraApplicantId
+      ) {
+        setGlobalError(
+          "We couldn't find your application reference. Please go back to the Login step and try again.",
+        );
+        return;
+      }
+
+      const services = Array.isArray(answers.selectedServices)
+        ? (answers.selectedServices as string[])
+        : [];
+
+      try {
+        setIsSubmittingStep(true);
+
+        const payload = {
+          tenant_id: String(answers.koraTenantId),
+          application_id: String(answers.koraApplicationId),
+          applicant_id: String(answers.koraApplicantId),
+          full_name: String(answers.fullName || ""),
+          nationality: String(answers.nationality || ""),
+          occupation: String(answers.occupation || ""),
+          source_of_income: String(answers.sourceOfIncome || ""),
+          expected_frequency:
+            (answers.expectedFrequency as string | undefined) || undefined,
+          expected_value:
+            (answers.expectedValue as string | undefined) || undefined,
+          selected_services: services,
+        };
+
+        const res = await createApplicantProfile(payload);
+
+        // Store profile id for downstream use (review, audit, etc.)
+        setValue("koraApplicantProfileId", res.id);
+
+        next();
+      } catch (e: any) {
+        console.error("Failed to save applicant profile", e);
+        setGlobalError(
+          e?.message ||
+            "We couldn’t save your profile details. Please check the fields and try again.",
+        );
+      } finally {
+        setIsSubmittingStep(false);
+      }
+
+      return;
+    }
+
+    // 4) All other steps – just move forward
     next();
   }
 
@@ -429,6 +503,10 @@ export default function OnboardingRenderer({
 
     if (step.id === "identity") {
       return <IdentityStep answers={answers} setValue={setValue} />;
+    }
+
+    if (step.id === "profile") {
+      return <ProfileStep answers={answers} setValue={setValue} />;
     }
 
     // default: generic field-driven step
