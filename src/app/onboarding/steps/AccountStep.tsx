@@ -1,3 +1,5 @@
+// src\app\onboarding\steps\AccountStep.tsx
+
 "use client";
 
 import React from "react";

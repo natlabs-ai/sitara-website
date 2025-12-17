@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "1.8",
+    "version": "1.9",
     "title": "Sitara Onboarding"
   },
   "steps": [
@@ -17,9 +17,58 @@
             { "value": "business", "label": "Business" }
           ],
           "required": true
+        },
+        {
+          "id": "signingRole",
+          "label": "Who is completing this application?",
+          "type": "radio",
+          "options": [
+            {
+              "value": "signatory",
+              "label": "I am an authorised signatory (Person named in the business license, i.e., CEO, GM, or director)"
+            },
+            {
+              "value": "employee",
+              "label": "I am an employee acting on behalf of the company"
+            }
+          ],
+          "required": true,
+          "showIf": [{ "field": "accountType", "equals": "business" }]
+        },
+
+        {
+          "id": "signatoryFirstName",
+          "label": "Authorised signatory’s first name",
+          "type": "text",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
+        },
+        {
+          "id": "signatoryLastName",
+          "label": "Authorised signatory’s family name",
+          "type": "text",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
+        },
+        {
+          "id": "signatoryEmail",
+          "label": "Authorised signatory’s email",
+          "type": "email",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
         }
       ]
     },
+
     {
       "id": "login",
       "label": "Login",
@@ -31,26 +80,17 @@
           "type": "otp",
           "showIf": [{ "field": "email", "exists": true }]
         },
-        {
-          "id": "phone",
-          "label": "Phone E.164",
-          "type": "tel",
-          "required": true
-        },
+        { "id": "phone", "label": "Phone E.164", "type": "tel", "required": true },
         {
           "id": "phoneOtp",
           "label": "Phone OTP",
           "type": "otp",
           "showIf": [{ "field": "phone", "exists": true }]
         },
-        {
-          "id": "password",
-          "label": "Set Password",
-          "type": "password",
-          "required": true
-        }
+        { "id": "password", "label": "Set Password", "type": "password", "required": true }
       ]
     },
+
     {
       "id": "identity",
       "label": "Identity",
@@ -72,51 +112,26 @@
         }
       ]
     },
+
     {
       "id": "profile",
       "label": "Profile",
       "showIf": [{ "field": "accountType", "equals": "individual" }],
       "fields": [
-        {
-          "id": "fullName",
-          "label": "Full name",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "nationality",
-          "label": "Nationality",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "occupation",
-          "label": "Occupation",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "sourceOfIncome",
-          "label": "Source of income",
-          "type": "textarea",
-          "required": true
-        },
+        { "id": "fullName", "label": "Full name", "type": "text", "required": true },
+        { "id": "nationality", "label": "Nationality", "type": "text", "required": true },
+        { "id": "occupation", "label": "Occupation", "type": "text", "required": true },
+        { "id": "sourceOfIncome", "label": "Source of income", "type": "textarea", "required": true },
         {
           "id": "expectedFrequency",
           "label": "How often do you expect to transact with Sitara?",
           "type": "select",
           "required": false,
           "options": [
-            {
-              "value": "occasional",
-              "label": "Occasional (up to 2 times per year)"
-            },
+            { "value": "occasional", "label": "Occasional (up to 2 times per year)" },
             { "value": "monthly", "label": "Monthly" },
             { "value": "weekly", "label": "Weekly" },
-            {
-              "value": "high_frequency",
-              "label": "High frequency (several times per week)"
-            },
+            { "value": "high_frequency", "label": "High frequency (several times per week)" },
             { "value": "unsure", "label": "Not sure yet" }
           ]
         },
@@ -139,36 +154,19 @@
           "type": "multiselect",
           "required": true,
           "options": [
-            {
-              "value": "buy_gold",
-              "label": "Buy gold",
-              "group": "individual"
-            },
-            {
-              "value": "sell_gold",
-              "label": "Sell gold",
-              "group": "individual"
-            },
-            {
-              "value": "deposit_gold",
-              "label": "Deposit / store gold",
-              "group": "individual"
-            },
-            {
-              "value": "storage_logistics",
-              "label": "Storage / logistics only",
-              "group": "individual"
-            }
+            { "value": "buy_gold", "label": "Buy gold", "group": "individual" },
+            { "value": "sell_gold", "label": "Sell gold", "group": "individual" },
+            { "value": "deposit_gold", "label": "Deposit / store gold", "group": "individual" },
+            { "value": "storage_logistics", "label": "Storage / logistics only", "group": "individual" }
           ],
           "filterBy": {
             "field": "accountType",
-            "map": {
-              "individual": "individual"
-            }
+            "map": { "individual": "individual" }
           }
         }
       ]
     },
+
     {
       "id": "corporateSetup",
       "label": "Business",
@@ -179,246 +177,62 @@
           "label": "Country of Incorporation",
           "type": "select",
           "required": true,
-          "options": [
-            { "value": "AE", "label": "United Arab Emirates" },
-            { "value": "AR", "label": "Argentina" },
-            { "value": "BF", "label": "Burkina Faso" },
-            { "value": "BO", "label": "Bolivia" },
-            { "value": "BR", "label": "Brazil" },
-            { "value": "CD", "label": "Congo (DRC)" },
-            { "value": "CH", "label": "Switzerland" },
-            { "value": "CI", "label": "Côte d’Ivoire" },
-            { "value": "CL", "label": "Chile" },
-            { "value": "CM", "label": "Cameroon" },
-            { "value": "CO", "label": "Colombia" },
-            { "value": "EC", "label": "Ecuador" },
-            { "value": "EG", "label": "Egypt" },
-            { "value": "ET", "label": "Ethiopia" },
-            { "value": "GH", "label": "Ghana" },
-            { "value": "GY", "label": "Guyana" },
-            { "value": "IN", "label": "India" },
-            { "value": "KE", "label": "Kenya" },
-            { "value": "ML", "label": "Mali" },
-            { "value": "MZ", "label": "Mozambique" },
-            { "value": "NG", "label": "Nigeria" },
-            { "value": "PE", "label": "Peru" },
-            { "value": "PY", "label": "Paraguay" },
-            { "value": "RW", "label": "Rwanda" },
-            { "value": "SG", "label": "Singapore" },
-            { "value": "SN", "label": "Senegal" },
-            { "value": "SD", "label": "Sudan" },
-            { "value": "TR", "label": "Turkey" },
-            { "value": "TZ", "label": "Tanzania" },
-            { "value": "UG", "label": "Uganda" },
-            { "value": "GB", "label": "United Kingdom" },
-            { "value": "US", "label": "United States" },
-            { "value": "UY", "label": "Uruguay" },
-            { "value": "VE", "label": "Venezuela" },
-            { "value": "ZA", "label": "South Africa" },
-            { "value": "ZM", "label": "Zambia" },
-            { "value": "ZW", "label": "Zimbabwe" }
-          ]
+          "options": []
         },
         {
-          "id": "businessTypeMain",
-          "label": "Business Type",
-          "type": "select",
+          "id": "businessActivities",
+          "label": "Business Activities",
+          "type": "multiselect",
           "required": true,
           "options": [
             { "value": "trader", "label": "Trader" },
             { "value": "supplier", "label": "Supplier" },
-            { "value": "jewellery", "label": "Jewellery" },
-            { "value": "institutional", "label": "Institutional" },
+            { "value": "refiner", "label": "Refiner" },
+            { "value": "vault_storage", "label": "Vault Storage" },
             { "value": "logistics", "label": "Logistics" },
-            { "value": "refining", "label": "Refining" }
+            { "value": "retail_jewellery", "label": "Retail / Manufacturing Jewellery" },
+            { "value": "institutional", "label": "Institutional" },
+            { "value": "other", "label": "Other (please specify)" }
           ]
         },
         {
-          "id": "businessTypeSub",
-          "label": "Category",
-          "type": "select",
+          "id": "supplierCategories",
+          "label": "Supplier Type",
+          "type": "multiselect",
           "required": true,
+          "showIf": [{ "field": "businessActivities", "includesAny": ["supplier"] }],
           "options": [
-            { "value": "spot", "label": "Spot / Physical", "group": "trader" },
-            { "value": "otc", "label": "OTC / Forward", "group": "trader" },
-
-            { "value": "mine", "label": "Mine", "group": "supplier" },
-            {
-              "value": "producer",
-              "label": "Producer / Smelter",
-              "group": "supplier"
-            },
-            {
-              "value": "aggregator",
-              "label": "Aggregator / Cooperative",
-              "group": "supplier"
-            },
-
-            { "value": "retail", "label": "Retail", "group": "jewellery" },
-            {
-              "value": "wholesale",
-              "label": "Wholesale",
-              "group": "jewellery"
-            },
-            {
-              "value": "manufacturer",
-              "label": "Manufacturer",
-              "group": "jewellery"
-            },
-
-            {
-              "value": "bank",
-              "label": "Bank / Private Bank",
-              "group": "institutional"
-            },
-            {
-              "value": "asset_manager",
-              "label": "Asset Manager / Fund / FO",
-              "group": "institutional"
-            },
-            {
-              "value": "corporate_treas",
-              "label": "Corporate Treasury",
-              "group": "institutional"
-            },
-
-            { "value": "vault", "label": "Vault / Storage", "group": "logistics" },
-            {
-              "value": "transport",
-              "label": "Transport / Armoured Carrier",
-              "group": "logistics"
-            },
-            {
-              "value": "customs_broker",
-              "label": "Customs Broker / Export Agent",
-              "group": "logistics"
-            },
-
-            { "value": "toll", "label": "Toll Refining", "group": "refining" },
-            { "value": "buy_in", "label": "Buy-In / Doré", "group": "refining" }
-          ],
-          "filterBy": {
-            "field": "businessTypeMain",
-            "map": {
-              "trader": "trader",
-              "supplier": "supplier",
-              "jewellery": "jewellery",
-              "institutional": "institutional",
-              "logistics": "logistics",
-              "refining": "refining"
-            }
-          }
+            { "value": "aggregator", "label": "Aggregator / Cooperative" },
+            { "value": "mine", "label": "Mine" },
+            { "value": "producer_smelter", "label": "Producer / Smelter" }
+          ]
+        },
+        {
+          "id": "businessActivitiesOther",
+          "label": "Other business activity",
+          "type": "text",
+          "required": true,
+          "showIf": [{ "field": "businessActivities", "includesAny": ["other"] }]
         }
       ]
     },
+
     {
       "id": "companyDetails",
       "label": "Documents",
       "showIf": [{ "field": "accountType", "equals": "business" }],
       "fields": [
         {
-          "id": "countryGuidanceAE",
-          "type": "note",
-          "label": "Guidance — United Arab Emirates",
-          "text": "Upload the best available proofs per category.\n\nExamples:\n• Legal existence: DED/DMCC/ADGM/DIFC Trade Licence (current)\n• Ownership: MOA/EOA, Shareholder Register\n• Directors/Signatories: Registry extract, Board Resolution appointing signatories\n• Registered address: Ejari/lease, utility bill\n• Tax: TRN certificate\n• Activity evidence: recent invoices/contracts, website\n• Precious metals (if gold/refining): Dealer/Exporter licence or relevant permit",
-          "showIf": [{ "field": "incCountry", "equals": "AE" }]
-        },
-        {
-          "id": "countryGuidanceGB",
-          "type": "note",
-          "label": "Guidance — United Kingdom",
-          "text": "Examples:\n• Legal existence: Certificate of Incorporation, Companies House snapshot\n• Ownership: Confirmation Statement, PSC Register\n• Directors/Signatories: Companies House directors list, Board Resolution\n• Registered address: Companies House filing, lease/utility bill\n• Tax: UTR or VAT registration\n• Activity evidence: invoices/contracts, website\n• Precious metals (if applicable): Dealer registration/permissions",
-          "showIf": [{ "field": "incCountry", "equals": "GB" }]
-        },
-        {
-          "id": "countryGuidanceUS",
-          "type": "note",
-          "label": "Guidance — United States",
-          "text": "Examples:\n• Legal existence: Articles/Certificate of Formation (state), Good Standing (if available)\n• Ownership: Operating Agreement/Bylaws, stock ledger/cap table\n• Directors/Signatories: Board Resolution appointing signatories/officers\n• Registered address: lease/utility bill/state filing\n• Tax: IRS EIN (SS-4/147C)\n• Activity evidence: invoices/contracts, website\n• Precious metals: state licences/permits where relevant",
-          "showIf": [{ "field": "incCountry", "equals": "US" }]
-        },
-        {
-          "id": "countryGuidanceSG",
-          "type": "note",
-          "label": "Guidance — Singapore",
-          "text": "Examples:\n• Legal existence: ACRA BizFile extract\n• Ownership: BizFile shareholders section\n• Directors/Signatories: BizFile officers + Board Resolution\n• Registered address: ACRA record, lease/utility bill\n• Tax: GST registration (if any)\n• Activity evidence: invoices/contracts, website\n• Precious metals: MAS/Customs permissions if applicable",
-          "showIf": [{ "field": "incCountry", "equals": "SG" }]
-        },
-        {
-          "id": "countryGuidanceGH",
-          "type": "note",
-          "label": "Guidance — Ghana",
-          "text": "Examples:\n• Legal existence: Registrar General Certificate(s), Company Profile\n• Ownership: Beneficial Ownership Register extract\n• Directors/Signatories: RGD profile + Board Resolution\n• Registered address: lease/utility bill\n• Tax: GRA TIN\n• Activity evidence: invoices/contracts, website\n• Precious metals: Minerals Commission Dealer/Exporter licence, assay/export docs",
-          "showIf": [{ "field": "incCountry", "equals": "GH" }]
-        },
-        {
-          "id": "countryGuidanceKE",
-          "type": "note",
-          "label": "Guidance — Kenya",
-          "text": "Examples:\n• Legal existence: Certificate of Incorporation\n• Ownership: CR12 (BRS)\n• Directors/Signatories: CR12 + Board Resolution\n• Registered address: lease/utility bill\n• Tax: KRA PIN\n• Activity evidence: invoices/contracts, website\n• Precious metals: Ministry of Mining Dealer/Export permit",
-          "showIf": [{ "field": "incCountry", "equals": "KE" }]
-        },
-        {
-          "id": "countryGuidanceTZ",
-          "type": "note",
-          "label": "Guidance — Tanzania",
-          "text": "Examples:\n• Legal existence: BRELA registration/extract\n• Ownership: BRELA extract/share listing\n• Directors/Signatories: BRELA officers + Board Resolution\n• Registered address: lease/utility bill\n• Tax: TIN certificate\n• Activity evidence: invoices/contracts, website\n• Precious metals: Mining Commission Dealer licence",
-          "showIf": [{ "field": "incCountry", "equals": "TZ" }]
-        },
-        {
-          "id": "countryGuidanceNG",
-          "type": "note",
-          "label": "Guidance — Nigeria",
-          "text": "Examples:\n• Legal existence: CAC Certificate/Status Report\n• Ownership: CAC extract (shareholders)\n• Directors/Signatories: CAC particulars + Board Resolution\n• Registered address: lease/utility bill\n• Tax: FIRS TIN\n• Activity evidence: invoices/contracts, website\n• Precious metals: Federal/State mining or dealer permits if applicable",
-          "showIf": [{ "field": "incCountry", "equals": "NG" }]
-        },
-        {
-          "id": "countryGuidanceZA",
-          "type": "note",
-          "label": "Guidance — South Africa",
-          "text": "Examples:\n• Legal existence: CIPC (CoR 14.x)\n• Ownership: CoR 21 / Annual Return\n• Directors/Signatories: CIPC directors + Board Resolution\n• Registered address: lease/municipal bill\n• Tax: SARS tax/VAT\n• Activity evidence: invoices/contracts, website\n• Precious metals: SA Precious Metals Regulator licence",
-          "showIf": [{ "field": "incCountry", "equals": "ZA" }]
-        },
-        {
-          "id": "countryGuidancePE",
-          "type": "note",
-          "label": "Guidance — Peru",
-          "text": "Examples:\n• Legal existence: SUNARP extract\n• Ownership: corporate register extract\n• Directors/Signatories: officers list + Board Resolution\n• Registered address: lease/utility bill\n• Tax: RUC (SUNAT)\n• Activity evidence: invoices/contracts, website\n• Precious metals: mining/export authorizations, SUNAT export declarations",
-          "showIf": [{ "field": "incCountry", "equals": "PE" }]
-        },
-        {
-          "id": "countryGuidanceCO",
-          "type": "note",
-          "label": "Guidance — Colombia",
-          "text": "Examples:\n• Legal existence: Cámara de Comercio certificate\n• Ownership: shareholder list/extract\n• Directors/Signatories: officers extract + Board Resolution\n• Registered address: lease/utility bill\n• Tax: RUT (DIAN)\n• Activity evidence: invoices/contracts, website\n• Precious metals: mining/export permits (if applicable)",
-          "showIf": [{ "field": "incCountry", "equals": "CO" }]
-        },
-        {
-          "id": "countryGuidanceBR",
-          "type": "note",
-          "label": "Guidance — Brazil",
-          "text": "Examples:\n• Legal existence: CNPJ/Comprovante + Junta Comercial extract\n• Ownership: shareholder list/statutes\n• Directors/Signatories: officers list + Board Resolution\n• Registered address: lease/utility bill\n• Tax: CNPJ / State IE\n• Activity evidence: invoices/contracts, website\n• Precious metals: state/ANM permits where relevant",
-          "showIf": [{ "field": "incCountry", "equals": "BR" }]
-        },
-        {
           "id": "legal_existence_files",
-          "label": "Proof of Legal Existence (upload any that apply)",
+          "label": "Proof of Legal Existence",
           "type": "file",
           "multiple": true,
           "accept": ".pdf,.jpg,.jpeg,.png,.zip",
           "required": true
         },
         {
-          "id": "ownership_files",
-          "label": "Proof of Ownership / Shareholding",
-          "type": "file",
-          "multiple": true,
-          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
-          "required": true
-        },
-        {
-          "id": "directors_signatories_files",
-          "label": "Proof of Directors / Signatories",
+          "id": "constitutional_corporate_files",
+          "label": "Constitutional / Corporate Documents",
           "type": "file",
           "multiple": true,
           "accept": ".pdf,.jpg,.jpeg,.png,.zip",
@@ -434,7 +248,7 @@
         },
         {
           "id": "operating_address_files",
-          "label": "Proof of Operating Address (if different from registered address)",
+          "label": "Proof of Operating Address (if different)",
           "type": "file",
           "multiple": true,
           "accept": ".pdf,.jpg,.jpeg,.png,.zip",
@@ -463,32 +277,38 @@
           "multiple": true,
           "accept": ".pdf,.jpg,.jpeg,.png,.zip",
           "required": true,
-          "showIf": [
-            {
-              "field": "businessTypeMain",
-              "includesAny": ["trader", "supplier", "refining"]
-            }
-          ]
+          "showIf": [{ "field": "businessActivities", "includesAny": ["trader", "supplier", "refiner"] }]
         }
       ]
     },
+
     {
       "id": "ownership",
       "label": "Ownership",
       "showIf": [{ "field": "accountType", "equals": "business" }],
       "fields": []
     },
+
+    {
+      "id": "relationship",
+      "label": "Relationship",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "fields": []
+    },
+
     {
       "id": "questionnaire",
       "label": "Questions",
       "fields": []
     },
+
     {
       "id": "submit",
       "label": "Submit",
       "fields": []
     }
   ],
+
   "questionBank": [
     {
       "id": "ind_pepSelf",
@@ -554,6 +374,7 @@
         { "field": "ind_thirdPartyUse", "equals": "yes" }
       ]
     },
+
     {
       "id": "pepExposure",
       "label": "Are any applicants, UBOs, directors, or signatories PEPs or related to PEPs?",
@@ -613,23 +434,6 @@
       "showIf": [{ "field": "accountType", "equals": "business" }]
     },
     {
-      "id": "sourceOfMetal",
-      "label": "Primary source of metal",
-      "type": "select",
-      "options": [
-        { "value": "mine", "label": "Mine" },
-        { "value": "recycled", "label": "Recycled / Secondary" },
-        { "value": "market", "label": "Market purchases" }
-      ],
-      "showIf": [
-        { "field": "accountType", "equals": "business" },
-        {
-          "field": "businessTypeMain",
-          "includesAny": ["supplier", "trader", "refining"]
-        }
-      ]
-    },
-    {
       "id": "countryExposure",
       "label": "List countries of sourcing/operations (comma-separated)",
       "type": "text",
@@ -645,54 +449,6 @@
         { "value": "partial", "label": "Partially / In progress" }
       ],
       "showIf": [{ "field": "accountType", "equals": "business" }]
-    },
-    {
-      "id": "doreAssayMethod",
-      "label": "Preferred doré assay method",
-      "type": "select",
-      "options": [
-        { "value": "fire_assay", "label": "Fire assay" },
-        { "value": "xrf", "label": "XRF (screening)" },
-        { "value": "third_party", "label": "Third-party lab" }
-      ],
-      "showIf": [
-        { "field": "accountType", "equals": "business" },
-        {
-          "field": "businessTypeMain",
-          "includesAny": ["supplier", "refining"]
-        }
-      ]
-    },
-    {
-      "id": "transportMode",
-      "label": "Typical transport mode",
-      "type": "select",
-      "options": [
-        { "value": "air", "label": "Air" },
-        { "value": "armoured_local", "label": "Armoured (local)" },
-        { "value": "courier_small", "label": "Courier (small parcels)" }
-      ],
-      "showIf": [
-        { "field": "accountType", "equals": "business" },
-        {
-          "field": "businessTypeMain",
-          "includesAny": ["logistics", "trader", "supplier"]
-        }
-      ]
-    },
-    {
-      "id": "jewellerySegment",
-      "label": "Jewellery segment focus",
-      "type": "select",
-      "options": [
-        { "value": "22k", "label": "22k / Traditional" },
-        { "value": "18k", "label": "18k / Luxury" },
-        { "value": "custom", "label": "Custom / Boutique" }
-      ],
-      "showIf": [
-        { "field": "accountType", "equals": "business" },
-        { "field": "businessTypeMain", "equals": "jewellery" }
-      ]
     }
   ]
 }

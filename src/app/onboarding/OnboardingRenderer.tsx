@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   createApplication,
   createApplicantProfile,
@@ -22,6 +23,61 @@ import { AccountStep } from "./steps/AccountStep";
 import { OwnershipStep } from "./steps/OwnershipStep";
 import { IdentityStep } from "./steps/IdentityStep";
 import { ProfileStep } from "./steps/ProfileStep";
+import BusinessProfileStep from "./steps/BusinessProfileStep";
+import BusinessDocumentsStep from "./steps/BusinessDocumentsStep";
+import RelationshipProfileStep from "./steps/RelationshipProfileStep";
+
+/** ---------- Helpers ---------- */
+function safeText(v: any): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") return v.trim();
+  return String(v);
+}
+
+function titleCase(s: string): string {
+  if (!s) return s;
+  return s
+    .split(/[\s_\-]+/)
+    .filter(Boolean)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+}
+
+function formatMaybe(v: any): string {
+  const s = safeText(v);
+  return s ? s : "Not provided";
+}
+
+function formatMaybeSpecified(v: any): string {
+  const s = safeText(v);
+  return s ? s : "Not specified";
+}
+
+function asArray(v: any): string[] {
+  if (Array.isArray(v)) return v.filter(Boolean).map((x) => String(x));
+  return [];
+}
+
+// Treat any non-empty docs structure as "provided"
+function hasDocs(val: any): boolean {
+  if (!val) return false;
+
+  if (typeof val === "object" && !Array.isArray(val)) {
+    if (Array.isArray((val as any).docs)) return (val as any).docs.length > 0;
+    return Object.keys(val).length > 0;
+  }
+
+  if (Array.isArray(val)) return val.length > 0;
+  if (typeof val === "string") return val.trim().length > 0;
+  return false;
+}
+
+function answeredPill(value: any): { label: string; tone: "ok" | "warn" } {
+  const s = safeText(value).toLowerCase();
+  if (!s) return { label: "Not answered", tone: "warn" };
+  if (s === "yes" || s === "no") return { label: s === "yes" ? "Yes" : "No", tone: "ok" };
+  return { label: safeText(value), tone: "ok" };
+}
 
 /** ---------- Main Component ---------- */
 export default function OnboardingRenderer({
@@ -32,17 +88,20 @@ export default function OnboardingRenderer({
   onStepChange,
 }: {
   spec: Spec;
-  onSubmit: (data: Record<string, any>) => void;
+  onSubmit: (data: Record<string, any>) => void | Promise<void>;
   initialAnswers?: Record<string, any>;
   onChange?: (data: Record<string, any>) => void;
   onStepChange?: (index: number, step: Step) => void;
 }) {
+  const router = useRouter();
+
   const [stepIdx, setStepIdx] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, any>>(
     initialAnswers || {},
   );
   const [isSubmittingStep, setIsSubmittingStep] = React.useState(false);
   const [globalError, setGlobalError] = React.useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
 
   const visibleSteps = React.useMemo(
     () => spec.steps.filter((s) => visibleByRules(s.showIf, answers)),
@@ -99,16 +158,28 @@ export default function OnboardingRenderer({
   }
 
   function next() {
-    if (visibleIdx < visibleSteps.length - 1)
-      goToVisibleIndex(visibleIdx + 1);
+    if (visibleIdx < visibleSteps.length - 1) goToVisibleIndex(visibleIdx + 1);
   }
 
   function prev() {
     if (visibleIdx > 0) goToVisibleIndex(visibleIdx - 1);
   }
 
-  function handleSubmit() {
-    onSubmit(answers);
+  /** Final submit handler (Submit button on the last step) */
+  async function handleSubmit() {
+    setGlobalError(null);
+    try {
+      setIsSubmittingStep(true);
+      await Promise.resolve(onSubmit(answers));
+      setHasSubmitted(true);
+    } catch (e: any) {
+      console.error("onSubmit handler failed", e);
+      setGlobalError(
+        e?.message || "We couldn’t submit your application. Please try again.",
+      );
+    } finally {
+      setIsSubmittingStep(false);
+    }
   }
 
   const questionnaireFields: Field[] =
@@ -120,7 +191,26 @@ export default function OnboardingRenderer({
 
   const canGoNext = (() => {
     if (step.id === "accountSelection") {
-      return !!answers.accountType && !isSubmittingStep;
+      const isBusiness = answers.accountType === "business";
+      const isEmployee = answers.signingRole === "employee";
+
+      if (!answers.accountType) return false;
+
+      if (isBusiness && isEmployee) {
+        const hasFirst =
+          typeof answers.signatoryFirstName === "string" &&
+          answers.signatoryFirstName.trim().length > 0;
+        const hasLast =
+          typeof answers.signatoryLastName === "string" &&
+          answers.signatoryLastName.trim().length > 0;
+        const hasEmail =
+          typeof answers.signatoryEmail === "string" &&
+          answers.signatoryEmail.trim().length > 0;
+
+        return hasFirst && hasLast && hasEmail && !isSubmittingStep;
+      }
+
+      return !isSubmittingStep;
     }
 
     if (step.id === "login") {
@@ -135,8 +225,7 @@ export default function OnboardingRenderer({
     }
 
     if (step.id === "identity") {
-      const isUAE =
-        answers.countryOfResidence === "United Arab Emirates";
+      const isUAE = answers.countryOfResidence === "United Arab Emirates";
 
       const hasEidFiles =
         !isUAE ||
@@ -145,11 +234,15 @@ export default function OnboardingRenderer({
           Array.isArray(answers.emiratesIdBack__files) &&
           answers.emiratesIdBack__files.length > 0);
 
+      const isBusiness = answers.accountType === "business";
+      const showPoA = !isBusiness;
+      const hasPoA = showPoA ? !!answers.proofOfAddressDocId : true;
+
       return (
         answers.idExtractStatus !== "processing" &&
         !!answers.countryOfResidence &&
-        !!answers.proofOfAddressDocId &&
         hasEidFiles &&
+        hasPoA &&
         !isSubmittingStep
       );
     }
@@ -169,8 +262,87 @@ export default function OnboardingRenderer({
       return hasOccupation && hasSource && hasServices && !isSubmittingStep;
     }
 
+    // Business profile
+    if (step.id === "corporateSetup") {
+      const hasCountry =
+        typeof answers.incCountry === "string" &&
+        answers.incCountry.trim().length > 0;
+
+      const activities = Array.isArray(answers.businessActivities)
+        ? (answers.businessActivities as unknown[])
+        : [];
+      const hasActivities = activities.length > 0;
+
+      return hasCountry && hasActivities && !isSubmittingStep;
+    }
+
+    // Business documents
+    if (step.id === "companyDetails") {
+      const hasLegal = hasDocs(answers.legal_existence_files);
+      const hasRegisteredAddress = hasDocs(answers.registered_address_files);
+      const hasTax = hasDocs(answers.tax_registration_files);
+
+      const activities = Array.isArray(answers.businessActivities)
+        ? (answers.businessActivities as string[])
+        : [];
+      const needsPreciousMetalsPermits = activities.some((v) =>
+        ["trader", "supplier", "refiner"].includes(v),
+      );
+      const hasPermits = needsPreciousMetalsPermits
+        ? hasDocs(answers.precious_metals_permits_files)
+        : true;
+
+      return (
+        hasLegal && hasRegisteredAddress && hasTax && hasPermits && !isSubmittingStep
+      );
+    }
+
+    // Relationship (business-only)
+    if (step.id === "relationship") {
+      const direction =
+        typeof answers.transaction_direction === "string" &&
+        answers.transaction_direction.trim().length > 0;
+
+      const products = Array.isArray(answers.relationship_products)
+        ? (answers.relationship_products as string[])
+        : [];
+      const hasProducts = products.length > 0;
+
+      const frequency =
+        typeof answers.relationship_frequency === "string" &&
+        answers.relationship_frequency.trim().length > 0;
+
+      const valueBand =
+        typeof answers.relationship_value_band_usd === "string" &&
+        answers.relationship_value_band_usd.trim().length > 0;
+
+      const paymentMethods = Array.isArray(answers.relationship_payment_methods)
+        ? (answers.relationship_payment_methods as string[])
+        : [];
+      const hasPaymentMethods = paymentMethods.length > 0;
+
+      const cashSelected = paymentMethods.includes("cash");
+      const cashAckOk = !cashSelected || answers.relationship_cash_ack === true;
+
+      return (
+        direction &&
+        hasProducts &&
+        frequency &&
+        valueBand &&
+        hasPaymentMethods &&
+        cashAckOk &&
+        !isSubmittingStep
+      );
+    }
+
     return !isSubmittingStep;
   })();
+
+  const canSubmit =
+    step.id === "submit" &&
+    answers.submitDeclarationAccepted === true &&
+    !isSubmittingStep &&
+    !hasSubmitted;
 
   const ownersForTree: Owner[] = React.useMemo(() => {
     const raw = answers.owners;
@@ -180,11 +352,11 @@ export default function OnboardingRenderer({
     );
   }, [answers.owners]);
 
-  /** ---------- Next click (login + identity + profile handling) ---------- */
+  /** ---------- Next click handlers ---------- */
   async function handleNextClick() {
     setGlobalError(null);
 
-    // 1) LOGIN step → create Kora application
+    // 1) LOGIN
     if (step.id === "login") {
       try {
         setIsSubmittingStep(true);
@@ -196,9 +368,7 @@ export default function OnboardingRenderer({
           tenant_code: "sitara-core",
           account_type: accountType,
           email: String(answers.email || ""),
-          phone_country_code: answers.phoneDial
-            ? `+${answers.phoneDial}`
-            : undefined,
+          phone_country_code: answers.phoneDial ? `+${answers.phoneDial}` : undefined,
           phone_number: answers.phoneNational || undefined,
           phone_e164: answers.phone || undefined,
           password: answers.password || undefined,
@@ -209,13 +379,13 @@ export default function OnboardingRenderer({
         setValue("koraApplicationId", res.application_id);
         setValue("koraApplicantId", res.applicant_id);
         setValue("koraTenantId", res.tenant_id);
+        setValue("koraApplicationExternalRef", res.external_reference);
 
         next();
       } catch (e: any) {
         console.error("Failed to create Kora application from login step", e);
         setGlobalError(
-          e?.message ||
-            "Unable to start your application. Please try again.",
+          e?.message || "Unable to start your application. Please try again.",
         );
       } finally {
         setIsSubmittingStep(false);
@@ -223,23 +393,17 @@ export default function OnboardingRenderer({
       return;
     }
 
-    // 2) IDENTITY step → upload Emirates ID (if UAE resident) on Next
+    // 2) IDENTITY (UAE EID upload on next)
     if (step.id === "identity") {
-      const isUAE =
-        answers.countryOfResidence === "United Arab Emirates";
+      const isUAE = answers.countryOfResidence === "United Arab Emirates";
 
-      // If not UAE, nothing to upload – just continue
       if (!isUAE) {
         next();
         return;
       }
 
-      const frontFiles = answers.emiratesIdFront__files as
-        | File[]
-        | undefined;
-      const backFiles = answers.emiratesIdBack__files as
-        | File[]
-        | undefined;
+      const frontFiles = answers.emiratesIdFront__files as File[] | undefined;
+      const backFiles = answers.emiratesIdBack__files as File[] | undefined;
 
       if (
         !frontFiles?.length ||
@@ -260,16 +424,9 @@ export default function OnboardingRenderer({
         formData.append("front", frontFiles[0]);
         formData.append("back", backFiles[0]);
         formData.append("tenant_id", String(answers.koraTenantId));
-        formData.append(
-          "application_id",
-          String(answers.koraApplicationId),
-        );
-        if (answers.koraApplicantId) {
-          formData.append(
-            "applicant_id",
-            String(answers.koraApplicantId),
-          );
-        }
+        formData.append("application_id", String(answers.koraApplicationId));
+        if (answers.koraApplicantId)
+          formData.append("applicant_id", String(answers.koraApplicantId));
 
         const res = await fetch("/api/documents/emirates-id", {
           method: "POST",
@@ -279,14 +436,12 @@ export default function OnboardingRenderer({
         if (!res.ok) {
           const errJson = await res.json().catch(() => null);
           const detail =
-            errJson?.detail ||
-            "Failed to upload Emirates ID. Please try again.";
+            errJson?.detail || "Failed to upload Emirates ID. Please try again.";
           throw new Error(detail);
         }
 
         const data = await res.json();
 
-        // Persist returned doc IDs in answers for downstream use / UI
         setValue("emiratesIdFrontDocId", data.front_doc_id);
         setValue("emiratesIdBackDocId", data.back_doc_id);
         setValue("emiratesIdUploaded", true);
@@ -305,13 +460,9 @@ export default function OnboardingRenderer({
       return;
     }
 
-    // 3) PROFILE step → POST applicant profile to Kora
+    // 3) PROFILE → POST applicant profile
     if (step.id === "profile") {
-      if (
-        !answers.koraTenantId ||
-        !answers.koraApplicationId ||
-        !answers.koraApplicantId
-      ) {
+      if (!answers.koraTenantId || !answers.koraApplicationId || !answers.koraApplicantId) {
         setGlobalError(
           "We couldn't find your application reference. Please go back to the Login step and try again.",
         );
@@ -333,16 +484,12 @@ export default function OnboardingRenderer({
           nationality: String(answers.nationality || ""),
           occupation: String(answers.occupation || ""),
           source_of_income: String(answers.sourceOfIncome || ""),
-          expected_frequency:
-            (answers.expectedFrequency as string | undefined) || undefined,
-          expected_value:
-            (answers.expectedValue as string | undefined) || undefined,
+          expected_frequency: (answers.expectedFrequency as string | undefined) || undefined,
+          expected_value: (answers.expectedValue as string | undefined) || undefined,
           selected_services: services,
         };
 
         const res = await createApplicantProfile(payload);
-
-        // Store profile id for downstream use (review, audit, etc.)
         setValue("koraApplicantProfileId", res.id);
 
         next();
@@ -359,24 +506,87 @@ export default function OnboardingRenderer({
       return;
     }
 
-    // 4) All other steps – just move forward
     next();
   }
 
   /** ---------- Step content renderer ---------- */
   const renderStepContent = () => {
+    if (step.id === "accountSelection") {
+      const accountTypeField = step.fields.find((f) => f.id === "accountType");
+      const signingRoleField = step.fields.find((f) => f.id === "signingRole");
+
+      const showEmployeeBlock =
+        answers.accountType === "business" && answers.signingRole === "employee";
+
+      return (
+        <div className="space-y-5">
+          {accountTypeField && (
+            <FieldRenderer f={accountTypeField} answers={answers} setValue={setValue} />
+          )}
+
+          {signingRoleField && visibleByRules(signingRoleField.showIf, answers) && (
+            <FieldRenderer f={signingRoleField} answers={answers} setValue={setValue} />
+          )}
+
+          {showEmployeeBlock && (
+            <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+              <h2 className="text-sm font-semibold text-neutral-100">Authorised signatory</h2>
+              <p className="mt-1 text-xs text-neutral-400">
+                Please provide details of the authorised signatory named on the business licence (CEO, GM, or director).
+              </p>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-neutral-300">
+                    First name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={answers.signatoryFirstName || ""}
+                    onChange={(e) => setValue("signatoryFirstName", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-neutral-300">
+                    Family name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={answers.signatoryLastName || ""}
+                    onChange={(e) => setValue("signatoryLastName", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-1 block text-xs font-medium text-neutral-300">
+                  Email <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={answers.signatoryEmail || ""}
+                  onChange={(e) => setValue("signatoryEmail", e.target.value)}
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                />
+              </div>
+            </section>
+          )}
+        </div>
+      );
+    }
+
     if (step.id === "review") {
       return (
         <div className="rounded-xl border border-neutral-800 bg-black/30 p-4">
-          <h2 className="mb-2 text-base font-semibold text-neutral-100">
-            Review
-          </h2>
+          <h2 className="mb-2 text-base font-semibold text-neutral-100">Review</h2>
           <pre className="overflow-auto rounded-lg border border-neutral-800 bg-neutral-950/60 p-3 text-xs text-neutral-300">
             {JSON.stringify(answers, null, 2)}
           </pre>
           <p className="mt-2 text-xs text-neutral-400">
-            You’ll answer a short questionnaire next, tailored to your
-            selections.
+            You’ll answer a short questionnaire next, tailored to your selections.
           </p>
         </div>
       );
@@ -386,17 +596,11 @@ export default function OnboardingRenderer({
       return questionnaireFields.length > 0 ? (
         <div className="rounded-xl border border-neutral-800 bg-black/30 p-4">
           <p className="mb-4 text-sm text-neutral-300">
-            Please answer the questions below. These are generated from your
-            earlier selections.
+            Please answer the questions below. These are generated from your earlier selections.
           </p>
           <div className="space-y-5">
             {questionnaireFields.map((f) => (
-              <FieldRenderer
-                key={f.id}
-                f={f}
-                answers={answers}
-                setValue={setValue}
-              />
+              <FieldRenderer key={f.id} f={f} answers={answers} setValue={setValue} />
             ))}
           </div>
         </div>
@@ -408,117 +612,299 @@ export default function OnboardingRenderer({
     }
 
     if (step.id === "submit") {
-      return (
-        <div className="space-y-4 rounded-xl border border-neutral-800 bg-black/30 p-4">
-          <h2 className="mb-2 text-base font-semibold text-neutral-100">
-            Ready to submit
-          </h2>
-          <p className="text-sm text-neutral-300">
-            We’re sending the information below. Please confirm the details
-            before final submission.
-          </p>
-          <pre className="overflow-auto rounded-lg border border-neutral-800 bg-neutral-950/60 p-3 text-xs text-neutral-300">
-            {JSON.stringify(answers, null, 2)}
-          </pre>
+      const isBusiness = answers.accountType === "business";
+      const isUAE = answers.countryOfResidence === "United Arab Emirates";
+      const showPoA = !isBusiness;
 
-          {ownersForTree.length > 0 && (
-            <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-950/60 p-3">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-100">
-                Ownership structure (summary)
-              </h3>
-              <p className="mb-2 text-xs text-neutral-400">
-                This summary shows only disclosed owners with a name. Empty rows
-                are automatically collapsed.
+// Risk declarations (schema-aware for individual vs business)
+const isBusinessAccount = answers.accountType === "business";
+
+const pepValue = isBusinessAccount ? answers.pepExposure : answers.ind_pepSelf;
+const sanctionsValue = isBusinessAccount
+  ? answers.sanctionsScreening
+  : answers.ind_sanctionsSelf;
+
+const actingValue = isBusinessAccount
+  ? (answers.actingOnBehalfOfThirdParty ??
+      answers.actingOnBehalfThirdParty ??
+      answers.thirdParty ??
+      answers.thirdPartyActing)
+  : answers.ind_thirdPartyUse;
+
+const pep = answeredPill(pepValue);
+const sanctions = answeredPill(sanctionsValue);
+const thirdParty = answeredPill(actingValue);
+
+
+      // Docs status
+      const passportOrIdReceived =
+        answers.idExtractStatus === "success" ||
+        !!answers.passportDocId ||
+        !!answers.identityDocId ||
+        !!answers.idDocumentDocId ||
+        !!answers.emiratesIdUploaded; // treat UAE EID as acceptable ID evidence too
+
+      const emiratesIdRequired = isUAE;
+      const emiratesIdReceived =
+        !!answers.emiratesIdFrontDocId ||
+        !!answers.emiratesIdBackDocId ||
+        answers.emiratesIdUploaded === true ||
+        (Array.isArray(answers.emiratesIdFront__files) && answers.emiratesIdFront__files.length > 0);
+
+      const poaReceived = !!answers.proofOfAddressDocId;
+
+      const services = asArray(answers.selectedServices);
+
+      if (hasSubmitted) {
+        const submissionRef =
+          (answers.koraApplicationExternalRef as string | undefined) || "Not available";
+        const fullName =
+          (answers.fullName as string | undefined) || "your application";
+
+        return (
+          <div className="space-y-5 print-section">
+            <section className="rounded-2xl border border-emerald-500/40 bg-emerald-900/20 p-5">
+              <h2 className="text-base font-semibold text-emerald-200">
+                Your application has been submitted
+              </h2>
+              <p className="mt-2 text-sm text-emerald-50/90">
+                Thank you, <span className="font-semibold">{fullName}</span>. Your details have been securely sent to the
+                Sitara compliance team for review.
               </p>
-              <div className="text-xs text-neutral-200">
-                <div className="mb-1 font-semibold">Client entity</div>
-                <ul className="ml-4 list-disc space-y-1">
-                  {ownersForTree.map((o, idx) => {
-                    let typeLabel = "Owner";
-                    switch (o.ownerType) {
-                      case "individual":
-                        typeLabel = "Individual";
-                        break;
-                      case "company":
-                        typeLabel = "Company";
-                        break;
-                      case "spv":
-                        typeLabel = "SPV / Holding";
-                        break;
-                      case "trust":
-                        typeLabel = "Trust";
-                        break;
-                      case "foundation":
-                        typeLabel = "Foundation";
-                        break;
-                      case "other_entity":
-                        typeLabel = "Other entity";
-                        break;
-                    }
+              <p className="mt-2 text-xs text-emerald-100/80">
+                Please keep the reference below for your records. You may be asked to quote it if you contact us about
+                your application.
+              </p>
 
-                    const shareLabel =
-                      o.share !== undefined && o.share !== ""
-                        ? ` · ${o.share}%`
-                        : "";
-                    const countryLabel = o.incCountry
-                      ? ` · ${o.incCountry}`
-                      : "";
-                    const pepLabel = o.pep === "yes" ? " · PEP" : "";
-                    const sancLabel =
-                      o.sanctions === "yes"
-                        ? " · Sanctions flag"
-                        : o.sanctions === "unsure"
-                        ? " · Sanctions unsure"
-                        : "";
+              <div className="mt-4 inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-950/60 px-4 py-2 text-[11px] font-medium tracking-wide text-emerald-100">
+                <span className="mr-2 uppercase text-emerald-300/90">Onboarding reference</span>
+                <span className="font-mono text-xs">{submissionRef}</span>
+              </div>
+            </section>
 
-                    return (
-                      <li key={o.id || idx}>
-                        <span className="font-medium">{o.name}</span>
-                        <span className="text-neutral-400">
-                          {" "}
-                          — {typeLabel}
-                          {shareLabel}
-                          {countryLabel}
-                          {pepLabel}
-                          {sancLabel}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+            <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5 text-xs text-neutral-300 md:text-sm">
+              <p>
+                Our team will review your application in line with UAE AML / CFT and internal compliance policies. If we
+                need anything else, we’ll contact you using the email or mobile number you provided.
+              </p>
+            </section>
+          </div>
+        );
+      }
+
+      // Pre-submit review (classic layout)
+      return (
+        <div className="space-y-5">
+          {/* Header */}
+          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+            <h2 className="text-sm font-semibold text-neutral-100">Review your application</h2>
+            <p className="mt-1 text-xs text-neutral-400">
+              Please confirm the details below before sending your application to the Sitara compliance team.
+            </p>
+            <p className="mt-2 text-[11px] text-neutral-500">
+              Most applications are reviewed within <span className="text-neutral-200">1–2 business days</span>.
+            </p>
+          </section>
+
+          {/* Identity / Contact row */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                Identity
+              </div>
+
+              <div className="mt-4 space-y-3 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-400">Account type</span>
+                  <span className="text-neutral-100">{isBusiness ? "Business" : "Individual"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-400">Full name</span>
+                  <span className="text-neutral-100">{safeText(answers.fullName) || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-400">Nationality</span>
+                  <span className="text-neutral-100">{safeText(answers.nationality) || "—"}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                Contact
+              </div>
+
+              <div className="mt-4 space-y-3 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-400">Email</span>
+                  <span className="text-neutral-100">{safeText(answers.email) || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-400">Mobile</span>
+                  <span className="text-neutral-100">{safeText(answers.phone) || "—"}</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Profile & expected use */}
+          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+              Profile & expected use
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-neutral-400">Occupation</span>
+                <span className="text-neutral-100">{formatMaybe(answers.occupation)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-neutral-400">Expected transaction frequency</span>
+                <span className="text-neutral-100">{formatMaybeSpecified(answers.expectedFrequency)}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-neutral-400">Source of income</span>
+                <span className="text-neutral-100">{formatMaybe(answers.sourceOfIncome)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-neutral-400">Typical transaction value</span>
+                <span className="text-neutral-100">{formatMaybeSpecified(answers.expectedValue)}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 text-xs md:col-span-2">
+                <span className="text-neutral-400">Service categories</span>
+                <span className="text-neutral-100">
+                  {services.length ? services.map((s) => titleCase(s)).join(", ") : "None selected"}
+                </span>
               </div>
             </div>
-          )}
+          </section>
+
+          {/* Risk declarations */}
+          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+              Risk declarations
+            </div>
+
+            <div className="mt-4 space-y-3 text-xs">
+              {[
+                { label: "Politically Exposed Person (PEP)", pill: pep },
+                { label: "Sanctions / restrictions", pill: sanctions },
+                { label: "Acting on behalf of a third party", pill: thirdParty },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-3">
+                  <span className="text-neutral-300">{row.label}</span>
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                      row.pill.tone === "warn"
+                        ? "border-neutral-700 bg-neutral-900 text-neutral-300"
+                        : "border-emerald-500/40 bg-emerald-900/20 text-emerald-200"
+                    }`}
+                  >
+                    {row.pill.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Documents received */}
+          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+              Documents received
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="text-xs">
+                <div className="text-neutral-400">Passport / ID</div>
+                <div className={passportOrIdReceived ? "mt-1 text-emerald-300" : "mt-1 text-neutral-400"}>
+                  {passportOrIdReceived ? "Received" : "Not uploaded"}
+                </div>
+              </div>
+
+              <div className="text-xs">
+                <div className="text-neutral-400">Emirates ID</div>
+                <div className="mt-1">
+                  {!emiratesIdRequired ? (
+                    <span className="text-neutral-400">Not required</span>
+                  ) : emiratesIdReceived ? (
+                    <span className="text-emerald-300">Received</span>
+                  ) : (
+                    <span className="text-neutral-400">Not uploaded</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-xs">
+                <div className="text-neutral-400">Proof of address</div>
+                <div className="mt-1">
+                  {!showPoA ? (
+                    <span className="text-neutral-400">Not required</span>
+                  ) : poaReceived ? (
+                    <span className="text-emerald-300">Received</span>
+                  ) : (
+                    <span className="text-neutral-400">Not uploaded</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Declaration */}
+          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+              Declaration
+            </div>
+
+            <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
+              By submitting this application, you confirm that all information and documents provided are true, accurate,
+              and complete to the best of your knowledge. You understand that Sitara may request additional information
+              or documentation, and that providing false or misleading information may result in your account being
+              declined or closed and, where required, reported to the relevant authorities under applicable AML / CFT
+              regulations.
+            </p>
+
+            <label className="mt-4 flex cursor-pointer items-start gap-2">
+              <input
+                type="checkbox"
+                checked={answers.submitDeclarationAccepted === true}
+                onChange={(e) => setValue("submitDeclarationAccepted", e.target.checked)}
+                className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[--gold-color] focus:ring-[--gold-color]"
+              />
+              <span className="text-xs text-neutral-200">
+                I confirm the above statements and authorise Sitara to use this information to perform customer due
+                diligence and ongoing compliance checks.
+              </span>
+            </label>
+
+            <style>{`:root{--gold-color:${GOLD}}`}</style>
+          </section>
         </div>
       );
     }
 
-    if (step.id === "login") {
-      return <AccountStep answers={answers} setValue={setValue} />;
+    if (step.id === "login") return <AccountStep answers={answers} setValue={setValue} />;
+    if (step.id === "ownership") return <OwnershipStep answers={answers} setValue={setValue} />;
+    if (step.id === "identity") return <IdentityStep answers={answers} setValue={setValue} />;
+    if (step.id === "profile") return <ProfileStep answers={answers} setValue={setValue} />;
+
+    if (step.id === "corporateSetup") {
+      return <BusinessProfileStep step={step} answers={answers} setValue={setValue} />;
     }
 
-    if (step.id === "ownership") {
-      return <OwnershipStep answers={answers} setValue={setValue} />;
+    if (step.id === "companyDetails") {
+      return <BusinessDocumentsStep answers={answers} setValue={setValue} />;
     }
 
-    if (step.id === "identity") {
-      return <IdentityStep answers={answers} setValue={setValue} />;
+    if (step.id === "relationship") {
+      return <RelationshipProfileStep answers={answers} setValue={setValue} />;
     }
 
-    if (step.id === "profile") {
-      return <ProfileStep answers={answers} setValue={setValue} />;
-    }
-
-    // default: generic field-driven step
     return (
       <div className="space-y-5">
         {step.fields.map((f) => (
-          <FieldRenderer
-            key={f.id}
-            f={f}
-            answers={answers}
-            setValue={setValue}
-          />
+          <FieldRenderer key={f.id} f={f} answers={answers} setValue={setValue} />
         ))}
       </div>
     );
@@ -526,8 +912,16 @@ export default function OnboardingRenderer({
 
   return (
     <div className="mx-auto max-w-3xl p-6">
-      {/* Breadcrumb */}
-      <nav className="mb-6 flex flex-wrap items-center gap-3 text-sm">
+      <style>{`
+        @media print {
+          body { background: #ffffff !important; color: #000000 !important; }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .no-print { display: none !important; }
+          .print-section { max-width: 100% !important; }
+        }
+      `}</style>
+
+      <nav className="no-print mb-6 flex flex-wrap items-center gap-3 text-sm">
         {visibleSteps.map((s, i) => {
           const isActive = s.id === step.id;
           return (
@@ -541,11 +935,7 @@ export default function OnboardingRenderer({
               >
                 {i + 1}
               </span>
-              <span
-                className={
-                  isActive ? "text-[--gold-color]" : "text-neutral-400"
-                }
-              >
+              <span className={isActive ? "text-[--gold-color]" : "text-neutral-400"}>
                 {s.label}
               </span>
               {i < visibleSteps.length - 1 && (
@@ -557,21 +947,18 @@ export default function OnboardingRenderer({
         <style>{`:root{--gold-color:${GOLD}}`}</style>
       </nav>
 
-      {/* Global error banner */}
       {globalError && (
-        <div className="mb-4 rounded-lg border border-red-500/40 bg-red-950/40 px-4 py-2 text-xs text-red-200">
+        <div className="no-print mb-4 rounded-lg border border-red-500/40 bg-red-950/40 px-4 py-2 text-xs text-red-200">
           {globalError}
         </div>
       )}
 
-      {/* Title */}
-      <div className="mb-6 text-center">
+      <div className="no-print mb-6 text-center">
         <h1
           className="
-            text-2xl md:text-3xl font-semibold tracking-widest
             bg-gradient-to-r from-[--color-bronze] via-[#d7c89a] to-[--color-bronze]
-            text-transparent bg-clip-text
-            drop-shadow-[0_0_10px_var(--gold-shadow)]
+            bg-clip-text text-2xl font-semibold tracking-widest text-transparent
+            drop-shadow-[0_0_10px_var(--gold-shadow)] md:text-3xl
           "
         >
           {spec.meta.title}
@@ -583,57 +970,79 @@ export default function OnboardingRenderer({
         <style>{`:root{--gold-shadow: rgba(191,167,111,.35)}`}</style>
       </div>
 
-      {/* Content */}
       <div className="space-y-5">{renderStepContent()}</div>
 
-      {/* Nav */}
-      <div className="mt-6 flex justify-between">
-        <button
-          type="button"
-          disabled={visibleIdx === 0 || isSubmittingStep}
-          onClick={prev}
-          className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-neutral-100 transition hover:bg-neutral-800 disabled:opacity-40"
-        >
-          Back
-        </button>
-
-        {step.id !== "submit" ? (
-          <button
-            type="button"
-            onClick={handleNextClick}
-            disabled={!canGoNext || visibleIdx >= visibleSteps.length - 1}
-            className={`rounded-lg px-5 py-2 font-medium transition ${
-              !canGoNext || visibleIdx >= visibleSteps.length - 1
-                ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
-                : "border border-[--gold-color] text-[--gold-color] hover:bg-[--gold-bg-soft]"
-            }`}
-          >
-            {isSubmittingStep
-              ? step.id === "login"
-                ? "Starting…"
-                : "Saving…"
-              : "Next"}
-          </button>
+      <div className="no-print mt-6 flex justify-between">
+        {step.id === "submit" && hasSubmitted ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") window.print();
+              }}
+              className="rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm text-neutral-100 transition hover:bg-neutral-800"
+            >
+              Print
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="rounded-lg bg-emerald-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-emerald-600"
+            >
+              Finish
+            </button>
+          </>
         ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="rounded-lg bg-emerald-500 px-5 py-2 font-medium text-white transition hover:bg-emerald-600"
-          >
-            Submit
-          </button>
+          <>
+            <button
+              type="button"
+              disabled={visibleIdx === 0 || isSubmittingStep || hasSubmitted}
+              onClick={prev}
+              className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-neutral-100 transition hover:bg-neutral-800 disabled:opacity-40"
+            >
+              Back
+            </button>
+
+            {step.id !== "submit" ? (
+              <button
+                type="button"
+                onClick={handleNextClick}
+                disabled={!canGoNext || visibleIdx >= visibleSteps.length - 1}
+                className={`rounded-lg px-5 py-2 font-medium transition ${
+                  !canGoNext || visibleIdx >= visibleSteps.length - 1
+                    ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
+                    : "border border-[--gold-color] text-[--gold-color] hover:bg-[--gold-bg-soft]"
+                }`}
+              >
+                {isSubmittingStep ? (step.id === "login" ? "Starting…" : "Saving…") : "Next"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className={`rounded-lg px-5 py-2 font-medium transition ${
+                  !canSubmit
+                    ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
+                    : "bg-emerald-500 text-white hover:bg-emerald-600"
+                }`}
+              >
+                {hasSubmitted ? "Submitted" : "Submit"}
+              </button>
+            )}
+          </>
         )}
         <style>{`:root{--gold-color:${GOLD};--gold-bg-soft:${GOLD_BG_SOFT}}`}</style>
       </div>
 
-      {/* Single Reset */}
-      <div className="mt-6">
+      <div className="no-print mt-6">
         <button
           type="button"
           onClick={() => {
             setAnswers({});
             setStepIdx(0);
             setGlobalError(null);
+            setHasSubmitted(false);
           }}
           className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-800"
         >

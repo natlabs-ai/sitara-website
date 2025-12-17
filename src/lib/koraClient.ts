@@ -20,6 +20,7 @@ export type CreateApplicationResponse = {
   tenant_id: string;
   status: string;
   account_type: string;
+  external_reference: string; 
 };
 
 /** -------- Applicant Profiles -------- */
@@ -38,6 +39,14 @@ export type ApplicantProfilePayload = {
   expected_value?: string | null;
 
   selected_services: string[];
+
+  // 🔹 NEW: individual risk flags
+  is_pep_self: boolean;
+  pep_self_details?: string | null;
+  is_sanctions_self: boolean;
+  sanctions_self_details?: string | null;
+  is_third_party_use: boolean;
+  third_party_use_details?: string | null;
 };
 
 export type ApplicantProfileResponse = {
@@ -52,6 +61,15 @@ export type ApplicantProfileResponse = {
   expected_frequency: string | null;
   expected_value: string | null;
   selected_services: string[];
+
+  // 🔹 NEW: individual risk flags
+  is_pep_self: boolean;
+  pep_self_details: string | null;
+  is_sanctions_self: boolean;
+  sanctions_self_details: string | null;
+  is_third_party_use: boolean;
+  third_party_use_details: string | null;
+
   created_at: string;
   updated_at: string;
 };
@@ -105,7 +123,7 @@ export async function createApplication(
   return body as CreateApplicationResponse;
 }
 
-/** -------- NEW: Applicant profile -------- */
+/** -------- Applicant profile -------- */
 
 export async function createApplicantProfile(
   payload: ApplicantProfilePayload,
@@ -120,7 +138,7 @@ export async function createApplicantProfile(
       body: JSON.stringify(payload),
     });
   } catch (error) {
-    // Network-level error (what you’re seeing now)
+    // Network-level error
     console.error("Network error calling /profiles:", error);
     throw new Error("Could not reach Kora API for profiles");
   }

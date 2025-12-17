@@ -51,6 +51,9 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
 
   const isUAE = answers.countryOfResidence === "United Arab Emirates";
 
+  // PoA rule: ONLY personal accounts see PoA here
+  const showProofOfAddress = answers.accountType !== "business";
+
   // ---- Simple file handler for Emirates ID ----
   const handleEidFileChange =
     (displayKey: string, filesKey: string) =>
@@ -67,10 +70,10 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
     <div className="space-y-6">
       {/* 1. Country of Residence (new card) */}
       <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
-        <h2 className="text-sm font-semibold text-neutral-100 mb-1">
+        <h2 className="mb-1 text-sm font-semibold text-neutral-100">
           Country of Residence <span className="text-red-400">*</span>
         </h2>
-        <p className="text-xs text-neutral-400 mb-3">
+        <p className="mb-3 text-xs text-neutral-400">
           Select the country where you currently live. This drives our AML / KYC
           checks and determines whether Emirates ID is required.
         </p>
@@ -139,7 +142,7 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
 
       {/* 3. Emirates ID – conditional card for UAE only */}
       {isUAE && (
-        <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5 space-y-4">
+        <section className="space-y-4 rounded-2xl border border-neutral-800 bg-black/30 p-5">
           <h2 className="text-sm font-semibold text-neutral-100">
             Emirates ID (UAE residents) <span className="text-red-400">*</span>
           </h2>
@@ -152,10 +155,10 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="mb-1 flex items-center justify-between gap-3">
                 <span className="text-xs text-neutral-300">Front</span>
                 {eidFrontName && (
-                  <span className="text-[11px] text-neutral-400 italic">
+                  <span className="text-[11px] italic text-neutral-400">
                     {eidFrontName}
                   </span>
                 )}
@@ -182,10 +185,10 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
             </div>
 
             <div>
-              <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="mb-1 flex items-center justify-between gap-3">
                 <span className="text-xs text-neutral-300">Back</span>
                 {eidBackName && (
-                  <span className="text-[11px] text-neutral-400 italic">
+                  <span className="text-[11px] italic text-neutral-400">
                     {eidBackName}
                   </span>
                 )}
@@ -214,22 +217,24 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
         </section>
       )}
 
-      {/* 4. Proof of Address – uploader */}
-      <ProofOfAddressUploader
-        tenantId={answers.koraTenantId}
-        applicationId={answers.koraApplicationId}
-        applicantId={answers.koraApplicantId}
-        onUploaded={(doc) => {
-          setValue("proofOfAddressDocId", doc.id);
-          setValue(
-            "proofOfAddressStatus",
-            (doc.verified_status as string) ?? "pending",
-          );
-          if (doc.original_file_name) {
-            setValue("proofOfAddressDisplayName", doc.original_file_name);
-          }
-        }}
-      />
+      {/* 4. Proof of Address – ONLY for personal accounts */}
+      {showProofOfAddress && (
+        <ProofOfAddressUploader
+          tenantId={answers.koraTenantId}
+          applicationId={answers.koraApplicationId}
+          applicantId={answers.koraApplicantId}
+          onUploaded={(doc) => {
+            setValue("proofOfAddressDocId", doc.id);
+            setValue(
+              "proofOfAddressStatus",
+              (doc.verified_status as string) ?? "pending",
+            );
+            if (doc.original_file_name) {
+              setValue("proofOfAddressDisplayName", doc.original_file_name);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-// src/app/api/documents/id/route.ts
+// src/app/api/documents/business/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -18,26 +18,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // IDs from the client (IdDocumentUploader)
-    // The uploader currently sends snake_case: tenant_id, application_id, applicant_id.
-    // We also support camelCase as a fallback in case the client changes later.
-    const tenantId =
-      incoming.get("tenant_id") ?? incoming.get("tenantId") ?? null;
-    const applicationId =
-      incoming.get("application_id") ?? incoming.get("applicationId") ?? null;
-    const applicantId =
-      incoming.get("applicant_id") ?? incoming.get("applicantId") ?? null;
+    const tenantId = incoming.get("tenantId");
+    const applicationId = incoming.get("applicationId");
+    const docCategory = incoming.get("docCategory");
 
     const outbound = new FormData();
     outbound.append("file", file);
 
-    // Match FastAPI param names (snake_case)
+    // Match FastAPI parameter names
     if (tenantId) outbound.append("tenant_id", String(tenantId));
-    if (applicationId) outbound.append("application_id", String(applicationId));
-    if (applicantId) outbound.append("applicant_id", String(applicantId));
+    if (applicationId)
+      outbound.append("application_id", String(applicationId));
+    if (docCategory) outbound.append("category", String(docCategory));
 
     const base = KORA_API_BASE.replace(/\/$/, "");
-    const res = await fetch(`${base}/api/v1/documents/id`, {
+    const res = await fetch(`${base}/api/v1/documents/business`, {
       method: "POST",
       body: outbound,
     });
@@ -51,14 +46,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (!res.ok) {
-      console.error("FastAPI /documents/id error", res.status, body);
+      console.error("FastAPI /documents/business error", res.status, body);
       return NextResponse.json(
         {
           error:
             body?.detail ||
             body?.error ||
             body?.raw ||
-            "Failed to analyze ID document via Kora API",
+            "Failed to upload company document via Kora API",
         },
         { status: res.status },
       );
@@ -66,11 +61,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(body, { status: 200 });
   } catch (err) {
-    console.error("ID upload proxy error", err);
+    console.error("Business document upload proxy error", err);
     return NextResponse.json(
       {
         error:
-          "Unexpected error uploading or analyzing ID document. Please try again.",
+          "Unexpected error uploading company document. Please try again.",
       },
       { status: 500 },
     );

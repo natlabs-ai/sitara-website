@@ -1,3 +1,5 @@
+// src/app/onboarding/FieldRenderer.tsx
+
 "use client";
 
 import React from "react";
@@ -11,6 +13,19 @@ import {
   DEV_MODE,
   isTruthy,
 } from "./onboardingShared";
+
+import {
+  MultiSelectCards,
+  type CardOption,
+} from "@/components/MultiSelectCards";
+import {
+  Building2,
+  Factory,
+  Warehouse,
+  Truck,
+  Gem,
+  Briefcase,
+} from "lucide-react";
 
 export function FieldRenderer({
   f,
@@ -63,39 +78,161 @@ export function FieldRenderer({
 
   // --- multiselect ---
   if (f.type === "multiselect") {
-    const selected: string[] = answers[f.id] || [];
+    const selected: string[] = Array.isArray(answers[f.id])
+      ? answers[f.id]
+      : [];
+
+    // 1) Special layout for Business Activities
+    if (f.id === "businessActivities") {
+      const baOptions: CardOption[] = [
+        {
+          value: "trader",
+          label: "Trader",
+          description: "Buying and selling physical gold or doré.",
+          icon: <Building2 className="h-4 w-4" />,
+        },
+        {
+          value: "supplier",
+          label: "Supplier",
+          description: "Mine output, aggregators or producers.",
+          icon: <Factory className="h-4 w-4" />,
+        },
+        {
+          value: "refiner",
+          label: "Refiner",
+          description: "Processing doré or scrap into refined bars.",
+          icon: <Factory className="h-4 w-4" />,
+        },
+        {
+          value: "vault_storage",
+          label: "Vault Storage",
+          description: "Secure storage of bullion and valuables.",
+          icon: <Warehouse className="h-4 w-4" />,
+        },
+        {
+          value: "logistics",
+          label: "Logistics",
+          description: "Armoured transport, export and customs.",
+          icon: <Truck className="h-4 w-4" />,
+        },
+        {
+          value: "retail_jewellery",
+          label: "Retail / Manufacturing Jewellery",
+          description: "Retail shops or jewellery manufacturing.",
+          icon: <Gem className="h-4 w-4" />,
+        },
+        {
+          value: "institutional",
+          label: "Institutional",
+          description: "Banks, funds, family offices, treasuries.",
+          icon: <Briefcase className="h-4 w-4" />,
+        },
+        {
+          value: "other",
+          label: "Other (please specify)",
+          description: "Any activity that does not fit the above.",
+          icon: <Building2 className="h-4 w-4" />,
+        },
+      ];
+
+      return (
+        <div
+          key={f.id}
+          className="rounded-xl border border-neutral-800 bg-black/30 p-4"
+        >
+          <MultiSelectCards
+            label={f.label}
+            required={f.required}
+            helperText="You can select multiple activities that apply to your firm."
+            value={selected}
+            onChange={(next) => setValue(f.id, next)}
+            options={baOptions}
+          />
+        </div>
+      );
+    }
+
+    // 2) Special layout for Supplier Type
+    if (f.id === "supplierCategories") {
+      const supOptions: CardOption[] = [
+        {
+          value: "aggregator",
+          label: "Aggregator / Cooperative",
+          description: "Collecting material from multiple miners or sources.",
+          icon: <Factory className="h-4 w-4" />,
+        },
+        {
+          value: "mine",
+          label: "Mine",
+          description: "Operating one or more mining sites.",
+          icon: <Factory className="h-4 w-4" />,
+        },
+        {
+          value: "producer_smelter",
+          label: "Producer / Smelter",
+          description: "Producing or smelting doré or semi-refined gold.",
+          icon: <Factory className="h-4 w-4" />,
+        },
+      ];
+
+      return (
+        <div
+          key={f.id}
+          className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4"
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm font-semibold text-neutral-50">
+              {f.label}
+              {f.required && <span className="text-red-400"> *</span>}
+            </div>
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+              Supplier details
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-neutral-200">
+            Select all supplier profiles that apply to your business.
+          </p>
+
+          <MultiSelectCards
+            value={selected}
+            onChange={(next) => setValue(f.id, next)}
+            options={supOptions}
+          />
+        </div>
+      );
+    }
+
+    // 3) Fallback styling for all other multiselects (e.g. selectedServices)
     return (
       <div
         key={f.id}
         className="rounded-xl border border-neutral-800 bg-black/30 p-4"
       >
         <Label required={f.required}>{f.label}</Label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {options.map((o) => {
             const isChecked = selected.includes(o.value);
             return (
-              <label
+              <button
                 key={o.value}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${
+                type="button"
+                onClick={() => {
+                  const next = new Set(selected);
+                  if (isChecked) {
+                    next.delete(o.value);
+                  } else {
+                    next.add(o.value);
+                  }
+                  setValue(f.id, Array.from(next));
+                }}
+                className={`rounded-full border px-3 py-1 text-xs transition ${
                   isChecked
-                    ? "border-[--gold-color] bg-[--gold-bg-soft]"
-                    : "border-neutral-800 bg-black/40"
+                    ? "border-[--gold-color] bg-[--gold-bg-soft] text-amber-100"
+                    : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/70"
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={(e) => {
-                    const nextVal = new Set(selected);
-                    e.target.checked
-                      ? nextVal.add(o.value)
-                      : nextVal.delete(o.value);
-                    setValue(f.id, Array.from(nextVal));
-                  }}
-                  className="h-4 w-4 accent-[--gold-color]"
-                />
-                <span className="text-neutral-100">{o.label}</span>
-              </label>
+                {o.label}
+              </button>
             );
           })}
         </div>
