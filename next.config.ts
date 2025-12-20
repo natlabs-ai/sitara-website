@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Static export for GitHub Pages
-  output: "export",
+  // output: "export",
   basePath: isProd ? `/${repo}` : "",
   assetPrefix: isProd ? `/${repo}/` : "",
   trailingSlash: true,

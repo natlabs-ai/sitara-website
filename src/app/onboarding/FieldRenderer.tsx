@@ -1,5 +1,4 @@
 // src/app/onboarding/FieldRenderer.tsx
-
 "use client";
 
 import React from "react";
@@ -14,10 +13,10 @@ import {
   isTruthy,
 } from "./onboardingShared";
 
-import {
-  MultiSelectCards,
-  type CardOption,
-} from "@/components/MultiSelectCards";
+import { countries } from "@/data/countries";
+
+import { MultiSelectCards, type CardOption } from "@/components/MultiSelectCards";
+
 import {
   Building2,
   Factory,
@@ -26,6 +25,8 @@ import {
   Gem,
   Briefcase,
 } from "lucide-react";
+
+import { GoldCombobox } from "@/components/GoldCombobox";
 
 export function FieldRenderer({
   f,
@@ -49,17 +50,11 @@ export function FieldRenderer({
   // --- radio ---
   if (f.type === "radio") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label required={f.required}>{f.label}</Label>
         <div className="flex flex-wrap gap-5">
           {options.map((o) => (
-            <label
-              key={o.value}
-              className="inline-flex items-center gap-2 text-neutral-100"
-            >
+            <label key={o.value} className="inline-flex items-center gap-2 text-neutral-100">
               <input
                 type="radio"
                 name={f.id}
@@ -78,9 +73,7 @@ export function FieldRenderer({
 
   // --- multiselect ---
   if (f.type === "multiselect") {
-    const selected: string[] = Array.isArray(answers[f.id])
-      ? answers[f.id]
-      : [];
+    const selected: string[] = Array.isArray(answers[f.id]) ? answers[f.id] : [];
 
     // 1) Special layout for Business Activities
     if (f.id === "businessActivities") {
@@ -136,10 +129,7 @@ export function FieldRenderer({
       ];
 
       return (
-        <div
-          key={f.id}
-          className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-        >
+        <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
           <MultiSelectCards
             label={f.label}
             required={f.required}
@@ -176,10 +166,7 @@ export function FieldRenderer({
       ];
 
       return (
-        <div
-          key={f.id}
-          className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4"
-        >
+        <div key={f.id} className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold text-neutral-50">
               {f.label}
@@ -193,23 +180,16 @@ export function FieldRenderer({
             Select all supplier profiles that apply to your business.
           </p>
 
-          <MultiSelectCards
-            value={selected}
-            onChange={(next) => setValue(f.id, next)}
-            options={supOptions}
-          />
+          <MultiSelectCards value={selected} onChange={(next) => setValue(f.id, next)} options={supOptions} />
         </div>
       );
     }
 
     // 3) Fallback styling for all other multiselects (e.g. selectedServices)
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label required={f.required}>{f.label}</Label>
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {options.map((o) => {
             const isChecked = selected.includes(o.value);
             return (
@@ -218,11 +198,8 @@ export function FieldRenderer({
                 type="button"
                 onClick={() => {
                   const next = new Set(selected);
-                  if (isChecked) {
-                    next.delete(o.value);
-                  } else {
-                    next.add(o.value);
-                  }
+                  if (isChecked) next.delete(o.value);
+                  else next.add(o.value);
                   setValue(f.id, Array.from(next));
                 }}
                 className={`rounded-full border px-3 py-1 text-xs transition ${
@@ -244,10 +221,7 @@ export function FieldRenderer({
   // --- textarea ---
   if (f.type === "textarea") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label htmlFor={f.id} required={f.required}>
           {f.label}
         </Label>
@@ -266,10 +240,7 @@ export function FieldRenderer({
   // --- file ---
   if (f.type === "file") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label htmlFor={f.id} required={f.required}>
           {f.label}
         </Label>
@@ -302,10 +273,7 @@ export function FieldRenderer({
   // --- otp ---
   if (f.type === "otp") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label htmlFor={f.id}>{f.label}</Label>
         <div className="flex gap-2">
           <input
@@ -322,17 +290,13 @@ export function FieldRenderer({
             <button
               type="button"
               onClick={() => setValue(f.id, "000000")}
-              className="px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-100 hover:bg-neutral-800"
+              className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 hover:bg-neutral-800"
             >
               Autofill
             </button>
           )}
         </div>
-        {DEV_MODE && (
-          <p className="text-xs text-neutral-500 mt-1">
-            Dev mode: OTP not validated.
-          </p>
-        )}
+        {DEV_MODE && <p className="mt-1 text-xs text-neutral-500">Dev mode: OTP not validated.</p>}
         <style>{`:root{--gold-color:${GOLD}}`}</style>
       </div>
     );
@@ -341,14 +305,9 @@ export function FieldRenderer({
   // --- note ---
   if (f.type === "note") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
-        <div className="text-sm font-semibold text-neutral-100 mb-1">
-          {f.label}
-        </div>
-        <div className="text-sm leading-6 text-neutral-300 whitespace-pre-wrap">
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
+        <div className="mb-1 text-sm font-semibold text-neutral-100">{f.label}</div>
+        <div className="whitespace-pre-wrap text-sm leading-6 text-neutral-300">
           {f.text || ""}
         </div>
       </div>
@@ -357,11 +316,26 @@ export function FieldRenderer({
 
   // --- select ---
   if (f.type === "select") {
+    // Special-case: Country of Incorporation uses GoldCombobox
+    if (f.id === "incCountry") {
+      const countryOptions = countries.map((c) => ({ value: c.name, label: c.name }));
+
+      return (
+        <GoldCombobox
+          label={f.label}
+          required={f.required}
+          value={String(answers[f.id] ?? "")}
+          onChange={(v) => setValue(f.id, v)}
+          options={countryOptions}
+          placeholder="Start typing to search…"
+          emptyText="No matches. Try a different spelling."
+        />
+      );
+    }
+
+    // For other selects, keep native select for now.
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label htmlFor={f.id} required={f.required}>
           {f.label}
         </Label>
@@ -388,10 +362,7 @@ export function FieldRenderer({
   // --- number ---
   if (f.type === "number") {
     return (
-      <div
-        key={f.id}
-        className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-      >
+      <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
         <Label htmlFor={f.id} required={f.required}>
           {f.label}
         </Label>
@@ -400,12 +371,7 @@ export function FieldRenderer({
           type="number"
           className={baseInput}
           value={answers[f.id] ?? ""}
-          onChange={(e) =>
-            setValue(
-              f.id,
-              e.target.value === "" ? "" : Number(e.target.value)
-            )
-          }
+          onChange={(e) => setValue(f.id, e.target.value === "" ? "" : Number(e.target.value))}
         />
         <style>{`:root{--gold-color:${GOLD}}`}</style>
       </div>
@@ -423,10 +389,7 @@ export function FieldRenderer({
       : "text";
 
   return (
-    <div
-      key={f.id}
-      className="rounded-xl border border-neutral-800 bg-black/30 p-4"
-    >
+    <div key={f.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
       <Label htmlFor={f.id} required={f.required}>
         {f.label}
       </Label>

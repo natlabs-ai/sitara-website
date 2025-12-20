@@ -11,6 +11,8 @@ import { ProofOfAddressUploader } from "@/components/ProofOfAddressUploader";
 import type { IdExtracted } from "@/types/IdExtracted";
 import { countries } from "@/data/countries";
 
+import { GoldCombobox } from "@/components/GoldCombobox";
+
 interface IdentityStepProps {
   answers: Record<string, any>;
   setValue: (id: string, val: any) => void;
@@ -20,17 +22,11 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
   answers,
   setValue,
 }) => {
-  // ---- Country selector (type-ahead) ----
-  const [countryQuery, setCountryQuery] = React.useState(
-    (answers.countryOfResidence as string) || "",
+  // ---- Country selector (GoldCombobox) ----
+  const countryOptions = React.useMemo(
+    () => countries.map((c) => ({ value: c.name, label: c.name })),
+    [],
   );
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
-
-  const filteredCountries = React.useMemo(() => {
-    const q = countryQuery.trim().toLowerCase();
-    if (!q) return countries;
-    return countries.filter((c) => c.name.toLowerCase().includes(q));
-  }, [countryQuery]);
 
   const handleCountrySelect = (name: string) => {
     const wasUAE = answers.countryOfResidence === "United Arab Emirates";
@@ -45,8 +41,6 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
     }
 
     setValue("countryOfResidence", name);
-    setCountryQuery(name);
-    setDropdownOpen(false);
   };
 
   const isUAE = answers.countryOfResidence === "United Arab Emirates";
@@ -68,58 +62,22 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. Country of Residence (new card) */}
+      {/* 1. Country of Residence (GoldCombobox) */}
       <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
-        <h2 className="mb-1 text-sm font-semibold text-neutral-100">
-          Country of Residence <span className="text-red-400">*</span>
-        </h2>
-        <p className="mb-3 text-xs text-neutral-400">
+        <GoldCombobox
+          label="Country of Residence"
+          required
+          value={String(answers.countryOfResidence ?? "")}
+          onChange={(v) => handleCountrySelect(v)}
+          options={countryOptions}
+          placeholder="Start typing to search…"
+          emptyText="No matches. Please check your spelling."
+        />
+
+        <p className="mt-2 text-xs text-neutral-400">
           Select the country where you currently live. This drives our AML / KYC
           checks and determines whether Emirates ID is required.
         </p>
-
-        <div className="relative">
-          <input
-            type="text"
-            value={countryQuery}
-            onChange={(e) => {
-              setCountryQuery(e.target.value);
-              setDropdownOpen(true);
-            }}
-            onFocus={() => setDropdownOpen(true)}
-            onBlur={() => {
-              setTimeout(() => setDropdownOpen(false), 120);
-            }}
-            placeholder="Start typing to search…"
-            className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
-          />
-
-          {dropdownOpen && (
-            <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-neutral-800 bg-black text-sm shadow-xl">
-              {filteredCountries.length === 0 && (
-                <div className="px-3 py-2 text-neutral-500">
-                  No matches. Please check your spelling.
-                </div>
-              )}
-              {filteredCountries.slice(0, 20).map((c) => (
-                <button
-                  key={c.code}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleCountrySelect(c.name)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-neutral-900"
-                >
-                  <span>{c.name}</span>
-                  {c.name === answers.countryOfResidence && (
-                    <span className="text-[10px] text-[#bfa76f]">
-                      selected
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </section>
 
       {/* 2. Passport / ID – uploader */}

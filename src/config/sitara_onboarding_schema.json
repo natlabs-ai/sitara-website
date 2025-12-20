@@ -35,7 +35,6 @@
           "required": true,
           "showIf": [{ "field": "accountType", "equals": "business" }]
         },
-
         {
           "id": "signatoryFirstName",
           "label": "Authorised signatory’s first name",
@@ -68,7 +67,6 @@
         }
       ]
     },
-
     {
       "id": "login",
       "label": "Login",
@@ -90,7 +88,6 @@
         { "id": "password", "label": "Set Password", "type": "password", "required": true }
       ]
     },
-
     {
       "id": "identity",
       "label": "Identity",
@@ -112,7 +109,6 @@
         }
       ]
     },
-
     {
       "id": "profile",
       "label": "Profile",
@@ -166,7 +162,6 @@
         }
       ]
     },
-
     {
       "id": "corporateSetup",
       "label": "Business",
@@ -178,49 +173,16 @@
           "type": "select",
           "required": true,
           "options": []
-        },
-        {
-          "id": "businessActivities",
-          "label": "Business Activities",
-          "type": "multiselect",
-          "required": true,
-          "options": [
-            { "value": "trader", "label": "Trader" },
-            { "value": "supplier", "label": "Supplier" },
-            { "value": "refiner", "label": "Refiner" },
-            { "value": "vault_storage", "label": "Vault Storage" },
-            { "value": "logistics", "label": "Logistics" },
-            { "value": "retail_jewellery", "label": "Retail / Manufacturing Jewellery" },
-            { "value": "institutional", "label": "Institutional" },
-            { "value": "other", "label": "Other (please specify)" }
-          ]
-        },
-        {
-          "id": "supplierCategories",
-          "label": "Supplier Type",
-          "type": "multiselect",
-          "required": true,
-          "showIf": [{ "field": "businessActivities", "includesAny": ["supplier"] }],
-          "options": [
-            { "value": "aggregator", "label": "Aggregator / Cooperative" },
-            { "value": "mine", "label": "Mine" },
-            { "value": "producer_smelter", "label": "Producer / Smelter" }
-          ]
-        },
-        {
-          "id": "businessActivitiesOther",
-          "label": "Other business activity",
-          "type": "text",
-          "required": true,
-          "showIf": [{ "field": "businessActivities", "includesAny": ["other"] }]
         }
       ]
     },
-
     {
       "id": "companyDetails",
       "label": "Documents",
-      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "showIf": [
+        { "field": "accountType", "equals": "business" },
+        { "field": "businessFlow", "equals": "advanced" }
+      ],
       "fields": [
         {
           "id": "legal_existence_files",
@@ -276,39 +238,43 @@
           "type": "file",
           "multiple": true,
           "accept": ".pdf,.jpg,.jpeg,.png,.zip",
-          "required": true,
-          "showIf": [{ "field": "businessActivities", "includesAny": ["trader", "supplier", "refiner"] }]
+          "required": false
         }
       ]
     },
-
     {
       "id": "ownership",
       "label": "Ownership",
       "showIf": [{ "field": "accountType", "equals": "business" }],
       "fields": []
     },
-
     {
       "id": "relationship",
       "label": "Relationship",
+      "showIf": [
+        { "field": "accountType", "equals": "business" },
+        { "field": "businessFlow", "equals": "advanced" }
+      ],
+      "fields": []
+    },
+    {
+      "id": "authorisedPeople",
+      "label": "Authorised People",
       "showIf": [{ "field": "accountType", "equals": "business" }],
       "fields": []
     },
-
     {
       "id": "questionnaire",
       "label": "Questions",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
       "fields": []
     },
-
     {
       "id": "submit",
       "label": "Submit",
       "fields": []
     }
   ],
-
   "questionBank": [
     {
       "id": "ind_pepSelf",
@@ -374,7 +340,6 @@
         { "field": "ind_thirdPartyUse", "equals": "yes" }
       ]
     },
-
     {
       "id": "pepExposure",
       "label": "Are any applicants, UBOs, directors, or signatories PEPs or related to PEPs?",
@@ -448,6 +413,24 @@
         { "value": "no", "label": "No" },
         { "value": "partial", "label": "Partially / In progress" }
       ],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "biz_screeningConsent",
+      "label": "I consent to sanctions/PEP screening by Sitara and its appointed service providers.",
+      "type": "multiselect",
+      "required": true,
+      "helperText": "Required to proceed.",
+      "options": [{ "value": "consent", "label": "I consent" }],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "biz_ongoingMonitoringAck",
+      "label": "I acknowledge periodic review and agree to provide updated documents when requested.",
+      "type": "multiselect",
+      "required": true,
+      "helperText": "Required to proceed.",
+      "options": [{ "value": "ack", "label": "I acknowledge" }],
       "showIf": [{ "field": "accountType", "equals": "business" }]
     }
   ]
