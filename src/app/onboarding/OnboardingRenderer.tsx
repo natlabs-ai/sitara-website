@@ -7,9 +7,11 @@ import {
   createApplication,
   createApplicantProfile,
   resolveOnboarding,
+  upsertCompanyProfile, // NEW
   type AccountType,
   type OnboardingResolveRequest,
   type OnboardingResolveResponse,
+  type EvidencePackResponse,
 } from "@/lib/koraClient";
 
 import { countries } from "@/data/countries";
@@ -32,6 +34,7 @@ import { ProfileStep } from "./steps/ProfileStep";
 import BusinessDocumentsStep from "./steps/BusinessDocumentsStep";
 import RelationshipProfileStep from "./steps/RelationshipProfileStep";
 import AuthorisedPeopleStep from "./steps/AuthorisedPeopleStep";
+import ReviewSubmitStep from "./steps/ReviewSubmitStep";
 
 /** ---------- Helpers ---------- */
 function safeText(v: any): string {
@@ -244,6 +247,12 @@ export default function OnboardingRenderer({
     if (step.id === "identity") {
       const isUAE = answers.countryOfResidence === "United Arab Emirates";
 
+      // Source of truth for "Passport/ID received" is the saved Document ID.
+      const hasPassportDoc =
+        !!answers.passportDocId ||
+        !!answers.identityDocId ||
+        !!answers.idDocumentDocId;
+
       const hasEidFiles =
         !isUAE ||
         (Array.isArray(answers.emiratesIdFront__files) &&
@@ -256,8 +265,9 @@ export default function OnboardingRenderer({
       const hasPoA = showPoA ? !!answers.proofOfAddressDocId : true;
 
       return (
-        answers.idExtractStatus !== "processing" &&
+        // Do not block on extraction status; block on evidence (doc id)
         !!answers.countryOfResidence &&
+        hasPassportDoc &&
         hasEidFiles &&
         hasPoA &&
         !isSubmittingStep
@@ -358,9 +368,21 @@ export default function OnboardingRenderer({
     return !isSubmittingStep;
   })();
 
+  // --- Evidence-pack based submit gating (business only, unless DEV_MODE) ---
+  const isBusiness = answers.accountType === "business";
+  const evidencePack =
+    (answers.evidencePack as EvidencePackResponse | null) ?? null;
+  const missingDocTypes = evidencePack?.derived?.missing_document_types ?? [];
+
+  const businessEvidenceOk =
+    !isBusiness ||
+    DEV_MODE ||
+    (evidencePack !== null && missingDocTypes.length === 0);
+
   const canSubmit =
     step.id === "submit" &&
     answers.submitDeclarationAccepted === true &&
+    businessEvidenceOk &&
     !isSubmittingStep &&
     !hasSubmitted;
 
@@ -402,6 +424,20 @@ export default function OnboardingRenderer({
         setValue("koraApplicantId", res.applicant_id);
         setValue("koraTenantId", res.tenant_id);
         setValue("koraApplicationExternalRef", res.external_reference);
+
+        // NEW: Create company profile row at business onboarding start
+        if (accountType === "business") {
+          try {
+            await upsertCompanyProfile({
+              tenant_id: res.tenant_id,
+              application_id: res.application_id,
+              applicant_id: res.applicant_id,
+            });
+          } catch (e) {
+            // Do not block onboarding if this fails (can be re-created later)
+            console.warn("Failed to create company profile at login step", e);
+          }
+        }
 
         next();
       } catch (e: any) {
@@ -512,8 +548,7 @@ export default function OnboardingRenderer({
           source_of_income: String(answers.sourceOfIncome || ""),
           expected_frequency:
             (answers.expectedFrequency as string | undefined) || undefined,
-          expected_value:
-            (answers.expectedValue as string | undefined) || undefined,
+          expected_value: (answers.expectedValue as string | undefined) || undefined,
           selected_services: services,
         };
 
@@ -771,20 +806,12 @@ export default function OnboardingRenderer({
       return (
         <div className="space-y-5">
           {accountTypeField && (
-            <FieldRenderer
-              f={accountTypeField}
-              answers={answers}
-              setValue={setValue}
-            />
+            <FieldRenderer f={accountTypeField} answers={answers} setValue={setValue} />
           )}
 
           {signingRoleField &&
             visibleByRules(signingRoleField.showIf, answers) && (
-              <FieldRenderer
-                f={signingRoleField}
-                answers={answers}
-                setValue={setValue}
-              />
+              <FieldRenderer f={signingRoleField} answers={answers} setValue={setValue} />
             )}
 
           {showEmployeeBlock && (
@@ -805,9 +832,7 @@ export default function OnboardingRenderer({
                   <input
                     type="text"
                     value={answers.signatoryFirstName || ""}
-                    onChange={(e) =>
-                      setValue("signatoryFirstName", e.target.value)
-                    }
+                    onChange={(e) => setValue("signatoryFirstName", e.target.value)}
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
@@ -819,9 +844,7 @@ export default function OnboardingRenderer({
                   <input
                     type="text"
                     value={answers.signatoryLastName || ""}
-                    onChange={(e) =>
-                      setValue("signatoryLastName", e.target.value)
-                    }
+                    onChange={(e) => setValue("signatoryLastName", e.target.value)}
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
@@ -909,11 +932,7 @@ export default function OnboardingRenderer({
 
           {/* Country of Incorporation (required) */}
           {incCountryEnhanced ? (
-            <FieldRenderer
-              f={incCountryEnhanced}
-              answers={answers}
-              setValue={setValue}
-            />
+            <FieldRenderer f={incCountryEnhanced} answers={answers} setValue={setValue} />
           ) : (
             <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 text-sm text-neutral-300">
               Missing required field: incCountry
@@ -927,9 +946,9 @@ export default function OnboardingRenderer({
     }
 
     if (step.id === "submit") {
-      const isBusiness = answers.accountType === "business";
+      const isBusinessLocal = answers.accountType === "business";
       const isUAE = answers.countryOfResidence === "United Arab Emirates";
-      const showPoA = !isBusiness;
+      const showPoA = !isBusinessLocal;
 
       const isBusinessAccount = answers.accountType === "business";
 
@@ -957,12 +976,9 @@ export default function OnboardingRenderer({
         Array.isArray(answers.biz_ongoingMonitoringAck) &&
         answers.biz_ongoingMonitoringAck.includes("ack");
 
+      // Source of truth: use saved doc id for "received".
       const passportOrIdReceived =
-        answers.idExtractStatus === "success" ||
-        !!answers.passportDocId ||
-        !!answers.identityDocId ||
-        !!answers.idDocumentDocId ||
-        !!answers.emiratesIdUploaded;
+        !!answers.passportDocId || !!answers.identityDocId || !!answers.idDocumentDocId;
 
       const emiratesIdRequired = isUAE;
       const emiratesIdReceived =
@@ -978,10 +994,8 @@ export default function OnboardingRenderer({
 
       if (hasSubmitted) {
         const submissionRef =
-          (answers.koraApplicationExternalRef as string | undefined) ||
-          "Not available";
-        const fullName =
-          (answers.fullName as string | undefined) || "your application";
+          (answers.koraApplicationExternalRef as string | undefined) || "Not available";
+        const fullName = (answers.fullName as string | undefined) || "your application";
 
         return (
           <div className="space-y-5 print-section">
@@ -991,12 +1005,11 @@ export default function OnboardingRenderer({
               </h2>
               <p className="mt-2 text-sm text-emerald-50/90">
                 Thank you, <span className="font-semibold">{fullName}</span>.
-                Your details have been securely sent to the Sitara compliance
-                team for review.
+                Your details have been securely sent to the Sitara compliance team for review.
               </p>
               <p className="mt-2 text-xs text-emerald-100/80">
-                Please keep the reference below for your records. You may be
-                asked to quote it if you contact us about your application.
+                Please keep the reference below for your records. You may be asked to quote it if you
+                contact us about your application.
               </p>
 
               <div className="mt-4 inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-950/60 px-4 py-2 text-[11px] font-medium tracking-wide text-emerald-100">
@@ -1009,9 +1022,9 @@ export default function OnboardingRenderer({
 
             <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5 text-xs text-neutral-300 md:text-sm">
               <p>
-                Our team will review your application in line with UAE AML / CFT
-                and internal compliance policies. If we need anything else,
-                we’ll contact you using the email or mobile number you provided.
+                Our team will review your application in line with UAE AML / CFT and internal
+                compliance policies. If we need anything else, we’ll contact you using the email or
+                mobile number you provided.
               </p>
             </section>
           </div>
@@ -1025,14 +1038,22 @@ export default function OnboardingRenderer({
               Review your application
             </h2>
             <p className="mt-1 text-xs text-neutral-400">
-              Please confirm the details below before sending your application
-              to the Sitara compliance team.
+              Please confirm the details below before sending your application to the Sitara
+              compliance team.
             </p>
             <p className="mt-2 text-[11px] text-neutral-500">
               Most applications are reviewed within{" "}
               <span className="text-neutral-200">1–2 business days</span>.
             </p>
           </section>
+
+          {/* Evidence pack section (business only) */}
+          <ReviewSubmitStep
+            answers={answers}
+            setValue={setValue}
+            setGlobalError={setGlobalError}
+            isSubmitting={isSubmittingStep}
+          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
@@ -1044,7 +1065,7 @@ export default function OnboardingRenderer({
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-neutral-400">Account type</span>
                   <span className="text-neutral-100">
-                    {isBusiness ? "Business" : "Individual"}
+                    {isBusinessLocal ? "Business" : "Individual"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -1092,14 +1113,10 @@ export default function OnboardingRenderer({
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Occupation</span>
-                <span className="text-neutral-100">
-                  {formatMaybe(answers.occupation)}
-                </span>
+                <span className="text-neutral-100">{formatMaybe(answers.occupation)}</span>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="text-neutral-400">
-                  Expected transaction frequency
-                </span>
+                <span className="text-neutral-400">Expected transaction frequency</span>
                 <span className="text-neutral-100">
                   {formatMaybeSpecified(answers.expectedFrequency)}
                 </span>
@@ -1107,14 +1124,10 @@ export default function OnboardingRenderer({
 
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Source of income</span>
-                <span className="text-neutral-100">
-                  {formatMaybe(answers.sourceOfIncome)}
-                </span>
+                <span className="text-neutral-100">{formatMaybe(answers.sourceOfIncome)}</span>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="text-neutral-400">
-                  Typical transaction value
-                </span>
+                <span className="text-neutral-400">Typical transaction value</span>
                 <span className="text-neutral-100">
                   {formatMaybeSpecified(answers.expectedValue)}
                 </span>
@@ -1123,9 +1136,7 @@ export default function OnboardingRenderer({
               <div className="flex items-center justify-between gap-3 text-xs md:col-span-2">
                 <span className="text-neutral-400">Service categories</span>
                 <span className="text-neutral-100">
-                  {services.length
-                    ? services.map((s) => titleCase(s)).join(", ")
-                    : "None selected"}
+                  {services.length ? services.map((s) => titleCase(s)).join(", ") : "None selected"}
                 </span>
               </div>
             </div>
@@ -1142,10 +1153,7 @@ export default function OnboardingRenderer({
                 { label: "Sanctions / restrictions", pill: sanctions },
                 { label: "Acting on behalf of a third party", pill: thirdParty },
               ].map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-center justify-between gap-3"
-                >
+                <div key={row.label} className="flex items-center justify-between gap-3">
                   <span className="text-neutral-300">{row.label}</span>
                   <span
                     className={`rounded-full border px-2.5 py-1 text-[11px] ${
@@ -1161,7 +1169,7 @@ export default function OnboardingRenderer({
             </div>
           </section>
 
-          {isBusiness ? (
+          {isBusinessLocal ? (
             <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
                 Consents & acknowledgements
@@ -1169,9 +1177,7 @@ export default function OnboardingRenderer({
 
               <div className="mt-4 space-y-3 text-xs">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-neutral-300">
-                    Screening consent (sanctions / PEP)
-                  </span>
+                  <span className="text-neutral-300">Screening consent (sanctions / PEP)</span>
                   <span
                     className={`rounded-full border px-2.5 py-1 text-[11px] ${
                       screeningConsent
@@ -1184,9 +1190,7 @@ export default function OnboardingRenderer({
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-neutral-300">
-                    Ongoing monitoring acknowledgement
-                  </span>
+                  <span className="text-neutral-300">Ongoing monitoring acknowledgement</span>
                   <span
                     className={`rounded-full border px-2.5 py-1 text-[11px] ${
                       monitoringAck
@@ -1201,6 +1205,7 @@ export default function OnboardingRenderer({
             </section>
           ) : null}
 
+          {/* Keep this section for now (individual docs). For business, the Evidence Pack section is now the source of truth. */}
           <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
               Documents received
@@ -1209,13 +1214,7 @@ export default function OnboardingRenderer({
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="text-xs">
                 <div className="text-neutral-400">Passport / ID</div>
-                <div
-                  className={
-                    passportOrIdReceived
-                      ? "mt-1 text-emerald-300"
-                      : "mt-1 text-neutral-400"
-                  }
-                >
+                <div className={passportOrIdReceived ? "mt-1 text-emerald-300" : "mt-1 text-neutral-400"}>
                   {passportOrIdReceived ? "Received" : "Not uploaded"}
                 </div>
               </div>
@@ -1254,28 +1253,24 @@ export default function OnboardingRenderer({
             </div>
 
             <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-              By submitting this application, you confirm that all information
-              and documents provided are true, accurate, and complete to the
-              best of your knowledge. You understand that Sitara may request
-              additional information or documentation, and that providing false
-              or misleading information may result in your account being declined
-              or closed and, where required, reported to the relevant authorities
-              under applicable AML / CFT regulations.
+              By submitting this application, you confirm that all information and documents provided are true, accurate, and complete to the best of your knowledge. You understand that Sitara may request additional information or documentation, and that providing false or misleading information may result in your account being declined or closed and, where required, reported to the relevant authorities under applicable AML / CFT regulations.
             </p>
+
+            {!DEV_MODE && isBusinessLocal && !businessEvidenceOk ? (
+              <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-900/15 p-4 text-xs text-amber-100/90">
+                You cannot submit yet because required business documents are missing. Please review the Business Evidence Pack section above.
+              </div>
+            ) : null}
 
             <label className="mt-4 flex cursor-pointer items-start gap-2">
               <input
                 type="checkbox"
                 checked={answers.submitDeclarationAccepted === true}
-                onChange={(e) =>
-                  setValue("submitDeclarationAccepted", e.target.checked)
-                }
+                onChange={(e) => setValue("submitDeclarationAccepted", e.target.checked)}
                 className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[--gold-color] focus:ring-[--gold-color]"
               />
               <span className="text-xs text-neutral-200">
-                I confirm the above statements and authorise Sitara to use this
-                information to perform customer due diligence and ongoing
-                compliance checks.
+                I confirm the above statements and authorise Sitara to use this information to perform customer due diligence and ongoing compliance checks.
               </span>
             </label>
 

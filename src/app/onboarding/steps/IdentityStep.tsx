@@ -96,7 +96,112 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
           if (auto.nationality) setValue("nationality", auto.nationality);
           if (auto.dateOfBirth) setValue("dateOfBirth", auto.dateOfBirth);
         }}
+        onUploaded={(r) => {
+          // Support both response shapes (new: savedDocumentId, old: savedPassportId)
+          const docId = r?.savedDocumentId ?? r?.savedPassportId ?? null;
+
+          if (docId) {
+            // Store as string for consistent downstream checks
+            setValue("passportDocId", String(docId));
+          }
+
+          // Optional evidence/debug fields
+          if (r?.storage?.url) setValue("passportDocUrl", r.storage.url);
+          if (r?.storage?.container)
+            setValue("passportBlobContainer", r.storage.container);
+          if (r?.storage?.blobName)
+            setValue("passportBlobName", r.storage.blobName);
+        }}
       />
+
+      {/* 2b. Documents received (local, simple status) */}
+      <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+        <h2 className="text-sm font-semibold text-neutral-100">
+          Documents received
+        </h2>
+        <p className="mt-1 text-xs text-neutral-400">
+          This reflects what we have successfully received from you during onboarding.
+        </p>
+
+        <div className="mt-4 space-y-2 text-sm">
+          {/* Passport */}
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-neutral-200">Passport / ID</span>
+            {answers.passportDocId ? (
+              <span className="inline-flex items-center gap-2 text-emerald-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                Received
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-neutral-400">
+                <span className="h-2 w-2 rounded-full bg-neutral-600" />
+                Not received yet
+              </span>
+            )}
+          </div>
+
+          {/* Proof of Address (personal only) */}
+          {showProofOfAddress && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-neutral-200">Proof of address</span>
+              {answers.proofOfAddressDocId ? (
+                <span className="inline-flex items-center gap-2 text-emerald-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Received
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 text-neutral-400">
+                  <span className="h-2 w-2 rounded-full bg-neutral-600" />
+                  Not received yet
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Emirates ID (UAE only — this is “selected”, not uploaded yet, based on your UX copy) */}
+          {isUAE && (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-neutral-200">Emirates ID (front)</span>
+                {eidFrontName ? (
+                  <span className="inline-flex items-center gap-2 text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    Selected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 text-neutral-400">
+                    <span className="h-2 w-2 rounded-full bg-neutral-600" />
+                    Not selected yet
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-neutral-200">Emirates ID (back)</span>
+                {eidBackName ? (
+                  <span className="inline-flex items-center gap-2 text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    Selected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 text-neutral-400">
+                    <span className="h-2 w-2 rounded-full bg-neutral-600" />
+                    Not selected yet
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Optional: show link if you store it */}
+        {answers.passportDocUrl && (
+          <p className="mt-3 text-xs text-neutral-400 break-all">
+            Stored reference: {String(answers.passportDocUrl)}
+          </p>
+        )}
+      </section>
+
 
       {/* 3. Emirates ID – conditional card for UAE only */}
       {isUAE && (

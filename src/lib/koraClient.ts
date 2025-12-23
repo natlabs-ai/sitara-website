@@ -93,18 +93,123 @@ export type OnboardingResolveResponse = {
   economic_activity_required: boolean;
 };
 
+/** -------- Evidence Pack -------- */
+
+export type EvidencePackDocument = {
+  id: string;
+  document_type: string;
+  category?: string | null;
+  blob?: {
+    container: string;
+    name: string;
+  } | null;
+  file?: {
+    original_name?: string | null;
+    mime_type?: string | null;
+    size_bytes?: number | null;
+    sha256?: string | null;
+  } | null;
+  dates?: {
+    uploaded_at?: string | null;
+    issued_on?: string | null;
+    expires_on?: string | null;
+    extracted_at?: string | null;
+  } | null;
+  issuer?: string | null;
+  document_number?: string | null;
+  extraction?: {
+    status?: string | null;
+    provider?: string | null;
+    model?: string | null;
+    confidence?: number | null;
+    payload?: any;
+  } | null;
+  verification?: {
+    status?: string | null;
+    verified_by?: string | null;
+    verified_at?: string | null;
+    notes?: string | null;
+  } | null;
+};
+
+export type EvidencePackDerived = {
+  document_sets?: string[];
+  required_document_types?: string[];
+  missing_document_types?: string[];
+  latest_documents_by_type?: Record<string, string>;
+  expiry_summary?: {
+    expired?: Array<any>;
+    next_expiring?: Array<any>;
+  };
+};
+
+export type EvidencePackResponse = {
+  meta: {
+    version: string;
+    tenant_id: string;
+    application_id: string;
+    generated_at: string;
+  };
+  application: any;
+  company_profile: any;
+  applicant_profile: any;
+  documents: EvidencePackDocument[];
+  overrides: any[];
+  derived: EvidencePackDerived;
+};
+
 /** -------- Base config -------- */
 
-// Base URL: host + port ONLY (no /api/v1 here)
+// Keep these for SERVER-side calls (Node / FastAPI direct).
+// For CLIENT-side calls, prefer Next.js API routes (/api/...) to avoid CORS and centralise auth later.
 const KORA_API_BASE =
   process.env.NEXT_PUBLIC_KORA_API_BASE_URL ?? "http://localhost:8000";
-
-// Central API prefix
 const API_PREFIX = "/api/v1";
+
+/** -------- Internal helpers -------- */
+
+async function _readJsonOrNull(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Standardised fetch wrapper:
+ * - If called in the browser: use Next.js API routes (/api/...)
+ * - If called server-side: call FastAPI directly (KORA_API_BASE + /api/v1)
+ */
+async function _koraFetch(
+  path:
+    | string
+    | {
+        client: string; // e.g. "/api/..."
+        server: string; // e.g. "/api/v1/..."
+      },
+  init?: RequestInit,
+): Promise<Response> {
+  const isBrowser = typeof window !== "undefined";
+
+  if (typeof path === "string") {
+    if (isBrowser) return fetch(path, init);
+    const base = KORA_API_BASE.replace(/\/$/, "");
+    const p = path.startsWith("/") ? path : `/${path}`;
+    return fetch(`${base}${p}`, init);
+  }
+
+  if (isBrowser) return fetch(path.client, init);
+
+  const base = KORA_API_BASE.replace(/\/$/, "");
+  const p = path.server.startsWith("/") ? path.server : `/${path.server}`;
+  return fetch(`${base}${p}`, init);
+}
 
 /** -------- Existing helpers -------- */
 
 export async function fetchPassport(passportId: number) {
+  // No Next proxy for passports currently; keep direct.
   const res = await fetch(`${KORA_API_BASE}${API_PREFIX}/passports/${passportId}`, {
     method: "GET",
   });
@@ -121,6 +226,7 @@ export async function fetchPassport(passportId: number) {
 export async function createApplication(
   payload: CreateApplicationPayload,
 ): Promise<CreateApplicationResponse> {
+  // Prefer direct for now (often called from client, but your setup already uses KORA_API_BASE).
   const res = await fetch(`${KORA_API_BASE}${API_PREFIX}/applications`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -155,12 +261,7 @@ export async function createApplicantProfile(
     throw new Error("Could not reach Kora API for profiles");
   }
 
-  let body: any = null;
-  try {
-    body = await res.json();
-  } catch {
-    // ignore parse errors
-  }
+  const body = await _readJsonOrNull(res);
 
   if (!res.ok) {
     console.error("Kora /profiles error", res.status, body);
@@ -170,10 +271,7 @@ export async function createApplicantProfile(
   return body as ApplicantProfileResponse;
 }
 
-/** -------- Resolve onboarding --------
- * For local dev you can call backend directly.
- * If you prefer routing via Next API, switch the fetch URL to "/api/kora/resolve-onboarding"
- */
+/** -------- Resolve onboarding -------- */
 
 export async function resolveOnboarding(
   applicationId: string,
@@ -195,12 +293,7 @@ export async function resolveOnboarding(
     throw new Error("Could not reach Kora API for onboarding resolution");
   }
 
-  let body: any = null;
-  try {
-    body = await res.json();
-  } catch {
-    // ignore
-  }
+  const body = await _readJsonOrNull(res);
 
   if (!res.ok) {
     console.error("Kora resolve-onboarding error", res.status, body);
@@ -208,4 +301,214 @@ export async function resolveOnboarding(
   }
 
   return body as OnboardingResolveResponse;
+}
+
+/** -------- Evidence pack -------- */
+
+export async function fetchEvidencePack(
+  applicationId: string,
+): Promise<EvidencePackResponse> {
+  let res: Response;
+
+  try {
+    res = await fetch(`${KORA_API_BASE}${API_PREFIX}/evidence/applications/${applicationId}`, {
+      method: "GET",
+    });
+  } catch (error) {
+    console.error("Network error calling evidence pack:", error);
+    throw new Error("Could not reach Kora API for evidence pack");
+  }
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Kora evidence pack error", res.status, body);
+    throw new Error(body?.detail || body?.error || "Failed to fetch evidence pack");
+  }
+
+  return body as EvidencePackResponse;
+}
+
+/** =====================================================================
+ * COMPANY PROFILE (BUSINESS)
+ * ===================================================================== */
+
+export type CompanyProfile = {
+  id: number;
+  tenant_id: string;
+  application_id: string;
+  applicant_id: string;
+
+  legal_name?: string | null;
+  trading_name?: string | null;
+  country_of_incorporation?: string | null;
+  registration_number?: string | null;
+  registration_jurisdiction?: string | null;
+  incorporation_date?: string | null; // ISO date
+  legal_form?: string | null;
+
+  registered_address?: string | null;
+  operating_address?: string | null;
+
+  main_business_activity?: string | null;
+  activity_risk_category?: string | null;
+
+  has_tax_registration?: boolean | null;
+  tax_registration_number?: string | null;
+  tax_registration_reason?: string | null;
+
+  has_precious_metals_permit?: boolean | null;
+  precious_metals_permit_ref?: string | null;
+  precious_metals_permit_expiry?: string | null; // ISO date
+
+  license_number?: string | null;
+  license_issue_date?: string | null; // ISO date
+  license_expiry_date?: string | null; // ISO date
+  license_issuing_authority?: string | null;
+
+  authorized_person_name?: string | null;
+  authorized_person_role?: string | null;
+  authorized_person_source?: string | null;
+  authorized_person_extracted_confidence?: number | null;
+
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompanyProfileCreatePayload = {
+  tenant_id: string;
+  application_id: string;
+  applicant_id: string;
+
+  // Optional initial fields
+  country_of_incorporation?: string | null;
+  registration_jurisdiction?: string | null;
+};
+
+export type CompanyProfilePatchPayload = Partial<
+  Omit<
+    CompanyProfile,
+    | "id"
+    | "tenant_id"
+    | "application_id"
+    | "applicant_id"
+    | "created_at"
+    | "updated_at"
+  >
+>;
+
+/**
+ * NOTE:
+ * You said: "We should standardise on dynamic route".
+ * Therefore these 3 functions use Next.js API routes when running in the browser:
+ * - GET /api/profiles/company/[applicationId]
+ * - PATCH /api/profiles/company/[applicationId]
+ * - PATCH /api/profiles/company/apply-document/[applicationId]/[documentId]
+ *
+ * Server-side fallback still uses FastAPI directly.
+ */
+
+export async function upsertCompanyProfile(
+  payload: CompanyProfileCreatePayload,
+): Promise<CompanyProfile> {
+  // You have no Next proxy route for POST yet, so keep direct for now.
+  let res: Response;
+
+  try {
+    res = await fetch(`${KORA_API_BASE}${API_PREFIX}/profiles/company`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    console.error("Network error calling /profiles/company:", error);
+    throw new Error("Could not reach Kora API for company profile");
+  }
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Kora /profiles/company error", res.status, body);
+    throw new Error(body?.detail || body?.error || "Failed to create company profile");
+  }
+
+  return body as CompanyProfile;
+}
+
+export async function fetchCompanyProfile(
+  applicationId: string,
+): Promise<CompanyProfile> {
+  const res = await _koraFetch(
+    {
+      client: `/api/profiles/company/${encodeURIComponent(applicationId)}`,
+      server: `${API_PREFIX}/profiles/company/${encodeURIComponent(applicationId)}`,
+    },
+    { method: "GET" },
+  );
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Company profile GET error", res.status, body);
+    throw new Error(body?.detail || body?.error || body?.message || "Failed to fetch company profile");
+  }
+
+  return body as CompanyProfile;
+}
+
+export async function patchCompanyProfile(
+  applicationId: string,
+  patch: CompanyProfilePatchPayload,
+): Promise<CompanyProfile> {
+  const res = await _koraFetch(
+    {
+      client: `/api/profiles/company/${encodeURIComponent(applicationId)}`,
+      server: `${API_PREFIX}/profiles/company/${encodeURIComponent(applicationId)}`,
+    },
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    },
+  );
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Company profile PATCH error", res.status, body);
+    throw new Error(body?.detail || body?.error || body?.message || "Failed to update company profile");
+  }
+
+  return body as CompanyProfile;
+}
+
+export async function applyBusinessDocumentToCompanyProfile(
+  applicationId: string,
+  documentId: string,
+): Promise<CompanyProfile> {
+  const res = await _koraFetch(
+    {
+      client: `/api/profiles/company/apply-document/${encodeURIComponent(
+        applicationId,
+      )}/${encodeURIComponent(documentId)}`,
+      server: `${API_PREFIX}/profiles/company/${encodeURIComponent(
+        applicationId,
+      )}/apply-document/${encodeURIComponent(documentId)}`,
+    },
+    { method: "PATCH" },
+  );
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Company profile apply-document error", res.status, body);
+    throw new Error(
+      body?.detail ||
+        body?.error ||
+        body?.message ||
+        "Failed to apply document to company profile",
+    );
+  }
+
+  return body as CompanyProfile;
 }
