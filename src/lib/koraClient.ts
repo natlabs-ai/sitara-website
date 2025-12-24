@@ -355,7 +355,6 @@ export type CompanyProfile = {
 
   has_tax_registration?: boolean | null;
   tax_registration_number?: string | null;
-  tax_registration_reason?: string | null;
 
   has_precious_metals_permit?: boolean | null;
   precious_metals_permit_ref?: string | null;

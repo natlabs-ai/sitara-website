@@ -10,7 +10,6 @@ import {
 import { ProofOfAddressUploader } from "@/components/ProofOfAddressUploader";
 import type { IdExtracted } from "@/types/IdExtracted";
 import { countries } from "@/data/countries";
-
 import { GoldCombobox } from "@/components/GoldCombobox";
 
 interface IdentityStepProps {
@@ -60,8 +59,128 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
   const eidFrontName = answers.emiratesIdFront as string | undefined;
   const eidBackName = answers.emiratesIdBack as string | undefined;
 
+  // ---- Extracted ID modal state ----
+  const [idDetailsOpen, setIdDetailsOpen] = React.useState(false);
+  const didAutoOpenRef = React.useRef(false);
+
+  const extracted = (answers.idExtractPrimary as IdExtracted | undefined) ?? undefined;
+
+  const extractSummary = React.useMemo(() => {
+    if (!extracted) return null;
+    const x: any = extracted;
+
+    const givenName =
+      x.givenName ?? x.given_name ?? x.firstName ?? x.first_name ?? null;
+    const familyName =
+      x.familyName ?? x.family_name ?? x.lastName ?? x.last_name ?? null;
+    const dob = x.dateOfBirth ?? x.date_of_birth ?? x.dob ?? null;
+
+    const nationality =
+      x.nationality ??
+      x.nationalityName ??
+      x.nationality_name ??
+      x.nationalityCode ??
+      x.nationality_code ??
+      null;
+
+    const passportNumber =
+      x.documentNumber ??
+      x.document_number ??
+      x.passportNumber ??
+      x.passport_number ??
+      x.idNumber ??
+      x.id_number ??
+      null;
+
+    return { givenName, familyName, dob, nationality, passportNumber };
+  }, [extracted]);
+
+  // Auto-open the modal once after a successful extraction (prevents repeated opens)
+  React.useEffect(() => {
+    const status = answers.idExtractStatus as IdExtractStatus | undefined;
+    if (status === "success" && extractSummary && !didAutoOpenRef.current) {
+      didAutoOpenRef.current = true;
+      setIdDetailsOpen(true);
+    }
+  }, [answers.idExtractStatus, extractSummary]);
+
+  const SummaryRow = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: any;
+  }) => (
+    <div className="flex items-start justify-between gap-6 border-b border-neutral-800/60 py-2 last:border-b-0">
+      <div className="text-xs text-neutral-400">{label}</div>
+      <div className="text-sm text-neutral-200 break-all text-right">
+        {value ? String(value) : <span className="text-neutral-500">—</span>}
+      </div>
+    </div>
+  );
+
+  const closeIdDetails = () => setIdDetailsOpen(false);
+
   return (
     <div className="space-y-6">
+      {/* ID Extracted Details Modal (confirm-only) */}
+      {idDetailsOpen && extractSummary && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Extracted identity details"
+          onMouseDown={(e) => {
+            // close only if clicking the backdrop (not the modal)
+            if (e.target === e.currentTarget) closeIdDetails();
+          }}
+        >
+          <div className="absolute inset-0 bg-black/70" />
+          <div className="relative w-full max-w-xl rounded-2xl border border-neutral-800 bg-[#070707] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 p-5">
+              <div>
+                <h2 className="text-sm font-semibold text-neutral-100">
+                  Identity details extracted
+                </h2>
+                <p className="mt-1 text-xs text-neutral-400">
+                  Please confirm these details match your document. You can continue once reviewed.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-neutral-800 bg-black/40 px-3 py-1 text-xs text-neutral-200 hover:border-[#bfa76f]"
+                onClick={closeIdDetails}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="px-5 pb-2">
+              <div className="rounded-xl border border-neutral-800 bg-black/30 p-4">
+                <SummaryRow label="Given name" value={extractSummary.givenName} />
+                <SummaryRow label="Family name" value={extractSummary.familyName} />
+                <SummaryRow label="Date of birth" value={extractSummary.dob} />
+                <SummaryRow label="Nationality" value={extractSummary.nationality} />
+                <SummaryRow
+                  label="Passport / document number"
+                  value={extractSummary.passportNumber}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-5 pt-3">
+              <button
+                type="button"
+                className="rounded-full border border-neutral-800 bg-black/40 px-4 py-2 text-sm text-neutral-200 hover:border-[#bfa76f]"
+                onClick={closeIdDetails}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Country of Residence (GoldCombobox) */}
       <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
         <GoldCombobox
@@ -87,6 +206,10 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
         applicantId={answers.koraApplicantId}
         onStatusChange={(status: IdExtractStatus) => {
           setValue("idExtractStatus", status);
+          // allow modal to auto-open again if user re-uploads a new file in the same session
+          if (status === "processing" || status === "idle") {
+            didAutoOpenRef.current = false;
+          }
         }}
         onExtracted={(payload: IdExtracted) => {
           setValue("idExtractPrimary", payload);
@@ -158,7 +281,7 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
             </div>
           )}
 
-          {/* Emirates ID (UAE only — this is “selected”, not uploaded yet, based on your UX copy) */}
+          {/* Emirates ID (UAE only — “selected”, not uploaded yet in this UX) */}
           {isUAE && (
             <>
               <div className="flex items-center justify-between gap-4">
@@ -201,7 +324,6 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
           </p>
         )}
       </section>
-
 
       {/* 3. Emirates ID – conditional card for UAE only */}
       {isUAE && (

@@ -7,8 +7,10 @@ import {
   applyBusinessDocumentToCompanyProfile,
   patchCompanyProfile,
   fetchCompanyProfile,
+  fetchEvidencePack,
   type CompanyProfile,
   type CompanyProfilePatchPayload,
+  type EvidencePackResponse,
 } from "@/lib/koraClient";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -107,7 +109,6 @@ function normaliseDocs(
 
 function isoToInputDate(v?: string | null): string {
   if (!v) return "";
-  // Expect YYYY-MM-DD; tolerate full ISO
   return String(v).slice(0, 10);
 }
 
@@ -125,18 +126,12 @@ function inputDateToIso(v?: string): string | null {
 function unwrapScalar(v: any): string {
   if (v === null || v === undefined) return "";
 
-  // If backend returns an object like { value: "..." }
   if (typeof v === "object") {
     if ("value" in v) return String((v as any).value ?? "");
     return "";
   }
 
   const s = String(v);
-
-  // If backend returns a stringified object (Python-ish or JSON-ish), extract value
-  // Examples:
-  // "{'value': '18106', 'source': 'key_value_pairs'}"
-  // '{"value":"18106","source":"key_value_pairs"}'
   const m1 = s.match(/['"]value['"]\s*:\s*['"]([^'"]*)['"]/);
   if (m1?.[1] !== undefined) return m1[1];
 
@@ -146,19 +141,32 @@ function unwrapScalar(v: any): string {
 function unwrapDateToInput(v: any): string {
   const s = unwrapScalar(v);
   if (!s) return "";
-  // tolerate full ISO; UI expects YYYY-MM-DD
   return String(s).slice(0, 10);
+}
+
+function readV2FieldFromNormalization(
+  normalization: any,
+  fieldKey: string,
+): string {
+  const fields = normalization?.fields;
+  const node = fields?.[fieldKey];
+  if (!node) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "object") return unwrapScalar(node);
+  return "";
 }
 
 /** ---------- Simple modal ---------- */
 function Modal({
   open,
   title,
+  subtitle,
   children,
   onClose,
 }: {
   open: boolean;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   onClose: () => void;
 }) {
@@ -176,8 +184,8 @@ function Modal({
           <div>
             <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
             <p className="mt-1 text-xs text-neutral-400">
-              Confirm or edit the company details extracted from the business
-              licence.
+              {subtitle ??
+                "Confirm or edit the company details extracted from the document."}
             </p>
           </div>
           <button
@@ -208,10 +216,7 @@ interface BusinessDocUploaderProps {
   answers: Record<string, any>;
   single?: boolean;
   setValue: (id: string, val: any) => void;
-  onUploaded?: (args: {
-    category: string;
-    documentId: string;
-  }) => void | Promise<void>;
+  onUploaded?: (args: { category: string; documentId: string }) => void | Promise<void>;
 }
 
 const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
@@ -254,7 +259,6 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Capture synchronously; do NOT touch e.currentTarget after await.
     const inputEl = e.currentTarget;
     const files = inputEl.files;
     if (!files || files.length === 0) return;
@@ -271,8 +275,6 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
         const formData = new FormData();
         formData.append("file", file);
 
-        // These keys MUST match what your API expects.
-        // Your FastAPI expects: tenant_id, application_id, applicant_id, category
         if (tenantId) formData.append("tenant_id", tenantId);
         if (applicationId) formData.append("application_id", applicationId);
         if (applicantId) formData.append("applicant_id", applicantId);
@@ -311,7 +313,6 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
 
         nextDocs.push({ id: String(docId), name: file.name });
 
-        // Notify parent (used for legal_existence)
         await onUploaded?.({ category, documentId: String(docId) });
       }
 
@@ -324,7 +325,6 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
         err?.message || "We could not upload this document. Please try again.",
       );
     } finally {
-      // allow reselecting same file
       if (inputEl) inputEl.value = "";
     }
   };
@@ -492,67 +492,21 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
     { examples: guidance?.preciousMetalsExamples },
   );
 
-  /** ---------- Legal existence → apply-document → modal editing ---------- */
+  /** ---------- Company profile state ---------- */
   const [companyProfile, setCompanyProfile] =
     React.useState<CompanyProfile | null>(null);
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [modalLoading, setModalLoading] = React.useState(false);
-  const [modalError, setModalError] = React.useState<string | null>(null);
-  const [saving, setSaving] = React.useState(false);
-
-  const [draft, setDraft] = React.useState({
-    legal_name: "",
-    trading_name: "",
-    registration_number: "",
-    legal_form: "",
-    license_number: "",
-    license_issue_date: "",
-    license_expiry_date: "",
-    license_issuing_authority: "",
-  });
-
-  const hydrateDraft = React.useCallback((p: CompanyProfile) => {
-    // Unwrap "rich" backend values to scalars for UI inputs.
-    setDraft({
-      legal_name: unwrapScalar((p as any).legal_name),
-      trading_name: unwrapScalar((p as any).trading_name),
-      registration_number: unwrapScalar((p as any).registration_number),
-      legal_form: unwrapScalar((p as any).legal_form),
-      license_number: unwrapScalar((p as any).license_number),
-      // Prefer unwrapDateToInput to handle {value: "..."} and tolerate ISO
-      license_issue_date: unwrapDateToInput((p as any).license_issue_date),
-      license_expiry_date: unwrapDateToInput((p as any).license_expiry_date),
-      license_issuing_authority: unwrapScalar(
-        (p as any).license_issuing_authority,
-      ),
-    });
-  }, []);
-
-  const openModalWithProfile = React.useCallback(
-    (p: CompanyProfile) => {
-      setCompanyProfile(p);
-      setValue("companyProfile", p); // keep answers in sync for downstream steps/review
-      hydrateDraft(p);
-      setModalError(null);
-      setModalOpen(true);
-    },
-    [hydrateDraft, setValue],
-  );
 
   const ensureCompanyProfile = React.useCallback(async () => {
     if (!applicationId) return null;
 
-    // 1) If already in state, use it
     if (companyProfile) return companyProfile;
 
-    // 2) If stored in answers, use it
     if (answers.companyProfile) {
       const p = answers.companyProfile as CompanyProfile;
       setCompanyProfile(p);
       return p;
     }
 
-    // 3) Fetch from API
     try {
       const p = await fetchCompanyProfile(applicationId);
       setCompanyProfile(p);
@@ -563,106 +517,222 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
     }
   }, [answers.companyProfile, applicationId, companyProfile, setValue]);
 
-  const onDocUploaded = React.useCallback(
-    async ({
-      category,
-      documentId,
-    }: {
-      category: string;
-      documentId: string;
-    }) => {
-      if (category !== "legal_existence") return;
-      if (!applicationId) return;
+  /** ---------- Legal existence modal ---------- */
+  const [licenceModalOpen, setLicenceModalOpen] = React.useState(false);
+  const [licenceModalLoading, setLicenceModalLoading] = React.useState(false);
+  const [licenceModalError, setLicenceModalError] = React.useState<string | null>(null);
+  const [licenceSaving, setLicenceSaving] = React.useState(false);
 
-      setModalLoading(true);
-      setModalError(null);
+  const [licenceDraft, setLicenceDraft] = React.useState({
+    legal_name: "",
+    trading_name: "",
+    registration_number: "",
+    legal_form: "",
+    license_number: "",
+    license_issue_date: "",
+    license_expiry_date: "",
+    license_issuing_authority: "",
+  });
 
-      try {
-        // Apply normalization into company profile (fills blanks)
-const updated = await applyBusinessDocumentToCompanyProfile(
-  applicationId,
-  documentId,
-);
+  const hydrateLicenceDraft = React.useCallback((p: CompanyProfile) => {
+    setLicenceDraft({
+      legal_name: unwrapScalar((p as any).legal_name),
+      trading_name: unwrapScalar((p as any).trading_name),
+      registration_number: unwrapScalar((p as any).registration_number),
+      legal_form: unwrapScalar((p as any).legal_form),
+      license_number: unwrapScalar((p as any).license_number),
+      license_issue_date: unwrapDateToInput((p as any).license_issue_date),
+      license_expiry_date: unwrapDateToInput((p as any).license_expiry_date),
+      license_issuing_authority: unwrapScalar((p as any).license_issuing_authority),
+    });
+  }, []);
 
-// DEBUG: confirm what backend actually returned
-console.group("[BusinessDocumentsStep] applyBusinessDocumentToCompanyProfile");
-console.log("Full CompanyProfile:", updated);
-console.log("Top-level keys:", Object.keys(updated || {}));
-
-const fields = [
-  "legal_name",
-  "trading_name",
-  "license_issuing_authority",
-  "license_issue_date",
-  "license_expiry_date",
-  "registration_number",
-  "license_number",
-  "legal_form",
-];
-
-console.log(
-  "Relevant fields:",
-  Object.fromEntries(fields.map((k) => [k, (updated as any)?.[k]])),
-);
-console.groupEnd();
-
-openModalWithProfile(updated);
-
-      } catch (e: any) {
-        console.error("apply-document failed", e);
-
-        // Fallback: open whatever exists so user can fill manually
-        const existing = await ensureCompanyProfile();
-        if (existing) {
-          openModalWithProfile(existing);
-          setModalError(
-            e?.message ||
-              "We uploaded the document, but could not auto-fill company details. Please enter them manually.",
-          );
-        } else {
-          setModalError(
-            e?.message ||
-              "We uploaded the document, but could not load company details. Please try again.",
-          );
-        }
-      } finally {
-        setModalLoading(false);
-      }
+  const openLicenceModalWithProfile = React.useCallback(
+    (p: CompanyProfile) => {
+      setCompanyProfile(p);
+      setValue("companyProfile", p);
+      hydrateLicenceDraft(p);
+      setLicenceModalError(null);
+      setLicenceModalOpen(true);
     },
-    [applicationId, ensureCompanyProfile, openModalWithProfile],
+    [hydrateLicenceDraft, setValue],
   );
 
-  const saveModal = React.useCallback(async () => {
+  const saveLicenceModal = React.useCallback(async () => {
     if (!applicationId) return;
 
-    setSaving(true);
-    setModalError(null);
+    setLicenceSaving(true);
+    setLicenceModalError(null);
 
     try {
       const patch: CompanyProfilePatchPayload = {
-        legal_name: draft.legal_name || null,
-        trading_name: draft.trading_name || null,
-        registration_number: draft.registration_number || null,
-        legal_form: draft.legal_form || null,
-        license_number: draft.license_number || null,
-        license_issue_date: inputDateToIso(draft.license_issue_date),
-        license_expiry_date: inputDateToIso(draft.license_expiry_date),
-        license_issuing_authority: draft.license_issuing_authority || null,
+        legal_name: licenceDraft.legal_name || null,
+        trading_name: licenceDraft.trading_name || null,
+        registration_number: licenceDraft.registration_number || null,
+        legal_form: licenceDraft.legal_form || null,
+        license_number: licenceDraft.license_number || null,
+        license_issue_date: inputDateToIso(licenceDraft.license_issue_date),
+        license_expiry_date: inputDateToIso(licenceDraft.license_expiry_date),
+        license_issuing_authority: licenceDraft.license_issuing_authority || null,
       };
 
       const updated = await patchCompanyProfile(applicationId, patch);
       setCompanyProfile(updated);
       setValue("companyProfile", updated);
-      setModalOpen(false);
+      setLicenceModalOpen(false);
     } catch (e: any) {
       console.error("PATCH company profile failed", e);
-      setModalError(
+      setLicenceModalError(
         e?.message || "Failed to save company details. Please try again.",
       );
     } finally {
-      setSaving(false);
+      setLicenceSaving(false);
     }
-  }, [applicationId, draft, setValue]);
+  }, [applicationId, licenceDraft, setValue]);
+
+  /** ---------- Tax modal (Option 1: read from evidence pack) ---------- */
+  const [taxModalOpen, setTaxModalOpen] = React.useState(false);
+  const [taxModalLoading, setTaxModalLoading] = React.useState(false);
+  const [taxModalError, setTaxModalError] = React.useState<string | null>(null);
+  const [taxSaving, setTaxSaving] = React.useState(false);
+
+  const [taxDraft, setTaxDraft] = React.useState({
+    has_tax_registration: true,
+    tax_registration_number: "",
+    tax_registration_issue_date: "",
+  });
+
+  const openTaxModal = React.useCallback((prefill?: Partial<typeof taxDraft>) => {
+    setTaxDraft((p) => ({
+      ...p,
+      ...prefill,
+    }));
+    setTaxModalError(null);
+    setTaxModalOpen(true);
+  }, []);
+
+  const saveTaxModal = React.useCallback(async () => {
+    if (!applicationId) return;
+
+    setTaxSaving(true);
+    setTaxModalError(null);
+
+    try {
+      const patch: CompanyProfilePatchPayload = {
+        has_tax_registration: taxDraft.has_tax_registration ?? true,
+        tax_registration_number: taxDraft.tax_registration_number || null,
+      };
+
+      const updated = await patchCompanyProfile(applicationId, patch);
+      setCompanyProfile(updated);
+      setValue("companyProfile", updated);
+      setTaxModalOpen(false);
+    } catch (e: any) {
+      console.error("PATCH company profile (tax) failed", e);
+      setTaxModalError(
+        e?.message || "Failed to save tax registration details. Please try again.",
+      );
+    } finally {
+      setTaxSaving(false);
+    }
+  }, [applicationId, setValue, taxDraft]);
+
+  /** ---------- Upload callback ---------- */
+  const onDocUploaded = React.useCallback(
+    async ({ category, documentId }: { category: string; documentId: string }) => {
+      if (!applicationId) return;
+
+      // 1) Business licence -> existing flow (unchanged)
+      if (category === "legal_existence") {
+        setLicenceModalLoading(true);
+        setLicenceModalError(null);
+
+        try {
+          const updated = await applyBusinessDocumentToCompanyProfile(
+            applicationId,
+            documentId,
+          );
+
+          openLicenceModalWithProfile(updated);
+        } catch (e: any) {
+          console.error("apply-document failed", e);
+
+          const existing = await ensureCompanyProfile();
+          if (existing) {
+            openLicenceModalWithProfile(existing);
+            setLicenceModalError(
+              e?.message ||
+                "We uploaded the document, but could not auto-fill company details. Please enter them manually.",
+            );
+          } else {
+            setLicenceModalError(
+              e?.message ||
+                "We uploaded the document, but could not load company details. Please try again.",
+            );
+          }
+        } finally {
+          setLicenceModalLoading(false);
+        }
+
+        return;
+      }
+
+      // 2) Tax registration -> Option 1: read from evidence pack + modal
+      if (category === "tax_registration") {
+        setTaxModalLoading(true);
+        setTaxModalError(null);
+
+        try {
+          const pack: EvidencePackResponse = await fetchEvidencePack(applicationId);
+          const doc = (pack?.documents || []).find((d) => String(d.id) === String(documentId));
+
+          const normalization =
+            (doc as any)?.extraction?.payload?.normalization ||
+            (doc as any)?.extraction?.payload?.extracted_json?.normalization ||
+            (doc as any)?.extraction?.payload?.extracted?.normalization ||
+            {};
+
+          const trn = readV2FieldFromNormalization(normalization, "tax_registration_number");
+          const issue = readV2FieldFromNormalization(normalization, "tax_registration_issue_date");
+
+          // Pre-fill from existing company profile too (if already set)
+          const existing = await ensureCompanyProfile();
+
+          openTaxModal({
+            has_tax_registration: true,
+            tax_registration_number: trn || unwrapScalar((existing as any)?.tax_registration_number),
+            tax_registration_issue_date: issue ? isoToInputDate(issue) : "",
+          
+          });
+        } catch (e: any) {
+          console.error("tax evidence pack fetch failed", e);
+
+          // Still allow manual entry
+          const existing = await ensureCompanyProfile();
+          openTaxModal({
+            has_tax_registration: true,
+            tax_registration_number: unwrapScalar((existing as any)?.tax_registration_number),
+            tax_registration_issue_date: "",
+           });
+
+          setTaxModalError(
+            e?.message ||
+              "We uploaded the document, but could not read extracted tax details. Please enter them manually.",
+          );
+        } finally {
+          setTaxModalLoading(false);
+        }
+
+        return;
+      }
+    },
+    [
+      applicationId,
+      ensureCompanyProfile,
+      openLicenceModalWithProfile,
+      openTaxModal,
+    ],
+  );
 
   return (
     <div className="space-y-6">
@@ -684,20 +754,22 @@ openModalWithProfile(updated);
         )}
       </section>
 
+      {/* Legal existence modal */}
       <Modal
-        open={modalOpen}
+        open={licenceModalOpen}
         title="Company details (from business licence)"
-        onClose={() => setModalOpen(false)}
+        subtitle="Confirm or edit the company details extracted from the business licence."
+        onClose={() => setLicenceModalOpen(false)}
       >
-        {modalLoading ? (
+        {licenceModalLoading ? (
           <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 text-xs text-neutral-300">
             Applying extracted fields…
           </div>
         ) : (
           <div className="space-y-4">
-            {modalError && (
+            {licenceModalError && (
               <div className="rounded-xl border border-amber-500/40 bg-amber-900/15 p-4 text-xs text-amber-100/90">
-                {modalError}
+                {licenceModalError}
               </div>
             )}
 
@@ -707,9 +779,9 @@ openModalWithProfile(updated);
                   Legal name
                 </label>
                 <input
-                  value={draft.legal_name}
+                  value={licenceDraft.legal_name}
                   onChange={(e) =>
-                    setDraft((p) => ({ ...p, legal_name: e.target.value }))
+                    setLicenceDraft((p) => ({ ...p, legal_name: e.target.value }))
                   }
                   className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                 />
@@ -720,9 +792,9 @@ openModalWithProfile(updated);
                   Trading name
                 </label>
                 <input
-                  value={draft.trading_name}
+                  value={licenceDraft.trading_name}
                   onChange={(e) =>
-                    setDraft((p) => ({ ...p, trading_name: e.target.value }))
+                    setLicenceDraft((p) => ({ ...p, trading_name: e.target.value }))
                   }
                   className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                 />
@@ -733,9 +805,9 @@ openModalWithProfile(updated);
                   Registration number
                 </label>
                 <input
-                  value={draft.registration_number}
+                  value={licenceDraft.registration_number}
                   onChange={(e) =>
-                    setDraft((p) => ({
+                    setLicenceDraft((p) => ({
                       ...p,
                       registration_number: e.target.value,
                     }))
@@ -749,9 +821,9 @@ openModalWithProfile(updated);
                   Legal form
                 </label>
                 <input
-                  value={draft.legal_form}
+                  value={licenceDraft.legal_form}
                   onChange={(e) =>
-                    setDraft((p) => ({ ...p, legal_form: e.target.value }))
+                    setLicenceDraft((p) => ({ ...p, legal_form: e.target.value }))
                   }
                   className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                 />
@@ -769,9 +841,9 @@ openModalWithProfile(updated);
                     Licence number
                   </label>
                   <input
-                    value={draft.license_number}
+                    value={licenceDraft.license_number}
                     onChange={(e) =>
-                      setDraft((p) => ({
+                      setLicenceDraft((p) => ({
                         ...p,
                         license_number: e.target.value,
                       }))
@@ -785,9 +857,9 @@ openModalWithProfile(updated);
                     Issuing authority
                   </label>
                   <input
-                    value={draft.license_issuing_authority}
+                    value={licenceDraft.license_issuing_authority}
                     onChange={(e) =>
-                      setDraft((p) => ({
+                      setLicenceDraft((p) => ({
                         ...p,
                         license_issuing_authority: e.target.value,
                       }))
@@ -802,9 +874,9 @@ openModalWithProfile(updated);
                   </label>
                   <input
                     type="date"
-                    value={draft.license_issue_date}
+                    value={licenceDraft.license_issue_date}
                     onChange={(e) =>
-                      setDraft((p) => ({
+                      setLicenceDraft((p) => ({
                         ...p,
                         license_issue_date: e.target.value,
                       }))
@@ -819,9 +891,9 @@ openModalWithProfile(updated);
                   </label>
                   <input
                     type="date"
-                    value={draft.license_expiry_date}
+                    value={licenceDraft.license_expiry_date}
                     onChange={(e) =>
-                      setDraft((p) => ({
+                      setLicenceDraft((p) => ({
                         ...p,
                         license_expiry_date: e.target.value,
                       }))
@@ -835,23 +907,109 @@ openModalWithProfile(updated);
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setModalOpen(false)}
-                disabled={saving}
+                onClick={() => setLicenceModalOpen(false)}
+                disabled={licenceSaving}
                 className="rounded-lg border border-neutral-800 bg-black/40 px-4 py-2 text-sm text-neutral-200 hover:bg-black/60 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={saveModal}
-                disabled={saving}
+                onClick={saveLicenceModal}
+                disabled={licenceSaving}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  saving
+                  licenceSaving
                     ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
                     : "border border-[#bfa76f] text-[#bfa76f] hover:bg-[#bfa76f]/10"
                 }`}
               >
-                {saving ? "Saving…" : "Save"}
+                {licenceSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Tax registration modal */}
+      <Modal
+        open={taxModalOpen}
+        title="Tax registration details"
+        subtitle="Confirm or edit the tax registration details extracted from the certificate."
+        onClose={() => setTaxModalOpen(false)}
+      >
+        {taxModalLoading ? (
+          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 text-xs text-neutral-300">
+            Reading extracted tax details…
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {taxModalError && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-900/15 p-4 text-xs text-amber-100/90">
+                {taxModalError}
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-xs font-medium text-neutral-300">
+                  Tax registration number (TRN)
+                </label>
+                <input
+                  value={taxDraft.tax_registration_number}
+                  onChange={(e) =>
+                    setTaxDraft((p) => ({
+                      ...p,
+                      tax_registration_number: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                />
+                <p className="mt-1 text-[11px] text-neutral-400">
+                  We will store this in the company profile for downstream checks.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-neutral-300">
+                  Issue date (from certificate)
+                </label>
+                <input
+                  type="date"
+                  value={taxDraft.tax_registration_issue_date}
+                  onChange={(e) =>
+                    setTaxDraft((p) => ({
+                      ...p,
+                      tax_registration_issue_date: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                />
+                <p className="mt-1 text-[11px] text-neutral-400">
+                  This is retained in the document extraction payload (not the profile DB column).
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setTaxModalOpen(false)}
+                disabled={taxSaving}
+                className="rounded-lg border border-neutral-800 bg-black/40 px-4 py-2 text-sm text-neutral-200 hover:bg-black/60 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveTaxModal}
+                disabled={taxSaving}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  taxSaving
+                    ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
+                    : "border border-[#bfa76f] text-[#bfa76f] hover:bg-[#bfa76f]/10"
+                }`}
+              >
+                {taxSaving ? "Saving…" : "Save"}
               </button>
             </div>
           </div>
@@ -924,6 +1082,7 @@ openModalWithProfile(updated);
           applicantId={applicantId}
           answers={answers}
           setValue={setValue}
+          onUploaded={onDocUploaded}
         />
 
         <BusinessDocUploader
