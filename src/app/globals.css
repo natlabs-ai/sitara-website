@@ -82,3 +82,34 @@ body {
 .btn-outline-gold:hover{
   background: var(--gold-bg-soft);
 }
+
+@layer base {
+  /* Keep Contact inputs dark */
+  .sitara-contact input,
+  .sitara-contact textarea,
+  .sitara-contact select {
+    background-color: #171717; /* neutral-900 */
+    color: #f5f5f5; /* neutral-100 */
+  }
+
+  .sitara-contact input:focus,
+  .sitara-contact textarea:focus,
+  .sitara-contact select:focus {
+    outline: none;
+    box-shadow: none;
+    background-color: #171717;
+    border-color: #525252; /* neutral-600 */
+  }
+
+  /* Chrome/Safari autofill override (this is usually the “sky blue”) */
+  .sitara-contact input:-webkit-autofill,
+  .sitara-contact textarea:-webkit-autofill,
+  .sitara-contact select:-webkit-autofill {
+    -webkit-text-fill-color: #f5f5f5 !important;
+    box-shadow: 0 0 0px 1000px #171717 inset !important;
+    -webkit-box-shadow: 0 0 0px 1000px #171717 inset !important;
+    transition: background-color 9999s ease-out 0s;
+    caret-color: #f5f5f5;
+  }
+}
+
