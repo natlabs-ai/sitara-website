@@ -7,8 +7,6 @@ export default function Contact() {
         <h2 className="text-2xl sm:text-3xl font-semibold text-white">
           Start a Conversation
         </h2>
-        <p className="mt-2 text-neutral-400">KYC/AML verification.</p>
-
         {/* Stack on mobile, two columns on md+ */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Form */}
@@ -52,7 +50,6 @@ export default function Contact() {
                   contact@sitara.ae
                 </a>
               </li>
-              <li>☎️ +971-XX-XXX-XXXX</li>
             </ul>
           </div>
         </div>

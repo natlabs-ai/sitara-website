@@ -36,6 +36,9 @@ import RelationshipProfileStep from "./steps/RelationshipProfileStep";
 import AuthorisedPeopleStep from "./steps/AuthorisedPeopleStep";
 import ReviewSubmitStep from "./steps/ReviewSubmitStep";
 
+// ✅ NEW: Questions step (business only)
+import QuestionsStep from "./steps/QuestionsStep";
+
 /** ---------- Helpers ---------- */
 function safeText(v: any): string {
   if (v === null || v === undefined) return "";
@@ -109,6 +112,8 @@ export default function OnboardingRenderer({
 }) {
   const router = useRouter();
 
+  const STORAGE_KEY = "sitara_onboarding_answers_v1";
+
   const [stepIdx, setStepIdx] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, any>>(
     initialAnswers || {},
@@ -116,6 +121,35 @@ export default function OnboardingRenderer({
   const [isSubmittingStep, setIsSubmittingStep] = React.useState(false);
   const [globalError, setGlobalError] = React.useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
+
+  // Hydrate answers from localStorage (client-only) if initialAnswers not provided
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (initialAnswers && Object.keys(initialAnswers).length > 0) return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        setAnswers(parsed);
+      }
+    } catch (e) {
+      console.warn("Failed to read onboarding draft from localStorage", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist answers to localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(answers ?? {}));
+    } catch (e) {
+      console.warn("Failed to persist onboarding draft to localStorage", e);
+    }
+  }, [answers]);
 
   const visibleSteps = React.useMemo(() => {
     const isBusiness = answers.accountType === "business";
@@ -360,9 +394,39 @@ export default function OnboardingRenderer({
       );
     }
 
-    // Questionnaire step reserved for future activity-driven questions
+    // ✅ UPDATED: Questionnaire step (business-only) must be completed to proceed
     if (step.id === "questionnaire") {
-      return !isSubmittingStep;
+      const q = (answers.questionnaire as Record<string, any> | null) ?? null;
+
+      const has = (v: any) => {
+        if (v === null || v === undefined) return false;
+        if (typeof v === "string") return v.trim().length > 0;
+        if (typeof v === "boolean") return true;
+        if (Array.isArray(v)) return v.length > 0;
+        return true;
+      };
+
+      const requiredKeys = [
+        "pep_exposure",
+        "sanctions_screening",
+        "ubo_disclosed_verified",
+        "aml_policy",
+        "expected_txn_volume_usd_band",
+        "countries_of_operation_iso2",
+        "kyc_sops",
+        "consent_screening",
+        "ack_ongoing_review",
+      ] as const;
+
+      if (!q) return false;
+
+      const ackOk = q.consent_screening === true && q.ack_ongoing_review === true;
+
+      const requiredOk = requiredKeys
+        .filter((k) => k !== "consent_screening" && k !== "ack_ongoing_review")
+        .every((k) => has(q[k])) && ackOk;
+
+      return requiredOk && !isSubmittingStep;
     }
 
     return !isSubmittingStep;
@@ -548,7 +612,8 @@ export default function OnboardingRenderer({
           source_of_income: String(answers.sourceOfIncome || ""),
           expected_frequency:
             (answers.expectedFrequency as string | undefined) || undefined,
-          expected_value: (answers.expectedValue as string | undefined) || undefined,
+          expected_value:
+            (answers.expectedValue as string | undefined) || undefined,
           selected_services: services,
         };
 
@@ -806,12 +871,20 @@ export default function OnboardingRenderer({
       return (
         <div className="space-y-5">
           {accountTypeField && (
-            <FieldRenderer f={accountTypeField} answers={answers} setValue={setValue} />
+            <FieldRenderer
+              f={accountTypeField}
+              answers={answers}
+              setValue={setValue}
+            />
           )}
 
           {signingRoleField &&
             visibleByRules(signingRoleField.showIf, answers) && (
-              <FieldRenderer f={signingRoleField} answers={answers} setValue={setValue} />
+              <FieldRenderer
+                f={signingRoleField}
+                answers={answers}
+                setValue={setValue}
+              />
             )}
 
           {showEmployeeBlock && (
@@ -832,7 +905,9 @@ export default function OnboardingRenderer({
                   <input
                     type="text"
                     value={answers.signatoryFirstName || ""}
-                    onChange={(e) => setValue("signatoryFirstName", e.target.value)}
+                    onChange={(e) =>
+                      setValue("signatoryFirstName", e.target.value)
+                    }
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
@@ -844,7 +919,9 @@ export default function OnboardingRenderer({
                   <input
                     type="text"
                     value={answers.signatoryLastName || ""}
-                    onChange={(e) => setValue("signatoryLastName", e.target.value)}
+                    onChange={(e) =>
+                      setValue("signatoryLastName", e.target.value)
+                    }
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
@@ -932,7 +1009,11 @@ export default function OnboardingRenderer({
 
           {/* Country of Incorporation (required) */}
           {incCountryEnhanced ? (
-            <FieldRenderer f={incCountryEnhanced} answers={answers} setValue={setValue} />
+            <FieldRenderer
+              f={incCountryEnhanced}
+              answers={answers}
+              setValue={setValue}
+            />
           ) : (
             <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 text-sm text-neutral-300">
               Missing required field: incCountry
@@ -1113,7 +1194,9 @@ export default function OnboardingRenderer({
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Occupation</span>
-                <span className="text-neutral-100">{formatMaybe(answers.occupation)}</span>
+                <span className="text-neutral-100">
+                  {formatMaybe(answers.occupation)}
+                </span>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Expected transaction frequency</span>
@@ -1124,7 +1207,9 @@ export default function OnboardingRenderer({
 
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Source of income</span>
-                <span className="text-neutral-100">{formatMaybe(answers.sourceOfIncome)}</span>
+                <span className="text-neutral-100">
+                  {formatMaybe(answers.sourceOfIncome)}
+                </span>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Typical transaction value</span>
@@ -1136,7 +1221,9 @@ export default function OnboardingRenderer({
               <div className="flex items-center justify-between gap-3 text-xs md:col-span-2">
                 <span className="text-neutral-400">Service categories</span>
                 <span className="text-neutral-100">
-                  {services.length ? services.map((s) => titleCase(s)).join(", ") : "None selected"}
+                  {services.length
+                    ? services.map((s) => titleCase(s)).join(", ")
+                    : "None selected"}
                 </span>
               </div>
             </div>
@@ -1214,7 +1301,11 @@ export default function OnboardingRenderer({
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="text-xs">
                 <div className="text-neutral-400">Passport / ID</div>
-                <div className={passportOrIdReceived ? "mt-1 text-emerald-300" : "mt-1 text-neutral-400"}>
+                <div
+                  className={
+                    passportOrIdReceived ? "mt-1 text-emerald-300" : "mt-1 text-neutral-400"
+                  }
+                >
                   {passportOrIdReceived ? "Received" : "Not uploaded"}
                 </div>
               </div>
@@ -1222,7 +1313,7 @@ export default function OnboardingRenderer({
               <div className="text-xs">
                 <div className="text-neutral-400">Emirates ID</div>
                 <div className="mt-1">
-                  {!emiratesIdRequired ? (
+                  {!isUAE ? (
                     <span className="text-neutral-400">Not required</span>
                   ) : emiratesIdReceived ? (
                     <span className="text-emerald-300">Received</span>
@@ -1302,6 +1393,11 @@ export default function OnboardingRenderer({
 
     if (step.id === "authorisedPeople") {
       return <AuthorisedPeopleStep answers={answers} setValue={setValue} />;
+    }
+
+    // ✅ NEW: Questions step renderer
+    if (step.id === "questionnaire") {
+      return <QuestionsStep answers={answers} setValue={setValue} />;
     }
 
     return (
@@ -1446,6 +1542,11 @@ export default function OnboardingRenderer({
         <button
           type="button"
           onClick={() => {
+            try {
+              if (typeof window !== "undefined") {
+                window.localStorage.removeItem(STORAGE_KEY);
+              }
+            } catch {}
             setAnswers({});
             setStepIdx(0);
             setGlobalError(null);

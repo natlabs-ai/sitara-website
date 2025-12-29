@@ -158,6 +158,24 @@ export type EvidencePackResponse = {
   derived: EvidencePackDerived;
 };
 
+/** -------- Questionnaires -------- */
+
+export type QuestionnaireCode = string; // e.g. "uae_business_questions";
+
+export type QuestionnaireUpsertPayload = {
+  tenant_id: string;
+  application_id: string;
+  questionnaire_code: QuestionnaireCode;
+  questionnaire_version: string; // e.g. "v1"
+  responses: Record<string, any>;
+};
+
+export type QuestionnaireResponse = QuestionnaireUpsertPayload & {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 /** -------- Base config -------- */
 
 // Keep these for SERVER-side calls (Node / FastAPI direct).
@@ -210,9 +228,10 @@ async function _koraFetch(
 
 export async function fetchPassport(passportId: number) {
   // No Next proxy for passports currently; keep direct.
-  const res = await fetch(`${KORA_API_BASE}${API_PREFIX}/passports/${passportId}`, {
-    method: "GET",
-  });
+  const res = await fetch(
+    `${KORA_API_BASE}${API_PREFIX}/passports/${passportId}`,
+    { method: "GET" },
+  );
 
   if (!res.ok) {
     throw new Error(`Failed to fetch passport ${passportId}`);
@@ -311,9 +330,10 @@ export async function fetchEvidencePack(
   let res: Response;
 
   try {
-    res = await fetch(`${KORA_API_BASE}${API_PREFIX}/evidence/applications/${applicationId}`, {
-      method: "GET",
-    });
+    res = await fetch(
+      `${KORA_API_BASE}${API_PREFIX}/evidence/applications/${applicationId}`,
+      { method: "GET" },
+    );
   } catch (error) {
     console.error("Network error calling evidence pack:", error);
     throw new Error("Could not reach Kora API for evidence pack");
@@ -449,7 +469,9 @@ export async function fetchCompanyProfile(
 
   if (!res.ok) {
     console.error("Company profile GET error", res.status, body);
-    throw new Error(body?.detail || body?.error || body?.message || "Failed to fetch company profile");
+    throw new Error(
+      body?.detail || body?.error || body?.message || "Failed to fetch company profile",
+    );
   }
 
   return body as CompanyProfile;
@@ -475,7 +497,9 @@ export async function patchCompanyProfile(
 
   if (!res.ok) {
     console.error("Company profile PATCH error", res.status, body);
-    throw new Error(body?.detail || body?.error || body?.message || "Failed to update company profile");
+    throw new Error(
+      body?.detail || body?.error || body?.message || "Failed to update company profile",
+    );
   }
 
   return body as CompanyProfile;
@@ -510,4 +534,111 @@ export async function applyBusinessDocumentToCompanyProfile(
   }
 
   return body as CompanyProfile;
+}
+
+/** -------- Questionnaires (draft autosave) -------- */
+
+export async function upsertQuestionnaire(
+  payload: QuestionnaireUpsertPayload,
+): Promise<QuestionnaireResponse> {
+  const res = await _koraFetch(
+    {
+      client: `/api/questionnaires`,
+      server: `${API_PREFIX}/questionnaires`,
+    },
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Questionnaire PUT error", res.status, body);
+    throw new Error(
+      body?.detail || body?.error || body?.message || "Failed to save questionnaire",
+    );
+  }
+
+  return body as QuestionnaireResponse;
+}
+
+export async function fetchQuestionnaire(params: {
+  tenant_id: string;
+  application_id: string;
+  questionnaire_code: QuestionnaireCode;
+}): Promise<QuestionnaireResponse> {
+  const qs = new URLSearchParams({
+    tenant_id: params.tenant_id,
+    application_id: params.application_id,
+    questionnaire_code: params.questionnaire_code,
+  }).toString();
+
+  const res = await _koraFetch(
+    {
+      client: `/api/questionnaires?${qs}`,
+      server: `${API_PREFIX}/questionnaires?${qs}`,
+    },
+    { method: "GET" },
+  );
+
+  if (res.status === 404) {
+    const err: any = new Error("Questionnaire not found");
+    err.status = 404;
+    throw err;
+  }
+
+  const body = await _readJsonOrNull(res);
+
+  if (!res.ok) {
+    console.error("Questionnaire GET error", res.status, body);
+    throw new Error(
+      body?.detail || body?.error || body?.message || "Failed to fetch questionnaire",
+    );
+  }
+
+  return body as QuestionnaireResponse;
+}
+
+/**
+ * Autosave helper:
+ * - merges patch into current responses (optionally fetching existing first)
+ * - then UPSERTs
+ *
+ * If your UI already holds the full responses object, skip this and call upsertQuestionnaire() directly.
+ */
+export async function autosaveQuestionnaireDraft(args: {
+  tenant_id: string;
+  application_id: string;
+  questionnaire_code: QuestionnaireCode;
+  questionnaire_version: string;
+  patch: Record<string, any>;
+}): Promise<QuestionnaireResponse> {
+  // Fetch existing (treat 404 as empty)
+  let existing: QuestionnaireResponse | null = null;
+
+  try {
+    existing = await fetchQuestionnaire({
+      tenant_id: args.tenant_id,
+      application_id: args.application_id,
+      questionnaire_code: args.questionnaire_code,
+    });
+  } catch (e: any) {
+    if (e?.status !== 404) throw e;
+  }
+
+  const mergedResponses = {
+    ...(existing?.responses ?? {}),
+    ...(args.patch ?? {}),
+  };
+
+  return upsertQuestionnaire({
+    tenant_id: args.tenant_id,
+    application_id: args.application_id,
+    questionnaire_code: args.questionnaire_code,
+    questionnaire_version: args.questionnaire_version,
+    responses: mergedResponses,
+  });
 }
