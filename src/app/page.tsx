@@ -35,7 +35,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Header active={active} onNav={scrollTo} />
+      <Header />
       <Hero
         onPrimary={() => scrollTo("contact")}
         onSecondary={() => scrollTo("services")}
