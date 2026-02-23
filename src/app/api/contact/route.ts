@@ -26,17 +26,6 @@ function safeText(v: string) {
 }
 
 export async function POST(req: Request) {
-  // Optional protection for non-dev environments
-  // Set SITARA_CONTACT_API_TOKEN and require callers to send:
-  // Authorization: Bearer <token>
-  if (process.env.NODE_ENV !== "development") {
-    const token = process.env.SITARA_CONTACT_API_TOKEN;
-    if (!token) return json(404, { error: "Not available" });
-
-    const auth = req.headers.get("authorization") || "";
-    if (auth !== `Bearer ${token}`) return json(401, { error: "Unauthorized" });
-  }
-
   const apiKey = process.env.RESEND_API_KEY;
   const internalTo = process.env.SITARA_CONTACT_TO;
   const from = process.env.SITARA_CONTACT_FROM; // MUST be set to @sitara.ae
