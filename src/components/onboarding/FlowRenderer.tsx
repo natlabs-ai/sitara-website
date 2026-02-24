@@ -113,9 +113,10 @@ export function FlowRenderer({ accountType, onComplete }: FlowRendererProps) {
 
   if (!flow) return null;
 
-  const visibleSteps = flow.steps.filter((s) => stepIsVisible(s, answers));
-  const currentStep = visibleSteps[stepIndex];
-  const isLast = stepIndex === visibleSteps.length - 1;
+  const visibleSteps  = flow.steps.filter((s) => stepIsVisible(s, answers));
+  const clampedIndex  = Math.min(stepIndex, Math.max(0, visibleSteps.length - 1));
+  const currentStep   = visibleSteps[clampedIndex];
+  const isLast        = clampedIndex === visibleSteps.length - 1;
 
   function handleChange(key: string, value: unknown) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -125,7 +126,7 @@ export function FlowRenderer({ accountType, onComplete }: FlowRendererProps) {
     if (isLast) {
       onComplete(answers);
     } else {
-      setStepIndex((i) => i + 1);
+      setStepIndex(clampedIndex + 1);
     }
   }
 
@@ -138,12 +139,12 @@ export function FlowRenderer({ accountType, onComplete }: FlowRendererProps) {
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-6">
         <span className="text-xs text-gray-400">
-          Step {stepIndex + 1} of {visibleSteps.length}
+          Step {clampedIndex + 1} of {visibleSteps.length}
         </span>
         <div className="w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-500 transition-all"
-            style={{ width: `${((stepIndex + 1) / visibleSteps.length) * 100}%` }}
+            style={{ width: `${((clampedIndex + 1) / visibleSteps.length) * 100}%` }}
           />
         </div>
       </div>
