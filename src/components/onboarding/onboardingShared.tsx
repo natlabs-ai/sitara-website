@@ -76,7 +76,7 @@ export type Owner = {
 
 /** ---------- Config ---------- */
 
-export const DEV_MODE = true;
+export const DEV_MODE = process.env.NODE_ENV !== "production";
 
 /** ---------- Palette ---------- */
 export const GOLD = "#bfa76f";

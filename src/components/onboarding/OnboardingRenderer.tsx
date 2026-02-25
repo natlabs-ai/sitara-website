@@ -645,12 +645,7 @@ export default function OnboardingRenderer({
             password: answers.password,
           });
 
-          // Store token
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('kora_access_token', response.access_token);
-          }
-
-          // Redirect to dashboard
+          // Redirect to dashboard (auth handled via HttpOnly cookie set by /api/auth/login)
           if (typeof window !== 'undefined') {
             window.location.href = '/dashboard';
           }

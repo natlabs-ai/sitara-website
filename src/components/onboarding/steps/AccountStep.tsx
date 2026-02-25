@@ -130,7 +130,8 @@ export function AccountStep({
 
   function sendSmsOtp() {
     if (!answers.phone) return;
-    setValue("phoneOtp", "000000");
+    if (DEV_MODE) setValue("phoneOtp", "000000");
+    // TODO: call POST /api/auth/otp/phone to send a real OTP in production
   }
 
   const baseBtn =
@@ -236,7 +237,8 @@ export function AccountStep({
                 size="sm"
                 onClick={() => {
                   if (!answers.email) return;
-                  setValue("emailOtp", "000000");
+                  if (DEV_MODE) setValue("emailOtp", "000000");
+                  // TODO: call POST /api/auth/otp/email to send a real OTP in production
                 }}
               >
                 Send
