@@ -20,7 +20,16 @@ export async function POST(req: NextRequest) {
   const data = await upstream.json();
   const isProd = process.env.NODE_ENV === "production";
 
-  const response = NextResponse.json({ message: "logged in" });
+  // Return user data (not the raw tokens — those go into HttpOnly cookies)
+  const response = NextResponse.json({
+    message: "logged in",
+    access_token: "", // cookie-based; empty here so callers don't use it for localStorage
+    token_type: data.token_type ?? "bearer",
+    applicant_id: data.applicant_id ?? null,
+    email: data.email ?? null,
+    applications: data.applications ?? [],
+    tenant_id: data.tenant_id ?? null,
+  });
 
   response.cookies.set("access_token", data.access_token, {
     httpOnly: true,

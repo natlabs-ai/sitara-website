@@ -1,0 +1,443 @@
+{
+  "meta": {
+    "version": "1.9",
+    "title": "Sitara Onboarding"
+  },
+  "steps": [
+    {
+      "id": "accountSelection",
+      "label": "Account",
+      "fields": [
+        {
+          "id": "accountType",
+          "label": "Account Type",
+          "type": "radio",
+          "options": [
+            { "value": "individual", "label": "Personal" },
+            { "value": "business", "label": "Business" }
+          ],
+          "required": true
+        },
+        {
+          "id": "signingRole",
+          "label": "Who is completing this application?",
+          "type": "radio",
+          "options": [
+            {
+              "value": "signatory",
+              "label": "I am an authorised signatory (Person named in the business license, i.e., CEO, GM, or director)"
+            },
+            {
+              "value": "employee",
+              "label": "I am an employee acting on behalf of the company"
+            }
+          ],
+          "required": true,
+          "showIf": [{ "field": "accountType", "equals": "business" }]
+        },
+        {
+          "id": "signatoryFirstName",
+          "label": "Authorised signatory’s first name",
+          "type": "text",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
+        },
+        {
+          "id": "signatoryLastName",
+          "label": "Authorised signatory’s family name",
+          "type": "text",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
+        },
+        {
+          "id": "signatoryEmail",
+          "label": "Authorised signatory’s email",
+          "type": "email",
+          "required": true,
+          "showIf": [
+            { "field": "accountType", "equals": "business" },
+            { "field": "signingRole", "equals": "employee" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "login",
+      "label": "Login",
+      "fields": [
+        { "id": "email", "label": "Email", "type": "email", "required": true },
+        {
+          "id": "emailOtp",
+          "label": "Email OTP",
+          "type": "otp",
+          "showIf": [{ "field": "email", "exists": true }]
+        },
+        { "id": "phone", "label": "Phone E.164", "type": "tel", "required": true },
+        {
+          "id": "phoneOtp",
+          "label": "Phone OTP",
+          "type": "otp",
+          "showIf": [{ "field": "phone", "exists": true }]
+        },
+        { "id": "password", "label": "Set Password", "type": "password", "required": true }
+      ]
+    },
+    {
+      "id": "identity",
+      "label": "Identity",
+      "fields": [
+        {
+          "id": "proofAddress",
+          "label": "Proof of Address (Utility bill, Bank statement, Tenancy/Ejari)",
+          "type": "file",
+          "accept": ".pdf,.jpg,.jpeg,.png",
+          "required": true,
+          "showIf": [{ "field": "accountType", "equals": "individual" }]
+        },
+        {
+          "id": "selfieVideo",
+          "label": "Selfie Video (5–10s with face + ID, state full name)",
+          "type": "file",
+          "accept": "video/*",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "label": "Profile",
+      "showIf": [{ "field": "accountType", "equals": "individual" }],
+      "fields": [
+        { "id": "fullName", "label": "Full name", "type": "text", "required": true },
+        { "id": "nationality", "label": "Nationality", "type": "text", "required": true },
+        { "id": "occupation", "label": "Occupation", "type": "text", "required": true },
+        { "id": "sourceOfIncome", "label": "Source of income", "type": "textarea", "required": true },
+        {
+          "id": "expectedFrequency",
+          "label": "How often do you expect to transact with Sitara?",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "occasional", "label": "Occasional (up to 2 times per year)" },
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "weekly", "label": "Weekly" },
+            { "value": "high_frequency", "label": "High frequency (several times per week)" },
+            { "value": "unsure", "label": "Not sure yet" }
+          ]
+        },
+        {
+          "id": "expectedValue",
+          "label": "What is the typical value of your transactions?",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "lt_50k", "label": "Up to AED 50,000" },
+            { "value": "50k_250k", "label": "AED 50,000 – 250,000" },
+            { "value": "250k_1m", "label": "AED 250,000 – 1,000,000" },
+            { "value": "gt_1m", "label": "Above AED 1,000,000" },
+            { "value": "unsure", "label": "Not sure yet" }
+          ]
+        },
+        {
+          "id": "selectedServices",
+          "label": "Service categories",
+          "type": "multiselect",
+          "required": true,
+          "options": [
+            { "value": "buy_gold", "label": "Buy gold", "group": "individual" },
+            { "value": "sell_gold", "label": "Sell gold", "group": "individual" },
+            { "value": "deposit_gold", "label": "Deposit / store gold", "group": "individual" },
+            { "value": "storage_logistics", "label": "Storage / logistics only", "group": "individual" }
+          ],
+          "filterBy": {
+            "field": "accountType",
+            "map": { "individual": "individual" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "riskDeclarations",
+      "label": "Risk Declarations",
+      "showIf": [{ "field": "accountType", "equals": "individual" }],
+      "fields": []
+    },
+    {
+      "id": "corporateSetup",
+      "label": "Business",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "fields": [
+        {
+          "id": "incCountry",
+          "label": "Country of Incorporation",
+          "type": "select",
+          "required": true,
+          "options": []
+        }
+      ]
+    },
+    {
+      "id": "companyDetails",
+      "label": "Documents",
+      "showIf": [
+        { "field": "accountType", "equals": "business" },
+        { "field": "businessFlow", "equals": "advanced" }
+      ],
+      "fields": [
+        {
+          "id": "legal_existence_files",
+          "label": "Proof of Legal Existence",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": true
+        },
+        {
+          "id": "constitutional_corporate_files",
+          "label": "Constitutional / Corporate Documents",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": true
+        },
+        {
+          "id": "registered_address_files",
+          "label": "Proof of Registered Address",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": true
+        },
+        {
+          "id": "operating_address_files",
+          "label": "Proof of Operating Address (if different)",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": false
+        },
+        {
+          "id": "tax_registration_files",
+          "label": "Tax Registration",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": true
+        },
+        {
+          "id": "activity_evidence_files",
+          "label": "Business Activity Evidence",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": false
+        },
+        {
+          "id": "precious_metals_permits_files",
+          "label": "Export Permits / Mining or Dealer Licences (if applicable)",
+          "type": "file",
+          "multiple": true,
+          "accept": ".pdf,.jpg,.jpeg,.png,.zip",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "ownership",
+      "label": "Ownership",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "fields": []
+    },
+    {
+      "id": "relationship",
+      "label": "Relationship",
+      "showIf": [
+        { "field": "accountType", "equals": "business" },
+        { "field": "businessFlow", "equals": "advanced" }
+      ],
+      "fields": []
+    },
+    {
+      "id": "authorisedPeople",
+      "label": "Authorised People",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "fields": []
+    },
+    {
+      "id": "questionnaire",
+      "label": "Questions",
+      "showIf": [{ "field": "accountType", "equals": "business" }],
+      "fields": []
+    },
+    {
+      "id": "submit",
+      "label": "Submit",
+      "fields": []
+    }
+  ],
+  "questionBank": [
+    {
+      "id": "ind_pepSelf",
+      "label": "Are you, the applicant, a Politically Exposed Person (PEP) or closely related/associated with a PEP?",
+      "type": "radio",
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_pepSelf_details",
+      "label": "If Yes, please provide details of the PEP role, country, organisation, and your relationship.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_pepSelf", "equals": "yes" }
+      ]
+    },
+    {
+      "id": "ind_sanctionsSelf",
+      "label": "Are you currently subject to any sanctions or restrictions by any government or international body?",
+      "type": "radio",
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_sanctionsSelf_details",
+      "label": "If Yes, please provide details of the sanctions or restrictions, including the issuing authority, reference (if known), and dates.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_sanctionsSelf", "equals": "yes" }
+      ]
+    },
+    {
+      "id": "ind_thirdPartyUse",
+      "label": "Will you be using this account on behalf of, or funded by, any third party?",
+      "type": "radio",
+      "required": true,
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "helperText": "This includes if another individual or company is providing funds, directing transactions, or is the ultimate beneficiary.",
+      "showIf": [{ "field": "accountType", "equals": "individual" }]
+    },
+    {
+      "id": "ind_thirdPartyUse_details",
+      "label": "If Yes, please provide the name of the third party and the nature of the relationship.",
+      "type": "textarea",
+      "required": true,
+      "showIf": [
+        { "field": "accountType", "equals": "individual" },
+        { "field": "ind_thirdPartyUse", "equals": "yes" }
+      ]
+    },
+    {
+      "id": "pepExposure",
+      "label": "Are any applicants, UBOs, directors, or signatories PEPs or related to PEPs?",
+      "type": "radio",
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "sanctionsScreening",
+      "label": "Do you conduct sanctions screening on counterparties?",
+      "type": "radio",
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "uboTransparency",
+      "label": "Are all Ultimate Beneficial Owners (UBOs) disclosed and verified?",
+      "type": "radio",
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "partial", "label": "Partially / Pending" },
+        { "value": "no", "label": "No" }
+      ],
+      "required": true,
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "amlPolicy",
+      "label": "Does your company maintain an internal AML/CFT policy?",
+      "type": "radio",
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "tradeVolume12m",
+      "label": "Estimated transaction volume in the next 12 months (USD)",
+      "type": "select",
+      "options": [
+        { "value": "<1m", "label": "< 1M" },
+        { "value": "1-5m", "label": "1–5M" },
+        { "value": "5-25m", "label": "5–25M" },
+        { "value": "25-100m", "label": "25–100M" },
+        { "value": ">100m", "label": "> 100M" }
+      ],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "countryExposure",
+      "label": "List countries of sourcing/operations (comma-separated)",
+      "type": "text",
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "hasComplianceDocs",
+      "label": "Do you maintain internal AML/CFT/KYC policies and due-diligence SOPs?",
+      "type": "radio",
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "partial", "label": "Partially / In progress" }
+      ],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "biz_screeningConsent",
+      "label": "I consent to sanctions/PEP screening by Sitara and its appointed service providers.",
+      "type": "multiselect",
+      "required": true,
+      "helperText": "Required to proceed.",
+      "options": [{ "value": "consent", "label": "I consent" }],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    },
+    {
+      "id": "biz_ongoingMonitoringAck",
+      "label": "I acknowledge periodic review and agree to provide updated documents when requested.",
+      "type": "multiselect",
+      "required": true,
+      "helperText": "Required to proceed.",
+      "options": [{ "value": "ack", "label": "I acknowledge" }],
+      "showIf": [{ "field": "accountType", "equals": "business" }]
+    }
+  ]
+}

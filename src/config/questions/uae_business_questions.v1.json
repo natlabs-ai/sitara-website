@@ -1,0 +1,95 @@
+{
+  "meta": {
+    "version": "v1",
+    "jurisdiction": "UAE",
+    "account_scope": "business",
+    "title": "UAE Business Questionnaire"
+  },
+  "questions": [
+    {
+      "code": "pep_exposure",
+      "label": "Are any applicants, UBOs, directors, authorised signatories, or controlling persons PEPs or related/connected to PEPs?",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "no", "label": "No" },
+        { "value": "yes", "label": "Yes" }
+      ]
+    },
+    {
+      "code": "sanctions_screening",
+      "label": "Do you conduct sanctions screening on customers and counterparties?",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" }
+      ]
+    },
+    {
+      "code": "ubo_disclosed_verified",
+      "label": "Are all Ultimate Beneficial Owners (UBOs) disclosed and verified?",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "partial", "label": "Partially / Pending" },
+        { "value": "no", "label": "No" }
+      ]
+    },
+    {
+      "code": "aml_policy",
+      "label": "Does your company maintain an internal AML/CFT policy approved by management?",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "unsure", "label": "Not sure" }
+      ]
+    },
+    {
+      "code": "expected_txn_volume_usd_band",
+      "label": "Estimated transaction volume in the next 12 months (USD)",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "<100k", "label": "< 100k" },
+        { "value": "100k-1m", "label": "100k – 1m" },
+        { "value": "1m-10m", "label": "1m – 10m" },
+        { "value": ">10m", "label": "> 10m" }
+      ]
+    },
+    {
+      "code": "countries_of_operation_iso2",
+      "label": "Select countries of sourcing, operations, and counterparties",
+      "type": "country_multi_select_iso2",
+      "required": true
+    },
+    {
+      "code": "kyc_sops",
+      "label": "Do you maintain documented AML/CFT/KYC procedures and due-diligence SOPs?",
+      "type": "single_select",
+      "required": true,
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "partial", "label": "Partially / In progress" }
+      ]
+    },
+    {
+      "code": "consent_screening",
+      "label": "I consent to sanctions/PEP screening by Sitara and its appointed service providers.",
+      "type": "ack",
+      "required": true,
+      "ackValue": "consent"
+    },
+    {
+      "code": "ack_ongoing_review",
+      "label": "I acknowledge periodic review and agree to provide updated documents when requested.",
+      "type": "ack",
+      "required": true,
+      "ackValue": "ack"
+    }
+  ]
+}
