@@ -15,16 +15,16 @@ if (!KORA_API_URL || !KORA_TENANT_KEY) {
 
 type KoraFetchOptions = {
   method?: string;
-  body?: unknown;
+  body?: unknown;           // JSON body
+  formData?: FormData;      // multipart/form-data (document uploads)
   accessToken?: string;
 };
 
 export async function koraFetch(
   path: string,
-  { method = "GET", body, accessToken }: KoraFetchOptions = {}
+  { method = "GET", body, formData, accessToken }: KoraFetchOptions = {}
 ): Promise<Response> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     "X-Tenant-Key": KORA_TENANT_KEY!,
   };
 
@@ -32,9 +32,19 @@ export async function koraFetch(
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
+  let fetchBody: BodyInit | undefined;
+
+  if (formData) {
+    // Let fetch set the correct multipart Content-Type boundary automatically
+    fetchBody = formData;
+  } else if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    fetchBody = JSON.stringify(body);
+  }
+
   return fetch(`${KORA_API_URL}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: fetchBody,
   });
 }
