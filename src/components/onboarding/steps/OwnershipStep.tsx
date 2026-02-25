@@ -144,8 +144,8 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
 
       // Use appropriate endpoint based on category type
       const endpoint = category.includes("owner_id_")
-        ? "/api/documents/id"
-        : "/api/documents/business";
+        ? "/api/kora/documents/id"
+        : "/api/kora/documents/business";
 
       const res = await fetch(endpoint, {
         method: "POST",

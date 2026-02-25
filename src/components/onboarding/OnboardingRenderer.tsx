@@ -769,7 +769,7 @@ export default function OnboardingRenderer({
         if (answers.koraApplicantId)
           formData.append("applicant_id", String(answers.koraApplicantId));
 
-        const res = await fetch("/api/documents/emirates-id", {
+        const res = await fetch("/api/kora/documents/emirates-id", {
           method: "POST",
           body: formData,
         });

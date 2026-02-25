@@ -134,8 +134,8 @@ const PersonDocumentUploader: React.FC<{
 
       // Upload to appropriate endpoint based on category
       const endpoint = category.includes("person_id_")
-        ? "/api/documents/id"
-        : "/api/documents/address";
+        ? "/api/kora/documents/id"
+        : "/api/kora/documents/address";
 
       const res = await fetch(endpoint, {
         method: "POST",

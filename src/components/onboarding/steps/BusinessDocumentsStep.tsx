@@ -307,7 +307,7 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
       if (applicantId) formData.append("applicant_id", applicantId);
       formData.append("category", category);
 
-      const res = await fetch("/api/documents/business", {
+      const res = await fetch("/api/kora/documents/business", {
         method: "POST",
         body: formData,
       });
