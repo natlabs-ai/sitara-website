@@ -19,7 +19,9 @@ export default function OnboardPage() {
   const [initialAnswers, setInitialAnswers] = React.useState<Record<string, any>>(
     mode === "login" ? { authMode: "login" } : {}
   );
-  const [initialStepId, setInitialStepId] = React.useState<string | null>(null);
+  const [initialStepId, setInitialStepId] = React.useState<string | null>(
+    mode === "login" ? "login" : null
+  );
   const [isReadOnly, setIsReadOnly] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
