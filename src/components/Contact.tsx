@@ -92,7 +92,7 @@ export default function Contact() {
 
             {status === "sent" && (
               <p className="text-sm text-emerald-300">
-                Sent. We'll get back to you shortly.
+                Sent. We&apos;ll get back to you shortly.
               </p>
             )}
             {status === "error" && typeof error === "string" && (

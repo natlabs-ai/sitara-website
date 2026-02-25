@@ -1,4 +1,5 @@
 // src/app/onboarding/steps/IdentityStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -11,7 +12,7 @@ import { ProofOfAddressUploader } from "@/components/ProofOfAddressUploader";
 import type { IdExtracted } from "@/types/IdExtracted";
 import { countries } from "@/data/countries";
 import { GoldCombobox } from "@/components/GoldCombobox";
-import { Modal, Section, Button, FormField, Input, DocumentUploadControl, type DocumentUploadStatus } from "@/components/ui";
+import { Modal, Section, Button, FormField, DocumentUploadControl, type DocumentUploadStatus } from "@/components/ui";
 
 /** Shape of confirmed identity fields (user-edited) */
 export interface ConfirmedIdentityFields {

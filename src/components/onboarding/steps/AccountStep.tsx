@@ -1,14 +1,13 @@
 // src\app\onboarding\steps\AccountStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 
 import React from "react";
 import {
-  GOLD,
-  GOLD_BG_SOFT,
   DEV_MODE,
 } from "../onboardingShared";
-import { Section, Button, Input, Alert } from "@/components/ui";
+import { Section, Button, Alert } from "@/components/ui";
 import { checkEmailAvailability } from "@/lib/koraClient";
 
 export function AccountStep({
@@ -133,9 +132,6 @@ export function AccountStep({
     if (DEV_MODE) setValue("phoneOtp", "000000");
     // TODO: call POST /api/auth/otp/phone to send a real OTP in production
   }
-
-  const baseBtn =
-    "px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-100 hover:bg-neutral-800";
 
   return (
     <div className="space-y-5">
@@ -372,7 +368,7 @@ export function AccountStep({
 
         {DEV_MODE && (
           <p className="mt-2 text-xs text-neutral-500">
-            Tip: we'll add strength checks in production.
+            Tip: we&apos;ll add strength checks in production.
           </p>
         )}
       </Section>

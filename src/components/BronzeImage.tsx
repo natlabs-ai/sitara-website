@@ -45,6 +45,7 @@ export default function BronzeImage({
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-soft">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={finalSrc}
         alt={alt}

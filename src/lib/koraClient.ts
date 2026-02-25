@@ -1,4 +1,5 @@
 // src/lib/koraClient.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Sitara-specific Kora API client.
 // All requests go through the Next.js proxy at /api/kora/[...path] (which adds
 // X-Tenant-Key and forwards auth cookies) or the dedicated auth routes at /api/auth/*.

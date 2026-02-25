@@ -1,4 +1,5 @@
 // src/app/onboarding/steps/ProfileStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 

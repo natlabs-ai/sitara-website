@@ -71,6 +71,7 @@ export default function SafeImg({ alt, sources, className, loading = "lazy" }: P
   }, [candidates, loading]);
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}

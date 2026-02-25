@@ -5,7 +5,6 @@ import {
   login as apiLogin,
   logout as apiLogout,
   getCurrentUser,
-  type LoginPayload,
   type ApplicationSummary,
 } from "@/lib/koraClient";
 

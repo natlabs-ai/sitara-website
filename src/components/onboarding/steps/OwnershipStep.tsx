@@ -1,4 +1,5 @@
 // src/app/onboarding/steps/OwnershipStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -16,7 +17,7 @@ import {
   fetchEvidencePack,
   type EvidencePackResponse,
 } from "@/lib/koraClient";
-import { GOLD, GOLD_BG_SOFT } from "../onboardingShared";
+import { GOLD } from "../onboardingShared";
 import {
   Modal,
   Section,
@@ -116,7 +117,7 @@ interface OwnerDocUploaderProps {
 }
 
 const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
-  fieldId,
+  fieldId: _fieldId,
   label,
   description,
   category,

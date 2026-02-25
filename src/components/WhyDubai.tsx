@@ -26,7 +26,7 @@ export default function WhyDubai() {
             At the Heart of Global Gold Trade
           </h2>
           <p className="mt-6 text-base sm:text-lg text-neutral-300 leading-relaxed">
-            Dubai's strategic location, regulatory framework, and Free Zone
+            Dubai&apos;s strategic location, regulatory framework, and Free Zone
             infrastructure connect producers, refineries, and markets with
             efficiency and trust. Sitara operates within this network to deliver
             reliable routes from origin to market.

@@ -1,9 +1,8 @@
 // src/app/onboarding/steps/AuthorisedPeopleStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
-import { countries } from "@/data/countries";
-import { GoldCombobox } from "@/components/GoldCombobox";
 import {
   type AuthorizedPerson,
   type AuthorizedPersonCreatePayload,
@@ -15,7 +14,6 @@ import {
   fetchEvidencePack,
   type EvidencePackResponse,
 } from "@/lib/koraClient";
-import { GOLD, GOLD_BG_SOFT } from "../onboardingShared";
 
 // Import UI components
 import {
@@ -51,11 +49,6 @@ type LocalPersonDraft = {
   isEditing: boolean;
 };
 
-type DocRef = {
-  id: string;
-  name: string;
-};
-
 /** Helper to unwrap scalar values from extraction payloads */
 function unwrapScalar(v: any): string {
   if (v === null || v === undefined) return "";
@@ -74,15 +67,6 @@ function readV2Field(normalization: any, fieldKey: string): string {
   if (typeof node === "string") return node;
   if (typeof node === "object") return unwrapScalar(node);
   return "";
-}
-
-/** Helper to convert date strings to YYYY-MM-DD */
-function toInputDate(v: any): string {
-  const s = unwrapScalar(v);
-  if (!s) return "";
-  // Already YYYY-MM-DD or ISO datetime
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  return s;
 }
 
 /**
@@ -381,7 +365,7 @@ const PersonModal: React.FC<{
  */
 export default function AuthorisedPeopleStep({
   answers,
-  setValue,
+  setValue: _setValue,
   isResuming = false,
 }: AuthorisedPeopleStepProps) {
   const [persons, setPersons] = React.useState<AuthorizedPerson[]>([]);

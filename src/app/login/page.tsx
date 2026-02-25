@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/koraClient";
@@ -40,8 +40,8 @@ export default function LoginPage() {
       await login({ email: email.trim(), password });
       await refreshUser();
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Invalid email or password.");
+    } catch (err: unknown) {
+      setError((err as { message?: string })?.message || "Invalid email or password.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +104,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 transition focus:outline-none focus:ring-2"
-                style={{ focusRingColor: GOLD } as any}
+                style={{ focusRingColor: GOLD } as React.CSSProperties}
                 onFocus={(e) => (e.target.style.borderColor = GOLD)}
                 onBlur={(e) => (e.target.style.borderColor = "")}
                 placeholder="you@example.com"

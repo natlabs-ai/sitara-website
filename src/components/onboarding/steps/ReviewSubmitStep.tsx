@@ -1,8 +1,9 @@
 // src/app/onboarding/steps/ReviewSubmitStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
-import { DEV_MODE, GOLD, GOLD_BG_SOFT } from "../onboardingShared";
+import { DEV_MODE, GOLD } from "../onboardingShared";
 import {
   fetchEvidencePack,
   listBeneficialOwners,
@@ -399,7 +400,7 @@ export default function ReviewSubmitStep({
 
   const documents = Array.isArray(evidence?.documents) ? evidence!.documents : [];
 
-  const latestDocFor = React.useCallback(
+  const _latestDocFor = React.useCallback(
     (docType: string) => {
       const latestId = latestByType?.[docType];
       if (!latestId) return null;

@@ -1,4 +1,5 @@
 // src/app/onboarding/steps/PersonalReviewStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 

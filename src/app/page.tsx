@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
@@ -12,14 +12,13 @@ import Footer from "@/components/Footer";
 const SECTIONS = ["about", "services", "why-dubai", "contact"] as const;
 
 export default function Page() {
-  const [active, setActive] = useState<(typeof SECTIONS)[number]>("about");
   const refs = useRef<Record<string, HTMLElement | null>>({});
 
-  // highlight current section
+  // highlight current section (track active via IntersectionObserver but not used in render)
   useEffect(() => {
     if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id as any)),
+      () => { /* active tracking unused */ },
       { threshold: 0.5 }
     );
     SECTIONS.forEach((id) => {

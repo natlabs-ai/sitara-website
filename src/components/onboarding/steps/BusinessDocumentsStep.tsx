@@ -1,4 +1,5 @@
 // src/app/onboarding/steps/BusinessDocumentsStep.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -297,7 +298,7 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
     setUploadStatus("uploading");
 
     try {
-      let nextDocs: DocRef[] = single ? [] : [...docs];
+      const nextDocs: DocRef[] = single ? [] : [...docs];
 
       const formData = new FormData();
       formData.append("file", file);

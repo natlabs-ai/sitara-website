@@ -84,9 +84,9 @@ export default function DashboardPage() {
       setDeletingId(applicationId);
       await deleteApplication(applicationId);
       await refreshUser();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Delete error:", error);
-      alert(error?.message || "Failed to delete application");
+      alert((error as { message?: string })?.message || "Failed to delete application");
     } finally {
       setDeletingId(null);
     }

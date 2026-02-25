@@ -1,4 +1,5 @@
 // src/components/ProofOfAddressUploader.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";

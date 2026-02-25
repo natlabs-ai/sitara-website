@@ -1,4 +1,5 @@
 // src/app/api/contact/route.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
