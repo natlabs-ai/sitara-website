@@ -753,5 +753,7 @@ export async function logout(): Promise<void> {
 export async function getCurrentUser(): Promise<LoginResponse> {
   const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
   if (!res.ok) throw new Error("Unauthorized");
-  return res.json();
+  const data = await res.json();
+  // /api/auth/me returns { authenticated: true, user: LoginResponse }
+  return (data.user ?? data) as LoginResponse;
 }

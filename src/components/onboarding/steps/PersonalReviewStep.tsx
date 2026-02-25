@@ -46,7 +46,7 @@ export const PersonalReviewStep: React.FC<PersonalReviewStepProps> = ({
       return;
     }
 
-    fetch(`http://localhost:8000/api/v1/documents/applications/${applicationId}/documents`)
+    fetch(`/api/kora/documents/applications/${applicationId}/documents`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
         setDocuments(data.documents || []);
@@ -93,7 +93,7 @@ export const PersonalReviewStep: React.FC<PersonalReviewStepProps> = ({
   const handleViewDocument = async (docId: string) => {
     try {
       console.log("Fetching view URL for document:", docId);
-      const res = await fetch(`http://localhost:8000/api/v1/documents/${docId}/view`);
+      const res = await fetch(`/api/kora/documents/${docId}/view`, { credentials: 'include' });
 
       console.log("Response status:", res.status);
       const data = await res.json();

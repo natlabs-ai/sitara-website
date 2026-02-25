@@ -494,7 +494,7 @@ export default function ReviewSubmitStep({
   const handleViewDocument = async (docId: string) => {
     try {
       console.log("Fetching view URL for document:", docId);
-      const res = await fetch(`http://localhost:8000/api/v1/documents/${docId}/view`);
+      const res = await fetch(`/api/kora/documents/${docId}/view`, { credentials: 'include' });
 
       console.log("Response status:", res.status);
       const data = await res.json();

@@ -194,8 +194,9 @@ export default function OnboardingRenderer({
 
     try {
       setIsSaving(true);
-      const res = await fetch(`http://localhost:8000/api/v1/applications/${effectiveApplicationId}/draft`, {
+      const res = await fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           current_step_id: currentStep.id,
@@ -234,8 +235,9 @@ export default function OnboardingRenderer({
 
     try {
       setIsSaving(true);
-      const res = await fetch(`http://localhost:8000/api/v1/applications/${effectiveApplicationId}/draft`, {
+      const res = await fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           current_step_id: currentStep.id,
@@ -878,9 +880,10 @@ export default function OnboardingRenderer({
 
         // Use the PATCH endpoint to update the existing profile with risk declarations
         const response = await fetch(
-          `http://localhost:8000/api/v1/profiles/${answers.koraApplicantProfileId}`,
+          `/api/kora/profiles/${answers.koraApplicantProfileId}`,
           {
             method: "PATCH",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
             },
