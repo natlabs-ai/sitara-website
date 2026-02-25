@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/onboard?mode=login");
+      router.push("/login");
     }
   }, [isLoading, isAuthenticated, router]);
 

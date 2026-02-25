@@ -45,7 +45,7 @@ export default function Header() {
           ))}
           <li>
             <Link
-              href="/onboard?mode=login"
+              href="/login"
               className="text-sm text-neutral-300 hover:text-white"
             >
               Log In
@@ -95,7 +95,7 @@ export default function Header() {
           ))}
           <li>
             <Link
-              href="/onboard?mode=login"
+              href="/login"
               onClick={close}
               className="block rounded-md px-3 py-3 text-base text-neutral-200 hover:bg-neutral-800"
             >
