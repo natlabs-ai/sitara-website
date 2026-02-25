@@ -9,6 +9,8 @@ const links = [
   { href: "#contact", label: "Contact" },
 ];
 
+const GOLD = "#bfa76f";
+
 export default function Header() {
   const [open, setOpen] = useState(false);
 
@@ -41,6 +43,23 @@ export default function Header() {
               </a>
             </li>
           ))}
+          <li>
+            <Link
+              href="/onboard"
+              className="text-sm text-neutral-300 hover:text-white"
+            >
+              Log In
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/onboard"
+              className="text-sm font-medium px-4 py-2 rounded-lg transition"
+              style={{ background: GOLD, color: "#0c0c0c" }}
+            >
+              Open Account
+            </Link>
+          </li>
         </ul>
 
         {/* Mobile menu button */}
@@ -74,6 +93,25 @@ export default function Header() {
               </a>
             </li>
           ))}
+          <li>
+            <Link
+              href="/onboard"
+              onClick={close}
+              className="block rounded-md px-3 py-3 text-base text-neutral-200 hover:bg-neutral-800"
+            >
+              Log In
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/onboard"
+              onClick={close}
+              className="block rounded-md px-3 py-3 text-base font-medium"
+              style={{ color: GOLD }}
+            >
+              Open Account
+            </Link>
+          </li>
         </ul>
       </div>
     </header>

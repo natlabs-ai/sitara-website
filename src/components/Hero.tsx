@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
 type Props = {
   onPrimary: () => void;
   onSecondary: () => void;
 };
 
-export default function Hero({ onPrimary, onSecondary }: Props) {
+export default function Hero({ onSecondary }: Props) {
   return (
     <section aria-label="Hero" className="pt-28 relative">
       {/* Abstract bronze gradients */}
@@ -27,12 +29,12 @@ export default function Hero({ onPrimary, onSecondary }: Props) {
             and delivery of investment-grade gold.
           </p>
           <div className="mt-8 flex items-center gap-4">
-            <button
-              onClick={onPrimary}
+            <Link
+              href="/onboard"
               className="border border-bronze rounded-xl px-5 py-3 hover:bg-bronze hover:text-black"
             >
-              Begin Relationship
-            </button>
+              Open Account
+            </Link>
             <button
               onClick={onSecondary}
               className="text-foreground/70 hover:text-bronze"
