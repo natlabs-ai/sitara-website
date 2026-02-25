@@ -14,8 +14,11 @@ export default function OnboardPage() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resume");
   const viewId = searchParams.get("view");
+  const mode = searchParams.get("mode"); // "login" | null (null → signup)
 
-  const [initialAnswers, setInitialAnswers] = React.useState<Record<string, any>>({});
+  const [initialAnswers, setInitialAnswers] = React.useState<Record<string, any>>(
+    mode === "login" ? { authMode: "login" } : {}
+  );
   const [initialStepId, setInitialStepId] = React.useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
