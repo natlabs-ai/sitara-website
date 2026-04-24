@@ -444,6 +444,11 @@ export default function OnboardingRenderer({
     }
 
     if (step.id === "identity") {
+      // DEV_MODE bypass: skip doc-upload gating so E2E tests can pass through
+      // without uploading real documents. handleNext() still auto-advances for
+      // non-UAE accounts (no Emirates ID required).
+      if (DEV_MODE) return !!answers.countryOfResidence && !isSubmittingStep;
+
       const isUAE = answers.countryOfResidence === "United Arab Emirates";
 
       // Source of truth for "Passport/ID received" is the saved Document ID.

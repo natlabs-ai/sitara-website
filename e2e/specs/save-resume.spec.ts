@@ -5,6 +5,7 @@ import { randomFile } from '../fixtures/randomFile'
 import {
   AccountSelectionPage,
   AccountStepPage,
+  IdentityPage,
   CorporateSetupPage,
   CompanyDetailsPage,
   OwnershipPage,
@@ -75,11 +76,19 @@ test.describe('Business onboarding — save & resume', () => {
     const accountStep = new AccountStepPage(page)
     await accountStep.signUp(freshAccount.email, freshAccount.password)
     await accountStep.clickNext()
-    // Wait for corporateSetup sentinel
-    await page.waitForSelector('[data-testid="next-button"]')
 
     // -------------------------------------------------------------------------
-    // 4. corporateSetup — fill but do NOT click Next
+    // 4. identity — shown for all account types; DEV_MODE only needs country
+    // -------------------------------------------------------------------------
+    const identity = new IdentityPage(page)
+    await identity.waitForStep()
+    await identity.fill('Bahrain')
+    await identity.clickNext()
+    // Wait for corporateSetup sentinel
+    await page.waitForSelector('input[name="biz_orientation"]')
+
+    // -------------------------------------------------------------------------
+    // 5. corporateSetup — fill but do NOT click Next
     // -------------------------------------------------------------------------
     const corporateSetup = new CorporateSetupPage(page)
     await corporateSetup.fill(CORP_SETUP)

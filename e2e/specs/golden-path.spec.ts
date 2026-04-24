@@ -5,6 +5,7 @@ import { randomFile } from '../fixtures/randomFile'
 import {
   AccountSelectionPage,
   AccountStepPage,
+  IdentityPage,
   CorporateSetupPage,
   CompanyDetailsPage,
   OwnershipPage,
@@ -75,11 +76,20 @@ test.describe('Business onboarding — golden path', () => {
     await accountStep.signUp(freshAccount.email, freshAccount.password)
     // signUp() does NOT advance; caller clicks next
     await accountStep.clickNext()
-    // Wait for corporateSetup sentinel
-    await page.waitForSelector('[data-testid="next-button"]')
 
     // -------------------------------------------------------------------------
-    // 4. corporateSetup
+    // 4. identity — shown for all account types; DEV_MODE only needs country
+    //    (non-UAE → handleNext auto-advances, no Emirates ID required)
+    // -------------------------------------------------------------------------
+    const identity = new IdentityPage(page)
+    await identity.waitForStep()
+    await identity.fill('Bahrain')
+    await identity.clickNext()
+    // Wait for corporateSetup sentinel (biz_orientation radio)
+    await page.waitForSelector('input[name="biz_orientation"]')
+
+    // -------------------------------------------------------------------------
+    // 5. corporateSetup
     // -------------------------------------------------------------------------
     const corporateSetup = new CorporateSetupPage(page)
     await corporateSetup.fill(CORP_SETUP)
