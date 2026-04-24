@@ -8,6 +8,7 @@ export interface SectionProps {
   titleColor?: 'gold' | 'neutral';
   children: React.ReactNode;
   className?: string;
+  'data-testid'?: string;
 }
 
 export const Section: React.FC<SectionProps> = ({
@@ -16,9 +17,10 @@ export const Section: React.FC<SectionProps> = ({
   titleColor = 'neutral',
   children,
   className,
+  'data-testid': dataTestId,
 }) => {
   return (
-    <section className={cn('rounded-2xl border border-neutral-800 bg-black/30 p-5', className)}>
+    <section className={cn('rounded-2xl border border-neutral-800 bg-black/30 p-5', className)} data-testid={dataTestId}>
       {title && (
         <h3
           className="mb-3 text-sm font-semibold"

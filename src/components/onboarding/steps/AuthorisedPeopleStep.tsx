@@ -80,6 +80,7 @@ const PersonDocumentUploader: React.FC<{
   tenantId: string;
   applicationId: string;
   applicantId: string;
+  testId?: string;
   onUploaded?: (info: { documentId: string; extracted?: any }) => Promise<void>;
 }> = ({
   fieldId,
@@ -89,6 +90,7 @@ const PersonDocumentUploader: React.FC<{
   tenantId,
   applicationId,
   applicantId,
+  testId,
   onUploaded,
 }) => {
   const [status, setStatus] = React.useState<DocumentUploadStatus>("idle");
@@ -171,6 +173,7 @@ const PersonDocumentUploader: React.FC<{
         accept=".pdf,.jpg,.jpeg,.png"
         maxSizeMB={10}
         fileName={status === "success" ? fileName : undefined}
+        testId={testId}
       />
     </FormField>
   );
@@ -275,7 +278,7 @@ const PersonModal: React.FC<{
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSave} loading={saving}>
+          <Button variant="primary" onClick={handleSave} loading={saving} data-testid="save-ap-button">
             Save
           </Button>
         </>
@@ -330,6 +333,7 @@ const PersonModal: React.FC<{
             tenantId={tenantId}
             applicationId={applicationId}
             applicantId={applicantId}
+            testId="ap-id-doc"
             onUploaded={handleIdDocUploaded}
           />
 
@@ -341,6 +345,7 @@ const PersonModal: React.FC<{
             tenantId={tenantId}
             applicationId={applicationId}
             applicantId={applicantId}
+            testId="ap-address-doc"
             onUploaded={handleAddressDocUploaded}
           />
         </div>
@@ -504,7 +509,7 @@ export default function AuthorisedPeopleStep({
           </Section>
         ) : (
           persons.map((person) => (
-            <Section key={person.id}>
+            <Section key={person.id} data-testid="ap-card">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-neutral-100">
@@ -541,7 +546,7 @@ export default function AuthorisedPeopleStep({
           ))
         )}
 
-        <Button variant="secondary" onClick={openAddModal}>
+        <Button variant="secondary" onClick={openAddModal} data-testid="add-ap-button">
           Add authorized person
         </Button>
       </div>
