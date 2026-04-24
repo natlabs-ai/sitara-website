@@ -44,7 +44,7 @@ const RELATIONSHIP = {
   direction: 'inbound',
   products: ['bars'],
   frequency: 'monthly',
-  valueBand: '1m-10m',
+  valueBand: '>1m',
   paymentMethods: ['bank_transfer'],
 }
 
@@ -148,7 +148,7 @@ test.describe('Business onboarding — golden path', () => {
     await questionnaire.answerRadio('sanctions_screening', 'yes')
     await questionnaire.answerRadio('ubo_disclosed_verified', 'yes')
     await questionnaire.answerRadio('aml_policy', 'yes')
-    await questionnaire.answerRadio('expected_txn_volume_usd_band', '1m-10m')
+    await questionnaire.answerRadio('expected_txn_volume_usd_band', '>10m')
 
     // countries_of_operation_iso2 is a country_multi_select with no testid.
     // Best-effort: try to select UAE; if the control is absent / optional, continue.
