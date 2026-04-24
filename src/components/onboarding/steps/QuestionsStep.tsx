@@ -103,6 +103,7 @@ function RadioQuestion({
               value={opt.value}
               checked={value === opt.value}
               onChange={() => onSet(opt.value)}
+              data-testid={`q-${def.code}-${opt.value}`}
               className="h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[#bfa76f] focus:ring-[#bfa76f]"
             />
             <span>{opt.label}</span>
@@ -137,6 +138,7 @@ function AckQuestion({
           type="checkbox"
           checked={checked}
           onChange={(e) => onToggle(e.target.checked)}
+          data-testid={`q-${def.code}-ack`}
           className="h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[#bfa76f] focus:ring-[#bfa76f]"
         />
         <span>
