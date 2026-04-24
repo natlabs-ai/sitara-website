@@ -14,7 +14,7 @@ export type FreshAccount = {
 export const test = base.extend<{ freshAccount: FreshAccount }>({
   freshAccount: async ({}, use) => {
     const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
-    const email    = `test-e2e-${suffix}@test.sitara.invalid`
+    const email    = `test-e2e-${suffix}@e2e.example.com`
     const password = 'E2eTestPass1!'
 
     let passed = false
