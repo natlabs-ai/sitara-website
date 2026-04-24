@@ -176,6 +176,7 @@ interface CollapsibleSectionProps {
   progress?: { completed: number; total: number };
   isComplete?: boolean;
   optional?: boolean;
+  sectionNumber?: number;
   children: React.ReactNode;
 }
 
@@ -187,50 +188,82 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   progress,
   isComplete,
   optional,
+  sectionNumber,
   children,
 }) => {
+  const accentColor = isComplete
+    ? "bg-green-500"
+    : expanded
+    ? "bg-amber-500"
+    : "bg-neutral-600";
+
+  const borderColor = expanded ? "border-neutral-700" : "border-neutral-800";
+
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+    <div className={`rounded-xl border-2 overflow-hidden shadow-sm ${borderColor}`}>
+      {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-neutral-800/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left bg-neutral-900 hover:bg-neutral-800/80 transition-colors"
       >
-        <div className="flex items-center gap-3">
+        {/* Left accent bar */}
+        <div className={`w-1 h-8 rounded-full shrink-0 ${accentColor}`} />
+
+        {/* Section number badge */}
+        {sectionNumber !== undefined && (
+          <div
+            className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+              isComplete
+                ? "bg-green-500/20 text-green-400"
+                : expanded
+                ? "bg-amber-500/20 text-amber-400"
+                : "bg-neutral-700 text-neutral-400"
+            }`}
+          >
+            {isComplete ? <Check className="w-3 h-3" /> : sectionNumber}
+          </div>
+        )}
+
+        {/* Title + subtitle */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-neutral-100">{title}</span>
+            {optional && (
+              <span className="text-[10px] uppercase tracking-wide text-neutral-400 bg-neutral-700 px-1.5 py-0.5 rounded">
+                Optional
+              </span>
+            )}
+          </div>
+          {subtitle && (
+            <p className="text-xs text-neutral-500 mt-0.5 truncate">{subtitle}</p>
+          )}
+        </div>
+
+        {/* Right side: progress pill + chevron */}
+        <div className="flex items-center gap-3 shrink-0">
+          {progress && !optional && (
+            <span
+              className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                isComplete
+                  ? "bg-green-500/15 text-green-400"
+                  : "bg-neutral-700 text-neutral-400"
+              }`}
+            >
+              {progress.completed}/{progress.total}
+            </span>
+          )}
           {expanded ? (
             <ChevronDown className="w-4 h-4 text-neutral-400" />
           ) : (
             <ChevronRight className="w-4 h-4 text-neutral-400" />
           )}
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-neutral-100">{title}</span>
-              {optional && (
-                <span className="text-[10px] uppercase tracking-wide text-neutral-500 bg-neutral-800 px-1.5 py-0.5 rounded">
-                  Optional
-                </span>
-              )}
-            </div>
-            {subtitle && (
-              <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {progress && !optional && (
-            <span className="text-xs text-neutral-400">
-              {progress.completed} of {progress.total} completed
-            </span>
-          )}
-          {isComplete && (
-            <div className="w-5 h-5 rounded-full bg-green-600/20 flex items-center justify-center">
-              <Check className="w-3 h-3 text-green-400" />
-            </div>
-          )}
         </div>
       </button>
+
+      {/* Content */}
       {expanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-neutral-800">
+        <div className="px-5 pb-5 pt-4 bg-neutral-800/40 border-t border-neutral-800">
           {children}
         </div>
       )}
@@ -253,6 +286,7 @@ interface BusinessDocUploaderProps {
   setValue: (id: string, val: any) => void;
   onUploaded?: (args: { category: string; documentId: string }) => void | Promise<void>;
   showValidationError?: boolean;
+  testId?: string;
 }
 
 const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
@@ -269,6 +303,7 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
   setValue,
   onUploaded,
   showValidationError = false,
+  testId,
 }) => {
   const [uploadStatus, setUploadStatus] = React.useState<DocumentUploadStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -365,43 +400,55 @@ const BusinessDocUploader: React.FC<BusinessDocUploaderProps> = ({
   const showError = showValidationError && required && !hasDocs;
 
   return (
-    <div className="space-y-2">
-      <FormField
-        label={label}
-        required={required}
-        helperText={description}
-        error={showError ? "This field is required." : undefined}
-        showError={showError}
-      >
-        <DocumentUploadControl
-          status={controlStatus}
-          errorMessage={error}
-          onFileSelect={handleFileSelect}
-          accept=".pdf,.jpg,.jpeg,.png,.zip"
-          maxSizeMB={25}
-        />
-
+    <div className="rounded-lg border border-neutral-700 bg-neutral-900/70 p-4 flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <label className="text-sm font-medium text-neutral-200">
+          {label}
+          {required && <span className="text-red-400 ml-0.5">*</span>}
+          {showError && (
+            <span className="ml-2 text-xs font-normal text-red-400">Required</span>
+          )}
+        </label>
         {hasDocs && (
-          <ul className="mt-2 space-y-1 text-xs text-neutral-300">
-            {docs.map((doc) => (
-              <li
-                key={doc.id}
-                className="flex items-center justify-between gap-2 rounded-md bg-neutral-950/50 px-3 py-2"
-              >
-                <span className="truncate">{doc.name}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemove(doc.id)}
-                  disabled={uploadStatus === "uploading"}
-                  className="shrink-0 text-[11px] text-neutral-400 underline-offset-2 hover:text-neutral-100 hover:underline"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
+            <Check className="w-2.5 h-2.5 text-green-400" />
+          </div>
         )}
-      </FormField>
+      </div>
+
+      {description && (
+        <p className="text-xs text-neutral-500 leading-snug">{description}</p>
+      )}
+
+      <DocumentUploadControl
+        status={controlStatus}
+        errorMessage={error}
+        onFileSelect={handleFileSelect}
+        accept=".pdf,.jpg,.jpeg,.png,.zip"
+        maxSizeMB={25}
+        testId={testId}
+      />
+
+      {hasDocs && (
+        <ul className="space-y-1 text-xs text-neutral-400">
+          {docs.map((doc) => (
+            <li
+              key={doc.id}
+              className="flex items-center justify-between gap-2 rounded-md bg-neutral-800 px-3 py-2"
+            >
+              <span className="truncate text-neutral-300">{doc.name}</span>
+              <button
+                type="button"
+                onClick={() => handleRemove(doc.id)}
+                disabled={uploadStatus === "uploading"}
+                className="shrink-0 text-[11px] text-neutral-500 underline-offset-2 hover:text-red-400 hover:underline"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
@@ -785,7 +832,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
 
       {/* Legal existence modal */}
       <Modal
@@ -1006,6 +1053,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
         onToggle={() => toggleSection("A")}
         progress={sectionAProgress}
         isComplete={sectionAComplete}
+        sectionNumber={1}
       >
         <div className="grid gap-4 md:grid-cols-2 mt-2">
           <BusinessDocUploader
@@ -1022,6 +1070,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
             setValue={setValue}
             onUploaded={onDocUploaded}
             showValidationError={showValidationErrors}
+            testId="upload-legal-existence"
           />
 
           <BusinessDocUploader
@@ -1036,6 +1085,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
             answers={answers}
             setValue={setValue}
             showValidationError={showValidationErrors}
+            testId="upload-constitutional"
           />
         </div>
       </CollapsibleSection>
@@ -1048,6 +1098,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
         onToggle={() => toggleSection("B")}
         progress={sectionBProgress}
         isComplete={sectionBComplete}
+        sectionNumber={2}
       >
         <div className="space-y-4 mt-2">
           <div className="grid gap-4 md:grid-cols-2">
@@ -1064,17 +1115,19 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
                 answers={answers}
                 setValue={setValue}
                 showValidationError={showValidationErrors}
+                testId="upload-registered-address"
               />
 
               {/* Address classification selector */}
-              <FormField
-                label="This address is:"
-                required
-                error={showValidationErrors && !hasAddressClassification ? "Please select an option." : undefined}
-                showError={showValidationErrors && !hasAddressClassification}
-              >
-                <div className="space-y-2">
-                  <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="rounded-lg border border-neutral-700 bg-neutral-900/70 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <p className="text-sm font-medium text-neutral-200 shrink-0">
+                    This address is:
+                    {showValidationErrors && !hasAddressClassification && (
+                      <span className="ml-2 text-xs font-normal text-red-400">Required</span>
+                    )}
+                  </p>
+                  <label className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="radio"
                       name="addressClassification"
@@ -1083,11 +1136,11 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
                       onChange={(e) => handleAddressClassification(e.target.value)}
                       className="h-4 w-4 border-neutral-600 bg-neutral-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-neutral-900"
                     />
-                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors">
-                      The registered business address (as per official records)
+                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors whitespace-nowrap">
+                      Registered business address
                     </span>
                   </label>
-                  <label className="flex items-center gap-3 cursor-pointer group">
+                  <label className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="radio"
                       name="addressClassification"
@@ -1096,12 +1149,12 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
                       onChange={(e) => handleAddressClassification(e.target.value)}
                       className="h-4 w-4 border-neutral-600 bg-neutral-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-neutral-900"
                     />
-                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors">
-                      The operating address (different from the registered address)
+                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors whitespace-nowrap">
+                      Operating address (different from registered)
                     </span>
                   </label>
                 </div>
-              </FormField>
+              </div>
             </div>
 
             <BusinessDocUploader
@@ -1117,6 +1170,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
               setValue={setValue}
               onUploaded={onDocUploaded}
               showValidationError={showValidationErrors}
+              testId="upload-tax-registration"
             />
           </div>
         </div>
@@ -1129,6 +1183,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
         expanded={expandedSections.C}
         onToggle={() => toggleSection("C")}
         optional
+        sectionNumber={3}
       >
         <div className="grid gap-4 md:grid-cols-2 mt-2">
           <BusinessDocUploader
@@ -1142,6 +1197,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
             applicantId={applicantId}
             answers={answers}
             setValue={setValue}
+            testId="upload-activity-evidence"
           />
 
           {needsPreciousMetalsPermits && (
@@ -1156,6 +1212,7 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
               applicantId={applicantId}
               answers={answers}
               setValue={setValue}
+              testId="upload-precious-metals"
             />
           )}
         </div>
