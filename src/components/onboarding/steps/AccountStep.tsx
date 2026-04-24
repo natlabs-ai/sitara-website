@@ -174,6 +174,7 @@ export function AccountStep({
             onClick={() => setMode('signup')}
             fullWidth
             size="lg"
+            data-testid="mode-signup"
           >
             Create Account
           </Button>
@@ -182,6 +183,7 @@ export function AccountStep({
             onClick={() => setMode('login')}
             fullWidth
             size="lg"
+            data-testid="mode-login"
           >
             Log In
           </Button>
@@ -205,6 +207,7 @@ export function AccountStep({
             placeholder="name@example.com"
             value={answers.email || ""}
             onChange={(e) => setValue("email", e.target.value)}
+            data-testid="account-email"
           />
         ) : (
           <div className="grid md:grid-cols-3 gap-3 items-center">
@@ -217,6 +220,7 @@ export function AccountStep({
                 setValue("email", e.target.value);
                 setValue("emailVerified", false);
               }}
+              data-testid="account-email"
             />
             <div className="flex items-center gap-2">
               <input
@@ -227,6 +231,7 @@ export function AccountStep({
                 placeholder="Email OTP"
                 value={answers.emailOtp || ""}
                 onChange={(e) => setValue("emailOtp", e.target.value)}
+                data-testid="email-otp-input"
               />
               <Button
                 variant="secondary"
@@ -236,6 +241,7 @@ export function AccountStep({
                   if (DEV_MODE) setValue("emailOtp", "000000");
                   // TODO: call POST /api/auth/otp/email to send a real OTP in production
                 }}
+                data-testid="email-otp-send"
               >
                 Send
               </Button>
@@ -245,6 +251,7 @@ export function AccountStep({
                 onClick={() =>
                   setValue("emailVerified", !!answers.email && !!answers.emailOtp)
                 }
+                data-testid="email-verify"
               >
                 {answers.emailVerified ? "Verified" : "Verify"}
               </Button>
@@ -284,6 +291,7 @@ export function AccountStep({
                 placeholder="501234567"
                 value={national}
                 onChange={(e) => onNationalChange(e.target.value)}
+                data-testid="phone-national-input"
               />
             </div>
 
@@ -296,8 +304,9 @@ export function AccountStep({
                 placeholder="SMS OTP"
                 value={answers.phoneOtp || ""}
                 onChange={(e) => setValue("phoneOtp", e.target.value)}
+                data-testid="phone-otp-input"
               />
-              <Button variant="secondary" size="sm" onClick={sendSmsOtp}>
+              <Button variant="secondary" size="sm" onClick={sendSmsOtp} data-testid="phone-otp-send">
                 Send
               </Button>
               <Button
@@ -309,6 +318,7 @@ export function AccountStep({
                     !!answers.phone && !!answers.phoneOtp
                   )
                 }
+                data-testid="phone-verify"
               >
                 {answers.phoneVerified ? "Verified" : "Verify"}
               </Button>
@@ -338,6 +348,7 @@ export function AccountStep({
             setValue("password", e.target.value);
             if (answers.confirmPassword) setValue("passwordMatch", true);
           }}
+          data-testid="account-password"
         />
 
         {mode === 'signup' && (
@@ -354,6 +365,7 @@ export function AccountStep({
                 setValue("confirmPassword", e.target.value);
                 setValue("passwordMatch", e.target.value === answers.password);
               }}
+              data-testid="account-confirm-password"
             />
 
             {answers.confirmPassword &&
