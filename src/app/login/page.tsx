@@ -108,6 +108,7 @@ export default function LoginPage() {
                 onFocus={(e) => (e.target.style.borderColor = GOLD)}
                 onBlur={(e) => (e.target.style.borderColor = "")}
                 placeholder="you@example.com"
+                data-testid="login-email"
               />
             </div>
 
@@ -131,6 +132,7 @@ export default function LoginPage() {
                   onFocus={(e) => (e.target.style.borderColor = GOLD)}
                   onBlur={(e) => (e.target.style.borderColor = "")}
                   placeholder="••••••••"
+                  data-testid="login-password"
                 />
                 <button
                   type="button"
@@ -160,6 +162,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="mt-2 w-full rounded-lg px-4 py-3 text-sm font-medium text-black transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: GOLD }}
+              data-testid="login-submit"
             >
               {isSubmitting ? "Logging in…" : "Log In"}
             </button>

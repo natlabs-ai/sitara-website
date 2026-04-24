@@ -112,6 +112,7 @@ export default function DashboardPage() {
             <button
               onClick={handleLogout}
               className="rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm text-neutral-100 transition hover:bg-neutral-800"
+              data-testid="logout-button"
             >
               Logout
             </button>
@@ -204,6 +205,7 @@ export default function DashboardPage() {
                           href={`/onboard?resume=${app.id}`}
                           style={{ backgroundColor: GOLD }}
                           className="rounded-lg px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
+                          data-testid="continue-application"
                         >
                           Continue Application
                         </Link>
