@@ -1,12 +1,13 @@
 import { type Page } from '@playwright/test'
 
-export interface CompanyDetailsData {
-  street: string
-  city: string
-  country: string
-  phone: string
-}
-
+/**
+ * CompanyDetailsPage covers the `companyDetails` wizard step, which renders
+ * BusinessDocumentsStep — a set of document upload controls.
+ *
+ * All upload testids follow the pattern:
+ *   container: data-testid="{testId}"
+ *   hidden input: data-testid="{testId}-input"
+ */
 export class CompanyDetailsPage {
   constructor(private readonly page: Page) {}
 
@@ -38,13 +39,31 @@ export class CompanyDetailsPage {
     await this.saveAndExitButton.click()
   }
 
-  async fill(data: CompanyDetailsData) {
-    await this.page.getByLabel('Street address').fill(data.street)
-    await this.page.getByLabel('City').fill(data.city)
+  /** Upload a file to any DocumentUploadControl on this step. */
+  async uploadFile(testId: string, filePath: string) {
+    await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
+    // Wait for the container to reflect a non-idle state (uploading or success)
+    await this.page.getByTestId(testId).waitFor({ state: 'visible' })
+  }
 
-    // Country is a select rendered by FieldRenderer
-    await this.page.locator('select[name="country"]').selectOption({ label: data.country })
-
-    await this.page.getByLabel('Phone number').fill(data.phone)
+  /** Upload all required business documents. */
+  async uploadDocuments(files: {
+    legalExistence: string
+    constitutional: string
+    registeredAddress: string
+    taxRegistration: string
+    activityEvidence?: string
+    preciousMetalsPermit?: string
+  }) {
+    await this.uploadFile('upload-legal-existence', files.legalExistence)
+    await this.uploadFile('upload-constitutional', files.constitutional)
+    await this.uploadFile('upload-registered-address', files.registeredAddress)
+    await this.uploadFile('upload-tax-registration', files.taxRegistration)
+    if (files.activityEvidence) {
+      await this.uploadFile('upload-activity-evidence', files.activityEvidence)
+    }
+    if (files.preciousMetalsPermit) {
+      await this.uploadFile('upload-precious-metals', files.preciousMetalsPermit)
+    }
   }
 }

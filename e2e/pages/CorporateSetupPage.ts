@@ -1,11 +1,18 @@
 import { type Page } from '@playwright/test'
 
 export interface CorporateSetupData {
-  legalName: string
-  jurisdiction: string
-  registrationNumber: string
-  entityType: string
-  dateOfIncorporation: string
+  /** Country name as it appears in the dropdown, e.g. "United Arab Emirates" */
+  incCountry: string
+  /** 'activity' | 'services' */
+  bizOrientation: 'activity' | 'services'
+  /** Does the business ever take ownership of precious metals? */
+  takesOwnership: boolean
+  /** Does the business ever hold client assets or funds? */
+  holdsClientAssets: boolean
+  /** Does the business act as a broker/agent for clients? */
+  actsAsIntermediary: boolean
+  /** Only required when holdsClientAssets is true */
+  settlementFacilitation?: boolean
 }
 
 export class CorporateSetupPage {
@@ -40,18 +47,31 @@ export class CorporateSetupPage {
   }
 
   async fill(data: CorporateSetupData) {
-    await this.page.getByLabel('Legal name').fill(data.legalName)
+    // Business orientation radio
+    await this.page.locator(`input[name="biz_orientation"][value="${data.bizOrientation}"]`).click()
 
-    // Jurisdiction is a country select
-    await this.page.locator('select[name="jurisdiction"]').selectOption({ label: data.jurisdiction })
+    // Country of Incorporation — SearchableCountrySelect (custom text input + dropdown)
+    const countryInput = this.page.getByPlaceholder('Start typing to search…')
+    await countryInput.click()
+    await countryInput.fill(data.incCountry.slice(0, 5))
+    await this.page.getByRole('listitem').filter({ hasText: data.incCountry }).first().click()
 
-    // Date of incorporation
-    await this.page.getByLabel('Date of incorporation').fill(data.dateOfIncorporation)
+    // Deterministic Q1: takes ownership of metals
+    const q1Buttons = this.page.locator('div').filter({ hasText: /Does the business ever take ownership of precious metals\?/ }).last()
+    await q1Buttons.getByRole('button', { name: data.takesOwnership ? 'Yes' : 'No' }).click()
 
-    // Registration number
-    await this.page.getByLabel('Registration number').fill(data.registrationNumber)
+    // Deterministic Q2: holds client assets or funds
+    const q2Buttons = this.page.locator('div').filter({ hasText: /Does the business ever hold client assets or client funds/ }).last()
+    await q2Buttons.getByRole('button', { name: data.holdsClientAssets ? 'Yes' : 'No' }).click()
 
-    // Legal entity type select
-    await this.page.locator('select[name="legal_entity_type"]').selectOption({ label: data.entityType })
+    // Settlement facilitation follow-up (only if Q2 = Yes)
+    if (data.holdsClientAssets && data.settlementFacilitation !== undefined) {
+      const sfButtons = this.page.locator('div').filter({ hasText: /do you facilitate settlement/ }).last()
+      await sfButtons.getByRole('button', { name: data.settlementFacilitation ? 'Yes' : 'No' }).click()
+    }
+
+    // Deterministic Q3: acts as intermediary
+    const q3Buttons = this.page.locator('div').filter({ hasText: /Does the business ever arrange or execute precious-metal transactions for clients/ }).last()
+    await q3Buttons.getByRole('button', { name: data.actsAsIntermediary ? 'Yes' : 'No' }).click()
   }
 }

@@ -12,7 +12,7 @@ export { ReviewSubmitPage } from './ReviewSubmitPage'
 
 // Re-export data interfaces
 export type { CorporateSetupData } from './CorporateSetupPage'
-export type { CompanyDetailsData } from './CompanyDetailsPage'
+// CompanyDetailsPage has no exported data interface (uploadDocuments takes an inline object)
 export type { IndividualOwnerData } from './OwnershipPage'
 export type { RelationshipData } from './RelationshipPage'
 export type { AuthorisedPersonData } from './AuthorisedPeoplePage'
