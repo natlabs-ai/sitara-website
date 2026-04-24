@@ -46,6 +46,7 @@ export class IdentityPage {
     const input = this.page.getByPlaceholder('Start typing to search…').first()
     await input.click()
     await input.fill(country.slice(0, 4))
-    await this.page.getByRole('option', { name: country }).first().click()
+    // GoldCombobox renders dropdown items as <button type="button"> inside a <ul>
+    await this.page.locator('ul button').filter({ hasText: country }).first().click()
   }
 }
