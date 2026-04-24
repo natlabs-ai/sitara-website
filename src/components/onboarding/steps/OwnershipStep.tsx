@@ -114,6 +114,7 @@ interface OwnerDocUploaderProps {
   applicationId?: string | null;
   applicantId?: string | null;
   onUploaded?: (args: { documentId: string; extracted?: any }) => void | Promise<void>;
+  testId?: string;
 }
 
 const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
@@ -125,6 +126,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
   applicationId,
   applicantId,
   onUploaded,
+  testId,
 }) => {
   const [uploadStatus, setUploadStatus] = React.useState<DocumentUploadStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -225,6 +227,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
           maxSizeMB={10}
           size="sm"
           fileName={uploadStatus === "success" ? uploadedDoc?.name : undefined}
+          testId={testId}
         />
       </FormField>
     </div>
@@ -500,6 +503,7 @@ function OwnerModal({
             onClick={() => onSave(draft)}
             loading={isSaving}
             disabled={isSaving}
+            data-testid="save-owner-button"
           >
             Save Owner
           </Button>
@@ -585,6 +589,7 @@ function OwnerModal({
                 applicationId={applicationId}
                 applicantId={applicantId}
                 onUploaded={handleIndividualIdUploaded}
+                testId="owner-id-doc"
               />
 
               <OwnerDocumentUploader
@@ -596,6 +601,7 @@ function OwnerModal({
                 applicationId={applicationId}
                 applicantId={applicantId}
                 onUploaded={handleIndividualAddressUploaded}
+                testId="owner-address-doc"
               />
             </div>
 
@@ -653,6 +659,7 @@ function OwnerModal({
                 applicationId={applicationId}
                 applicantId={applicantId}
                 onUploaded={handleEntityLegalExistenceUploaded}
+                testId="entity-reg-cert"
               />
 
               <OwnerDocumentUploader
@@ -664,6 +671,7 @@ function OwnerModal({
                 applicationId={applicationId}
                 applicantId={applicantId}
                 onUploaded={handleEntityOwnershipProofUploaded}
+                testId="entity-shareholding"
               />
             </div>
 
@@ -991,7 +999,7 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
               </p>
             )}
           </div>
-          <Button variant="secondary" onClick={addOwner} size="sm">
+          <Button variant="secondary" onClick={addOwner} size="sm" data-testid="add-owner-button">
             <span>＋</span> Add owner
           </Button>
         </div>
@@ -1017,6 +1025,7 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
             return (
               <div
                 key={owner.id}
+                data-testid="owner-card"
                 className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-3"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -1104,20 +1113,19 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
 
       {/* Declaration */}
       <Section>
-        <div className="mb-2 text-sm font-semibold text-neutral-100">
-          I confirm the ownership structure is complete and accurate.
-          {showValidationErrors && answers.ownershipDeclaration !== "agree" && <span className="text-red-400"> *</span>}
-        </div>
-        <label className="inline-flex items-center gap-2 text-neutral-100 text-sm cursor-pointer">
+        <label className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-100 cursor-pointer">
           <input
             type="radio"
             name="ownershipDeclaration"
             style={{ accentColor: GOLD }}
-            className="h-4 w-4"
+            className="h-4 w-4 shrink-0"
             checked={answers.ownershipDeclaration === "agree"}
             onChange={() => setValue("ownershipDeclaration", "agree")}
           />
-          <span>I agree</span>
+          <span>
+            I confirm the ownership structure is complete and accurate.
+            {showValidationErrors && answers.ownershipDeclaration !== "agree" && <span className="text-red-400"> *</span>}
+          </span>
         </label>
       </Section>
 
