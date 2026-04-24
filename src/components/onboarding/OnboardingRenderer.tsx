@@ -36,6 +36,7 @@ import BusinessDocumentsStep from "./steps/BusinessDocumentsStep";
 import RelationshipProfileStep from "./steps/RelationshipProfileStep";
 import AuthorisedPeopleStep from "./steps/AuthorisedPeopleStep";
 import ReviewSubmitStep from "./steps/ReviewSubmitStep";
+import ApplicationSummary from "./ApplicationSummary";
 import RiskDeclarationsStep from "./steps/RiskDeclarationsStep";
 import PersonalReviewStep from "./steps/PersonalReviewStep";
 
@@ -165,6 +166,11 @@ export default function OnboardingRenderer({
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
+        // Don't load stale data from a previous completed session — it would
+        // carry over the old koraApplicationId, making effectiveApplicationId
+        // truthy and hiding accountSelection/login steps on a fresh flow.
+        // If the user wants to resume, they must use the explicit ?resume= URL param.
+        if (parsed.koraApplicationId) return;
         setAnswers(parsed);
       }
     } catch (e) {
@@ -278,10 +284,17 @@ export default function OnboardingRenderer({
       (answers.businessFlow === "basic" ||
         answers.onboardingResolution?.low_risk_service_provider === true);
 
+    // Hide accountSelection/login once the user has passed through them.
+    // Use the explicit applicationId prop (resume flow) OR the _passedLogin flag
+    // set after successful signup. Do NOT use effectiveApplicationId here, because
+    // effectiveApplicationId also reads answers.koraApplicationId which can come
+    // from stale localStorage data, causing business steps to disappear.
+    const hasPassedLogin = !!(applicationId || answers._passedLogin);
+
     return spec.steps.filter((s) => {
       // When resuming an application, skip account selection and login steps
       // (these are only for creating new applications)
-      if (effectiveApplicationId && (s.id === "accountSelection" || s.id === "login")) {
+      if (hasPassedLogin && (s.id === "accountSelection" || s.id === "login")) {
         return false;
       }
 
@@ -669,6 +682,12 @@ export default function OnboardingRenderer({
           };
 
           const res = await createApplication(payload);
+
+          // Authenticate the new user so subsequent API calls (e.g. document
+          // uploads) have a valid session cookie.
+          if (answers.password) {
+            await login({ email: String(answers.email || ""), password: answers.password });
+          }
 
           setValue("koraApplicationId", res.application_id);
           setValue("koraApplicantId", res.applicant_id);
@@ -1371,6 +1390,12 @@ export default function OnboardingRenderer({
                 mobile number you provided.
               </p>
             </section>
+
+            {/* Read-only summary of what was submitted */}
+            <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
+              <h3 className="text-sm font-semibold text-neutral-100 mb-4">Application overview</h3>
+              <ApplicationSummary answers={answers} />
+            </section>
           </div>
         );
       }
@@ -1772,6 +1797,7 @@ export default function OnboardingRenderer({
           <>
             <Button
               variant="secondary"
+              data-testid="back-button"
               disabled={visibleIdx === 0 || isSubmittingStep || hasSubmitted || readOnly}
               onClick={prev}
             >
@@ -1790,6 +1816,7 @@ export default function OnboardingRenderer({
                   <Button
                     variant="secondary"
                     size="sm"
+                    data-testid="save-exit-button"
                     onClick={saveAndExit}
                     disabled={isSaving}
                   >
@@ -1802,6 +1829,7 @@ export default function OnboardingRenderer({
             {step.id !== "submit" ? (
               <Button
                 variant="primary"
+                data-testid="next-button"
                 onClick={() => {
                   // If validation fails, show errors and don't proceed
                   if (!canGoNext) {
@@ -1827,6 +1855,7 @@ export default function OnboardingRenderer({
             ) : (
               <Button
                 variant="primary"
+                data-testid="submit-button"
                 onClick={handleSubmit}
                 disabled={!canSubmit}
               >
