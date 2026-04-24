@@ -34,6 +34,8 @@ export interface DocumentUploadControlProps {
   size?: 'sm' | 'md';
   /** Show filename when uploaded */
   fileName?: string | null;
+  /** Optional test identifier for E2E testing */
+  testId?: string;
 }
 
 export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
@@ -47,6 +49,7 @@ export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
   className,
   size = 'md',
   fileName,
+  testId,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -121,7 +124,7 @@ export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
   );
 
   return (
-    <div className={cn('w-full', className)}>
+    <div className={cn('w-full', className)} data-testid={testId}>
       <input
         ref={inputRef}
         type="file"
@@ -129,6 +132,7 @@ export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
         onChange={handleChange}
         disabled={isDisabled}
         className="hidden"
+        data-testid={testId ? `${testId}-input` : undefined}
       />
 
       <div className="flex flex-col gap-2">
