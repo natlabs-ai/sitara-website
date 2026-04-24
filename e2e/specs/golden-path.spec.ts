@@ -96,7 +96,7 @@ test.describe('Business onboarding — golden path', () => {
       legalExistence: randomFile('legal_existence_proof'),
       constitutional: randomFile('legal_existence_proof'), // reuse same category — no dedicated constitutional category
       registeredAddress: randomFile('business_address_proof'),
-      taxRegistration: randomFile('tax_registration'),
+      taxRegistration: randomFile('legal_existence_proof'), // tax_registration dir empty — reuse legal doc
     })
     await companyDetails.clickNext()
     await page.waitForSelector('[data-testid="add-owner-button"]')

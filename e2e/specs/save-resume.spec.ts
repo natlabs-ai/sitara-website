@@ -119,7 +119,7 @@ test.describe('Business onboarding — save & resume', () => {
       legalExistence: randomFile('legal_existence_proof'),
       constitutional: randomFile('legal_existence_proof'),
       registeredAddress: randomFile('business_address_proof'),
-      taxRegistration: randomFile('tax_registration'),
+      taxRegistration: randomFile('legal_existence_proof'), // tax_registration dir empty — reuse legal doc
     })
 
     // 9. Click Next
