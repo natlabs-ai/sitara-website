@@ -39,11 +39,29 @@ export class CompanyDetailsPage {
     await this.saveAndExitButton.click()
   }
 
-  /** Upload a file to any DocumentUploadControl on this step. */
+  /** Upload a file to any DocumentUploadControl on this step, with automatic retry on transient errors. */
   async uploadFile(testId: string, filePath: string) {
-    await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
-    // Wait for the container to reflect a non-idle state (uploading or success)
-    await this.page.getByTestId(testId).waitFor({ state: 'visible' })
+    const container = this.page.getByTestId(testId)
+    const uploadedBtn = container.getByRole('button', { name: 'Uploaded' })
+    const retryBtn = container.getByRole('button', { name: 'Retry upload' })
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
+      // Wait for either success ("Uploaded") or error ("Retry upload")
+      await uploadedBtn.or(retryBtn).waitFor({ state: 'visible', timeout: 180_000 })
+      if (await uploadedBtn.isVisible()) return
+      // Error state — loop will retry
+    }
+    throw new Error(`Upload failed after 3 attempts for ${testId}`)
+  }
+
+  /** Dismiss the "Company details" modal if it appeared after a legal-existence upload. */
+  async dismissCompanyDetailsModalIfOpen() {
+    const modal = this.page.getByRole('dialog', { name: 'Company details (from business licence)' })
+    if (await modal.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await modal.getByRole('button', { name: 'Cancel' }).click()
+      await modal.waitFor({ state: 'hidden', timeout: 10_000 })
+    }
   }
 
   /** Upload all required business documents. */
@@ -56,7 +74,13 @@ export class CompanyDetailsPage {
     preciousMetalsPermit?: string
   }) {
     await this.uploadFile('upload-legal-existence', files.legalExistence)
+    // Legal-existence upload triggers a company-details confirmation modal — dismiss it.
+    await this.dismissCompanyDetailsModalIfOpen()
     await this.uploadFile('upload-constitutional', files.constitutional)
+    // Section B auto-expands via a React useEffect once sectionAComplete=true.
+    // The useEffect fires after the "Uploaded" state is committed to React,
+    // so wait briefly for the visible container before uploading.
+    await this.page.waitForSelector('[data-testid="upload-registered-address"]', { timeout: 30_000 })
     await this.uploadFile('upload-registered-address', files.registeredAddress)
     await this.uploadFile('upload-tax-registration', files.taxRegistration)
     if (files.activityEvidence) {

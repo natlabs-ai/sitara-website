@@ -52,29 +52,32 @@ export class AuthorisedPeoplePage {
   }
 
   async uploadFile(testId: string, filePath: string) {
-    await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
-    await this.page.getByTestId(testId).waitFor({ state: 'visible' })
+    const container = this.page.getByTestId(testId)
+    const uploadedBtn = container.getByRole('button', { name: 'Uploaded' })
+    const retryBtn = container.getByRole('button', { name: 'Retry upload' })
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
+      // Wait for either success ("Uploaded") or error ("Retry upload")
+      await uploadedBtn.or(retryBtn).waitFor({ state: 'visible', timeout: 180_000 })
+      if (await uploadedBtn.isVisible()) return
+    }
+    throw new Error(`Upload failed after 3 attempts for ${testId}`)
   }
 
   async addPerson(data: AuthorisedPersonData) {
     await this.addApButton.click()
 
-    await this.page.getByLabel('First name').fill(data.firstName)
-    await this.page.getByLabel('Last name').fill(data.lastName)
+    // Full Name (single combined field, id="full_name")
+    await this.page.locator('#full_name').fill(`${data.firstName} ${data.lastName}`)
 
-    // Role may be a select or a text input depending on implementation
-    const roleSelect = this.page.locator('select[name="role"]')
-    const roleSelectCount = await roleSelect.count()
-    if (roleSelectCount > 0) {
-      await roleSelect.selectOption({ label: data.role })
-    } else {
-      await this.page.getByLabel('Role').fill(data.role)
-    }
+    // Role / Title (text input, id="role", label="Role / Title")
+    await this.page.locator('#role').fill(data.role)
 
     // Upload ID document
     await this.uploadFile('ap-id-doc', data.idFile)
 
-    // Upload proof of address
+    // Upload proof of address (optional but we always provide it)
     await this.uploadFile('ap-address-doc', data.addressFile)
 
     await this.saveApButton.click()

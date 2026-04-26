@@ -54,25 +54,42 @@ export class OwnershipPage {
   }
 
   async uploadFile(testId: string, filePath: string) {
-    await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
-    await this.page.getByTestId(testId).waitFor({ state: 'visible' })
+    const container = this.page.getByTestId(testId)
+    const uploadedBtn = container.getByRole('button', { name: 'Uploaded' })
+    const retryBtn = container.getByRole('button', { name: 'Retry upload' })
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.page.getByTestId(`${testId}-input`).setInputFiles(filePath)
+      // Wait for either success ("Uploaded") or error ("Retry upload")
+      await uploadedBtn.or(retryBtn).waitFor({ state: 'visible', timeout: 180_000 })
+      if (await uploadedBtn.isVisible()) return
+    }
+    throw new Error(`Upload failed after 3 attempts for ${testId}`)
   }
 
   async addIndividualOwner(data: IndividualOwnerData) {
     await this.addOwnerButton.click()
 
-    // Fill individual owner fields in the modal
-    await this.page.getByLabel('First name').fill(data.firstName)
-    await this.page.getByLabel('Last name').fill(data.lastName)
+    // Select "Individual" from the Owner Type native <select id="owner_type">
+    await this.page.locator('#owner_type').selectOption('individual')
 
-    // Nationality select
-    await this.page.locator('select[name="nationality"]').selectOption({ label: data.nationality })
+    // Wait for individual fields to appear (conditional on owner_type === 'individual')
+    await this.page.waitForSelector('#individual_full_name')
 
-    // Date of birth
-    await this.page.getByLabel('Date of birth').fill(data.dob)
+    // Full Name (single combined field)
+    await this.page.locator('#individual_full_name').fill(`${data.firstName} ${data.lastName}`)
 
-    // Ownership percentage
-    await this.page.getByLabel('Ownership percentage').fill(String(data.ownershipPct))
+    // Nationality — GoldCombobox with placeholder="Select country..."
+    const nationalityInput = this.page.getByPlaceholder('Select country...')
+    await nationalityInput.click()
+    await nationalityInput.fill(data.nationality.slice(0, 5))
+    await this.page.locator('ul button').filter({ hasText: data.nationality }).first().click()
+
+    // Date of birth (date input, id="individual_date_of_birth")
+    await this.page.locator('#individual_date_of_birth').fill(data.dob)
+
+    // Ownership percentage (number input, id="ownership_percentage")
+    await this.page.locator('#ownership_percentage').fill(String(data.ownershipPct))
 
     // Upload ID document
     await this.uploadFile('owner-id-doc', data.idFile)

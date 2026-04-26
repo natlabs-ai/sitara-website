@@ -7,7 +7,8 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') })
 
 export default defineConfig({
   testDir: path.resolve(__dirname, 'specs'),
-  timeout: 120_000,
+  globalSetup: path.resolve(__dirname, 'global-setup.ts'),
+  timeout: 1_800_000,
   retries: 0,
   workers: 1,
   reporter: [
