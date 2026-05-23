@@ -95,7 +95,8 @@ test.describe('Business onboarding — golden path', () => {
     await corporateSetup.fill(CORP_SETUP)
     await corporateSetup.clickNext()
     // takesOwnership = true → advanced flow; companyDetails step follows
-    await page.waitForSelector('[data-testid="upload-legal-existence-input"]')
+    // wait for the visible container (the -input sibling is a hidden <input>)
+    await page.waitForSelector('[data-testid="upload-legal-existence"]')
 
     // -------------------------------------------------------------------------
     // 5. companyDetails — upload business documents
@@ -122,15 +123,17 @@ test.describe('Business onboarding — golden path', () => {
     })
     // Wait for the owner card to appear before advancing
     await page.waitForSelector('[data-testid="owner-card"]')
+    await ownershipPage.clickDeclaration()
     await ownershipPage.clickNext()
-    // relationship step follows in advanced flow
-    await page.waitForSelector('[data-testid="next-button"]')
 
     // -------------------------------------------------------------------------
     // 7. relationship — describe the business relationship
     //    (advanced flow only; requires takesOwnership = true)
     // -------------------------------------------------------------------------
     const relationshipPage = new RelationshipPage(page)
+    // waitForStep() uses #relationship_frequency — more reliable than next-button
+    // which lives in the persistent toolbar and resolves before the step renders.
+    await relationshipPage.waitForStep()
     await relationshipPage.fill(RELATIONSHIP)
     await relationshipPage.clickNext()
     await page.waitForSelector('[data-testid="add-ap-button"]')
@@ -160,17 +163,8 @@ test.describe('Business onboarding — golden path', () => {
     await questionnaire.answerRadio('aml_policy', 'yes')
     await questionnaire.answerRadio('expected_txn_volume_usd_band', '>10m')
 
-    // countries_of_operation_iso2 is a country_multi_select with no testid.
-    // Best-effort: try to select UAE; if the control is absent / optional, continue.
-    try {
-      const countrySelect = page.getByLabel('Select countries')
-      if (await countrySelect.isVisible({ timeout: 2_000 })) {
-        await countrySelect.fill('United Arab Emirates')
-        await page.getByRole('listitem').filter({ hasText: 'United Arab Emirates' }).first().click()
-      }
-    } catch {
-      // Not required; skip silently
-    }
+    // countries_of_operation_iso2 — required country multi-select (custom combobox, no testid)
+    await questionnaire.selectCountries(['United Arab Emirates'])
 
     await questionnaire.answerRadio('kyc_sops', 'yes')
     await questionnaire.ackQuestion('consent_screening')
@@ -185,7 +179,14 @@ test.describe('Business onboarding — golden path', () => {
     // -------------------------------------------------------------------------
     const reviewSubmit = new ReviewSubmitPage(page)
     await reviewSubmit.waitForReady()
+
+    // Wait for the submit API call to complete before asserting success text
+    const submitDone = page.waitForResponse(
+      res => res.url().includes('/submit') && res.request().method() === 'POST',
+      { timeout: 20_000 }
+    )
     await reviewSubmit.submit()
+    await submitDone
 
     // -------------------------------------------------------------------------
     // 11. Assert success

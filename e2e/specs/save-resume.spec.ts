@@ -107,9 +107,9 @@ test.describe('Business onboarding — save & resume', () => {
     await dashboard1.continueApplication()
 
     // 7. Assert wizard resumes on corporateSetup or companyDetails step
-    await page.waitForSelector('[data-testid="upload-legal-existence-input"], [data-testid="next-button"]')
+    await page.waitForSelector('[data-testid="upload-legal-existence"], [data-testid="next-button"]')
     expect(
-      (await page.locator('[data-testid="upload-legal-existence-input"]').isVisible()) ||
+      (await page.locator('[data-testid="upload-legal-existence"]').isVisible()) ||
       (await page.locator('[data-testid="next-button"]').isVisible()),
     ).toBe(true)
 
@@ -118,10 +118,10 @@ test.describe('Business onboarding — save & resume', () => {
 
     // If we landed back on corporateSetup (next-button visible but not upload), advance
     if (
-      !(await page.locator('[data-testid="upload-legal-existence-input"]').isVisible({ timeout: 2_000 }).catch(() => false))
+      !(await page.locator('[data-testid="upload-legal-existence"]').isVisible({ timeout: 2_000 }).catch(() => false))
     ) {
       await corporateSetup.clickNext()
-      await page.waitForSelector('[data-testid="upload-legal-existence-input"]')
+      await page.waitForSelector('[data-testid="upload-legal-existence"]')
     }
 
     await companyDetails.uploadDocuments({
@@ -159,21 +159,19 @@ test.describe('Business onboarding — save & resume', () => {
     await dashboard2.waitForPage()
     await dashboard2.continueApplication()
 
-    // 13. Assert wizard resumes on relationship or ownership step
-    await page.waitForSelector('[data-testid="next-button"], [data-testid="add-owner-button"]')
-    expect(
-      (await page.locator('[data-testid="next-button"]').isVisible()) ||
-      (await page.locator('[data-testid="add-owner-button"]').isVisible()),
-    ).toBe(true)
+    const relationshipPage = new RelationshipPage(page)
 
-    // If we landed back on ownership (add-owner-button), advance to relationship
-    if (await page.locator('[data-testid="add-owner-button"]').isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await ownershipPage.clickNext()
-      await page.waitForSelector('[data-testid="next-button"]')
-    }
+    // After checkpoint 2 the wizard always resumes on the ownership step
+    // (current_step_id = "ownership"). OwnershipStep loads beneficial owners
+    // via an async API call — wait up to 30 s for the full UI to appear.
+    await page.waitForSelector('[data-testid="add-owner-button"]', { timeout: 30_000 })
+    await ownershipPage.clickDeclaration()
+    await ownershipPage.clickNext()
+
+    // Wait for relationship step content (not next-button — it's always in the toolbar)
+    await relationshipPage.waitForStep()
 
     // 14. Complete relationship
-    const relationshipPage = new RelationshipPage(page)
     await relationshipPage.fill(RELATIONSHIP)
 
     // 15. Click Next
@@ -203,6 +201,7 @@ test.describe('Business onboarding — save & resume', () => {
     await questionnaire.answerRadio('ubo_disclosed_verified', 'yes')
     await questionnaire.answerRadio('aml_policy', 'yes')
     await questionnaire.answerRadio('expected_txn_volume_usd_band', '>10m')
+    await questionnaire.selectCountries(['United Arab Emirates'])
     await questionnaire.answerRadio('kyc_sops', 'yes')
     await questionnaire.ackQuestion('consent_screening')
     await questionnaire.ackQuestion('ack_ongoing_review')
@@ -215,7 +214,14 @@ test.describe('Business onboarding — save & resume', () => {
     // -------------------------------------------------------------------------
     const reviewSubmit = new ReviewSubmitPage(page)
     await reviewSubmit.waitForReady()
+
+    // Wait for the submit API call to complete before asserting success text
+    const submitDone = page.waitForResponse(
+      res => res.url().includes('/submit') && res.request().method() === 'POST',
+      { timeout: 20_000 }
+    )
     await reviewSubmit.submit()
+    await submitDone
 
     // -------------------------------------------------------------------------
     // 19. Assert success

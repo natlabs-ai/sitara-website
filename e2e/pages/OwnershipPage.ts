@@ -67,6 +67,10 @@ export class OwnershipPage {
     throw new Error(`Upload failed after 3 attempts for ${testId}`)
   }
 
+  async clickDeclaration() {
+    await this.page.locator('input[name="ownershipDeclaration"]').click()
+  }
+
   async addIndividualOwner(data: IndividualOwnerData) {
     await this.addOwnerButton.click()
 
