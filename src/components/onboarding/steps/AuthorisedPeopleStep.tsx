@@ -27,6 +27,7 @@ import {
   DocumentUploadControl,
   type DocumentUploadStatus,
 } from "@/components/ui";
+import { isValidEmail } from "../validationUtils";
 
 interface AuthorisedPeopleStepProps {
   answers: Record<string, any>;
@@ -194,6 +195,18 @@ const PersonModal: React.FC<{
   const [saving, setSaving] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [extractionInfo, setExtractionInfo] = React.useState<string>("");
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+  const touch = (field: string) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+  const fullNameError =
+    touched.full_name && !draft?.full_name?.trim()
+      ? "Full name is required"
+      : undefined;
+  const emailError =
+    touched.email && !!draft?.email && !isValidEmail(draft.email)
+      ? "Please enter a valid email address"
+      : undefined;
 
   const handleIdDocUploaded = async ({ documentId, extracted }: { documentId: string; extracted?: any }) => {
     setDraft((prev) => {
@@ -290,21 +303,34 @@ const PersonModal: React.FC<{
       {/* Personal Details */}
       <Section title="Personal Details" titleColor="gold">
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Full Name" required htmlFor="full_name">
+          <FormField
+            label="Full Name"
+            required
+            htmlFor="full_name"
+            error={fullNameError}
+            showError={!!fullNameError}
+          >
             <Input
               id="full_name"
               value={draft.full_name}
               onChange={(value) => setDraft((prev) => prev && { ...prev, full_name: value })}
+              onBlur={() => touch("full_name")}
               placeholder="e.g. John Smith"
             />
           </FormField>
 
-          <FormField label="Email" htmlFor="email">
+          <FormField
+            label="Email"
+            htmlFor="email"
+            error={emailError}
+            showError={!!emailError}
+          >
             <Input
               id="email"
               type="email"
               value={draft.email}
               onChange={(value) => setDraft((prev) => prev && { ...prev, email: value })}
+              onBlur={() => touch("email")}
               placeholder="john@example.com"
             />
           </FormField>
