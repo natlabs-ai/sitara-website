@@ -3,6 +3,7 @@
 "use client";
 
 import React from "react";
+import { isAtLeast18 } from "../validationUtils";
 import {
   IdDocumentUploader,
   type IdAutoFill,
@@ -210,6 +211,8 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
       errors.dateOfBirth = "Date of birth is required";
     } else if (!isValidDate(formDraft.dateOfBirth)) {
       errors.dateOfBirth = "Please enter a valid date (YYYY-MM-DD)";
+    } else if (!isAtLeast18(formDraft.dateOfBirth)) {
+      errors.dateOfBirth = "You must be at least 18 years old";
     }
     if (!formDraft.nationality.trim()) errors.nationality = "Nationality is required";
     if (!formDraft.passportNumber.trim()) errors.passportNumber = "Document number is required";
