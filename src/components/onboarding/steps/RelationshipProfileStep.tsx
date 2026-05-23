@@ -76,7 +76,7 @@ function toggleMulti(arr: string[] = [], v: string) {
   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 }
 
-export default function RelationshipProfileStep({ answers, setValue }: Props) {
+export default function RelationshipProfileStep({ answers, setValue, showValidationErrors = false }: Props) {
   const direction = (answers.transaction_direction as string) || "";
   const products = Array.isArray(answers.relationship_products)
     ? (answers.relationship_products as string[])
@@ -189,6 +189,9 @@ export default function RelationshipProfileStep({ answers, setValue }: Props) {
           })}
         </div>
 
+        {showValidationErrors && products.length === 0 && (
+          <p className="mt-2 text-xs text-red-400">Please select at least one product.</p>
+        )}
         <div className="mt-3 text-[11px] text-neutral-500">
           This reflects expected activity with us only.
         </div>
@@ -256,6 +259,10 @@ export default function RelationshipProfileStep({ answers, setValue }: Props) {
             );
           })}
         </div>
+
+        {showValidationErrors && paymentMethods.length === 0 && (
+          <p className="mt-2 text-xs text-red-400">Please select at least one payment method.</p>
+        )}
 
         {cashSelected ? (
           <div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950/60 p-4">
