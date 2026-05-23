@@ -955,6 +955,10 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
     0
   );
 
+  React.useEffect(() => {
+    setValue("beneficialOwners_total_pct", totalOwnership);
+  }, [totalOwnership]);
+
   if (loading) {
     return (
       <Section>

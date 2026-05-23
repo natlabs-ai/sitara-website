@@ -640,6 +640,16 @@ export default function OnboardingRenderer({
       return requiredOk && !isSubmittingStep;
     }
 
+    if (step.id === "authorisedPeople") {
+      return !isSubmittingStep;
+    }
+
+    if (step.id === "ownership") {
+      const totalPct = Number(answers.beneficialOwners_total_pct ?? 0);
+      const declarationOk = answers.ownershipDeclaration === "agree";
+      return totalPct <= 100 && declarationOk && !isSubmittingStep;
+    }
+
     return !isSubmittingStep;
   })();
 
