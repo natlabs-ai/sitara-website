@@ -239,6 +239,7 @@ export default function OnboardingRenderer({
     const currentStep = spec.steps[stepIdx];
     if (!currentStep) return;
 
+    let redirecting = false;
     try {
       setIsSaving(true);
       const res = await fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
@@ -267,15 +268,23 @@ export default function OnboardingRenderer({
         localStorage.setItem(`${STORAGE_KEY}_step`, currentStep.id);
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Hard redirect — router.push from an async callback can silently no-op
+      // in Next.js App Router; window.location.href guarantees navigation.
+      // Set redirecting=true so the finally block skips setIsSaving (avoids
+      // React state update on an unmounting component causing teardown errors).
+      // setTimeout(0) defers the navigation until React has flushed all pending
+      // state updates and effects, preventing Next.js RSC stream errors.
+      if (typeof window !== "undefined") {
+        redirecting = true;
+        setTimeout(() => { window.location.href = '/dashboard'; }, 0);
+      }
     } catch (e) {
       console.error('Save and exit error:', e);
       setSaveError("We couldn't save your progress. Please check your connection.");
     } finally {
-      setIsSaving(false);
+      if (!redirecting) setIsSaving(false);
     }
-  }, [effectiveApplicationId, readOnly, stepIdx, spec.steps, answers, router, STORAGE_KEY]);
+  }, [effectiveApplicationId, readOnly, stepIdx, spec.steps, answers, STORAGE_KEY]);
 
   const visibleSteps = React.useMemo(() => {
     const isBusiness = answers.accountType === "business";
@@ -350,13 +359,15 @@ export default function OnboardingRenderer({
     setAnswers((prev) => ({ ...prev, [id]: val }));
   }
 
-  async function goToVisibleIndex(nextVisibleIdx: number) {
+  function goToVisibleIndex(nextVisibleIdx: number) {
     const target = visibleSteps[nextVisibleIdx];
     if (!target) return;
 
-    // Save before navigating (user preference: save on step navigation)
+    // Fire-and-forget draft save — don't block step navigation on network
+    // latency. If the save fails the user sees the error indicator but can
+    // still proceed; the explicit "Save & Exit" button is the reliable path.
     if (effectiveApplicationId && !readOnly) {
-      await saveDraft(answers, step);
+      saveDraft(answers, step).catch(() => {});
     }
 
     const absolute = spec.steps.findIndex((s) => s.id === target.id);
@@ -499,7 +510,28 @@ export default function OnboardingRenderer({
       const hasSanctionsAnswer = typeof answers.ind_sanctionsSelf === "boolean";
       const hasThirdPartyAnswer = typeof answers.ind_thirdPartyUse === "boolean";
 
-      return hasPepAnswer && hasSanctionsAnswer && hasThirdPartyAnswer && !isSubmittingStep;
+      const pepDetailsOk =
+        answers.ind_pepSelf !== true ||
+        (typeof answers.ind_pepSelfDetails === "string" &&
+          answers.ind_pepSelfDetails.trim().length > 0);
+      const sanctionsDetailsOk =
+        answers.ind_sanctionsSelf !== true ||
+        (typeof answers.ind_sanctionsSelfDetails === "string" &&
+          answers.ind_sanctionsSelfDetails.trim().length > 0);
+      const thirdPartyDetailsOk =
+        answers.ind_thirdPartyUse !== true ||
+        (typeof answers.ind_thirdPartyUseDetails === "string" &&
+          answers.ind_thirdPartyUseDetails.trim().length > 0);
+
+      return (
+        hasPepAnswer &&
+        hasSanctionsAnswer &&
+        hasThirdPartyAnswer &&
+        pepDetailsOk &&
+        sanctionsDetailsOk &&
+        thirdPartyDetailsOk &&
+        !isSubmittingStep
+      );
     }
 
     // Step 4 (Business model): Country + deterministic questions (required)
@@ -1652,6 +1684,7 @@ export default function OnboardingRenderer({
                 checked={answers.submitDeclarationAccepted === true}
                 onChange={(e) => setValue("submitDeclarationAccepted", e.target.checked)}
                 className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[--gold-color] focus:ring-[--gold-color]"
+                data-testid="declaration-accept"
               />
               <span className="text-xs text-neutral-200">
                 I confirm the above statements and authorise Sitara to use this information to perform customer due diligence and ongoing compliance checks.

@@ -25,6 +25,10 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
   const thirdPartyUse = answers.ind_thirdPartyUse;
   const thirdPartyDetails = (answers.ind_thirdPartyUseDetails as string) || "";
 
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+  const touch = (field: string) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   return (
     <div className="space-y-5">
       {/* Header section */}
@@ -85,13 +89,19 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
               </label>
               <textarea
                 value={pepDetails}
-                onChange={(e) =>
-                  setValue("ind_pepSelfDetails", e.target.value)
-                }
+                onChange={(e) => setValue("ind_pepSelfDetails", e.target.value)}
+                onBlur={() => touch("pepDetails")}
                 placeholder="Describe your position or relationship to a PEP"
                 rows={2}
-                className="w-full rounded-xl border border-neutral-800 bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                  (touched.pepDetails || showValidationErrors) && !pepDetails.trim()
+                    ? "border-red-500/40"
+                    : "border-neutral-800"
+                }`}
               />
+              {(touched.pepDetails || showValidationErrors) && !pepDetails.trim() && (
+                <p className="mt-1 text-xs text-red-400">Please provide details.</p>
+              )}
             </div>
           )}
         </div>
@@ -142,13 +152,19 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
               </label>
               <textarea
                 value={sanctionsDetails}
-                onChange={(e) =>
-                  setValue("ind_sanctionsSelfDetails", e.target.value)
-                }
+                onChange={(e) => setValue("ind_sanctionsSelfDetails", e.target.value)}
+                onBlur={() => touch("sanctionsDetails")}
                 placeholder="Describe the sanctions or restrictions"
                 rows={2}
-                className="w-full rounded-xl border border-neutral-800 bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                  (touched.sanctionsDetails || showValidationErrors) && !sanctionsDetails.trim()
+                    ? "border-red-500/40"
+                    : "border-neutral-800"
+                }`}
               />
+              {(touched.sanctionsDetails || showValidationErrors) && !sanctionsDetails.trim() && (
+                <p className="mt-1 text-xs text-red-400">Please provide details.</p>
+              )}
             </div>
           )}
         </div>
@@ -199,13 +215,19 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
               </label>
               <textarea
                 value={thirdPartyDetails}
-                onChange={(e) =>
-                  setValue("ind_thirdPartyUseDetails", e.target.value)
-                }
+                onChange={(e) => setValue("ind_thirdPartyUseDetails", e.target.value)}
+                onBlur={() => touch("thirdPartyDetails")}
                 placeholder="Describe who you will be acting on behalf of"
                 rows={2}
-                className="w-full rounded-xl border border-neutral-800 bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                  (touched.thirdPartyDetails || showValidationErrors) && !thirdPartyDetails.trim()
+                    ? "border-red-500/40"
+                    : "border-neutral-800"
+                }`}
               />
+              {(touched.thirdPartyDetails || showValidationErrors) && !thirdPartyDetails.trim() && (
+                <p className="mt-1 text-xs text-red-400">Please provide details.</p>
+              )}
             </div>
           )}
         </div>
