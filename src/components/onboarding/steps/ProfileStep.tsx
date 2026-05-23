@@ -29,6 +29,10 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
 
   const occupation = (answers.occupation as string) || "";
   const sourceOfIncome = (answers.sourceOfIncome as string) || "";
+
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+  const touch = (field: string) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
   const expectedFrequency = (answers.expectedFrequency as string) || "";
   const expectedValue = (answers.expectedValue as string) || "";
 
@@ -93,12 +97,15 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
           required
           htmlFor="occupation"
           helperText="Required under UAE AML / CFT and goAML CDD rules."
+          error="This field is required."
+          showError={(touched.occupation || showValidationErrors) && !occupation.trim()}
         >
           <Input
             id="occupation"
             type="text"
             value={occupation}
             onChange={(value) => setValue("occupation", value)}
+            onBlur={() => touch("occupation")}
             placeholder="e.g. Finance Manager, Jewellery Trader, Business Owner"
           />
         </FormField>
@@ -109,11 +116,14 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
           required
           htmlFor="sourceOfIncome"
           helperText="Describe the main source(s) of your income. This is used for risk assessment and CDD."
+          error="This field is required."
+          showError={(touched.sourceOfIncome || showValidationErrors) && !sourceOfIncome.trim()}
         >
           <Textarea
             id="sourceOfIncome"
             value={sourceOfIncome}
             onChange={(value) => setValue("sourceOfIncome", value)}
+            onBlur={() => touch("sourceOfIncome")}
             placeholder="Salary, business profits, investment income, rental income, etc."
             rows={3}
           />
@@ -191,6 +201,9 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
               );
             })}
           </div>
+          {showValidationErrors && selectedServices.length === 0 && (
+            <p className="mt-1 text-xs text-red-400">Please select at least one service.</p>
+          )}
         </div>
       </Section>
     </div>
