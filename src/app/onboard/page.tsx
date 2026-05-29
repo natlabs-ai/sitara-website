@@ -11,7 +11,7 @@ import { submitApplication } from "@/lib/koraClient";
 
 const spec = sitaraSchema as Spec;
 
-export default function OnboardPage() {
+function OnboardPageInner() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resume");
   const viewId = searchParams.get("view");
@@ -102,5 +102,17 @@ export default function OnboardPage() {
         />
       </main>
     </div>
+  );
+}
+
+export default function OnboardPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-neutral-400">Loading…</div>
+      </div>
+    }>
+      <OnboardPageInner />
+    </React.Suspense>
   );
 }
