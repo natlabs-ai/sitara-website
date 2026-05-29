@@ -20,6 +20,10 @@ export class DashboardPage {
   }
 
   async continueApplication() {
-    await this.continueApplicationLink.click()
+    // Get the href and navigate directly — Next.js <Link> client-side navigation
+    // can silently no-op in Playwright; page.goto() guarantees the navigation.
+    const href = await this.continueApplicationLink.getAttribute('href')
+    if (!href) throw new Error('continue-application link has no href')
+    await this.page.goto(href)
   }
 }

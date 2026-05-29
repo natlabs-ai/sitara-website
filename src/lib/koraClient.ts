@@ -758,3 +758,59 @@ export async function getCurrentUser(): Promise<LoginResponse> {
   // /api/auth/me returns { authenticated: true, user: LoginResponse }
   return (data.user ?? data) as LoginResponse;
 }
+
+/** -------- OTP -------- */
+
+export async function sendEmailOtp(
+  email: string,
+): Promise<{ message: string; dev_code?: string }> {
+  const res = await _koraFetch("/auth/otp/email/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const body = await _readJsonOrNull(res);
+  if (!res.ok) throw new Error(body?.detail || "Failed to send email OTP");
+  return body;
+}
+
+export async function verifyEmailOtp(
+  email: string,
+  code: string,
+): Promise<{ verified: boolean }> {
+  const res = await _koraFetch("/auth/otp/email/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  const body = await _readJsonOrNull(res);
+  if (!res.ok) throw new Error(body?.detail || "Invalid OTP");
+  return body;
+}
+
+export async function sendPhoneOtp(
+  phone_e164: string,
+): Promise<{ message: string; dev_code?: string }> {
+  const res = await _koraFetch("/auth/otp/phone/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone_e164 }),
+  });
+  const body = await _readJsonOrNull(res);
+  if (!res.ok) throw new Error(body?.detail || "Failed to send SMS OTP");
+  return body;
+}
+
+export async function verifyPhoneOtp(
+  phone_e164: string,
+  code: string,
+): Promise<{ verified: boolean }> {
+  const res = await _koraFetch("/auth/otp/phone/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone_e164, code }),
+  });
+  const body = await _readJsonOrNull(res);
+  if (!res.ok) throw new Error(body?.detail || "Invalid OTP");
+  return body;
+}

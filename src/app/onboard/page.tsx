@@ -24,7 +24,10 @@ export default function OnboardPage() {
     mode === "login" ? "login" : null
   );
   const [isReadOnly, setIsReadOnly] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
+  // Start in loading state when resuming/viewing so we don't flash step 1
+  // before the draft data arrives (prevents Playwright race in E2E tests and
+  // avoids a visual flicker for real users).
+  const [isLoading, setIsLoading] = React.useState(!!(resumeId || viewId));
 
   React.useEffect(() => {
     async function loadApplication() {
@@ -35,11 +38,17 @@ export default function OnboardPage() {
         const res = await fetch(`/api/kora/applications/${appId}/resume`);
         if (!res.ok) throw new Error("Failed to load application");
         const data = await res.json();
+        const isSubmitted = data.status === "submitted";
         setInitialAnswers({
+          // Always seed IDs from the authoritative response so they're available
+          // even if the draft was saved before these values were persisted
+          koraApplicationId: String(data.application_id),
+          koraTenantId: String(data.tenant_id),
           ...data.draft_answers || {},
-          _applicationSubmitted: data.status === "submitted",
+          _applicationSubmitted: isSubmitted,
         });
-        setInitialStepId(data.current_step_id);
+        // For submitted applications always land on the summary step
+        setInitialStepId(isSubmitted ? "submit" : data.current_step_id);
         setIsReadOnly(!data.can_edit);
       } catch {
         try {

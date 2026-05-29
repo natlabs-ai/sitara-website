@@ -23,8 +23,18 @@ export class ReviewSubmitPage {
     await this.saveAndExitButton.click()
   }
 
-  /** Waits until the submit button is enabled and visible. */
+  /** Checks all declaration checkboxes and waits until the submit button is enabled. */
   async waitForReady() {
+    await this.page.getByTestId('declaration-accept').check()
+    // Individual accounts have two additional checkboxes; check them if present
+    const privacy = this.page.getByTestId('privacy-policy-accept')
+    if (await privacy.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await privacy.check()
+    }
+    const terms = this.page.getByTestId('terms-accept')
+    if (await terms.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await terms.check()
+    }
     await this.page.waitForSelector('[data-testid="submit-button"]:not([disabled])')
   }
 

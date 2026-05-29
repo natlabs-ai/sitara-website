@@ -286,6 +286,7 @@ const PersonModal: React.FC<{
       onClose={onClose}
       title={draft.id ? "Edit Authorized Person" : "Add Authorized Person"}
       size="lg"
+      closeOnBackdropClick={false}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>

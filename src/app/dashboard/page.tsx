@@ -52,6 +52,13 @@ export default function DashboardPage() {
   const { user, isLoading, isAuthenticated, logout, refreshUser } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Refresh on every dashboard visit so application statuses reflect the
+  // latest state (e.g. draft → submitted after completing onboarding in the
+  // same browser session without a full page reload).
+  useEffect(() => {
+    refreshUser().catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");

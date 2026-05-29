@@ -77,18 +77,23 @@ function RadioQuestion({
   value,
   onSet,
   showValidationErrors = false,
+  questionNumber,
 }: {
   def: QuestionDef;
   value: string;
   onSet: (v: string) => void;
   showValidationErrors?: boolean;
+  questionNumber?: number;
 }) {
-  const showAsterisk = showValidationErrors && def.required && !value;
+  const showError = showValidationErrors && def.required && !value;
   return (
-    <Section className="bg-black/20">
+    <Section className={showError ? "bg-black/20 border-red-500/40" : "bg-black/20"}>
       <div className="text-sm font-medium text-neutral-100">
+        {questionNumber && (
+          <span className="mr-2 text-neutral-500">{questionNumber}.</span>
+        )}
         {def.label}
-        {showAsterisk && <span className="text-red-400"> *</span>}
+        {showError && <span className="text-red-400"> *</span>}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-4">
@@ -110,6 +115,10 @@ function RadioQuestion({
           </label>
         ))}
       </div>
+
+      {showError && (
+        <p className="mt-3 text-xs text-red-400">Please select an answer</p>
+      )}
     </Section>
   );
 }
@@ -119,36 +128,37 @@ function AckQuestion({
   checked,
   onToggle,
   showValidationErrors = false,
+  questionNumber,
 }: {
   def: QuestionDef;
   checked: boolean;
   onToggle: (v: boolean) => void;
   showValidationErrors?: boolean;
+  questionNumber?: number;
 }) {
-  const showAsterisk = showValidationErrors && def.required && !checked;
+  const showError = showValidationErrors && def.required && !checked;
   return (
-    <Section className="bg-black/20">
-      <div className="text-sm font-medium text-neutral-100">
-        {def.label}
-        {showAsterisk && <span className="text-red-400"> *</span>}
-      </div>
-
-      <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-sm text-neutral-200">
+    <Section className={showError ? "bg-black/20 border-red-500/40" : "bg-black/20"}>
+      <label className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
           checked={checked}
           onChange={(e) => onToggle(e.target.checked)}
           data-testid={`q-${def.code}-ack`}
-          className="h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[#bfa76f] focus:ring-[#bfa76f]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-700 bg-neutral-950 text-[#bfa76f] focus:ring-[#bfa76f]"
         />
-        <span>
-          {def.ackValue
-            ? def.ackValue === "consent"
-              ? "I consent"
-              : "I acknowledge"
-            : "I confirm"}
+        <span className="text-sm font-medium text-neutral-100">
+          {questionNumber && (
+            <span className="mr-2 text-neutral-500">{questionNumber}.</span>
+          )}
+          {def.label}
+          {showError && <span className="text-red-400"> *</span>}
         </span>
       </label>
+
+      {showError && (
+        <p className="mt-3 text-xs text-red-400">Please confirm to continue</p>
+      )}
     </Section>
   );
 }
@@ -166,6 +176,7 @@ function CountryMultiSelect({
   inputRef,
   listRef,
   showValidationErrors = false,
+  questionNumber,
 }: {
   def: QuestionDef;
   countryQuery: string;
@@ -179,13 +190,17 @@ function CountryMultiSelect({
   inputRef: React.RefObject<HTMLInputElement | null>;
   listRef: React.RefObject<HTMLDivElement | null>;
   showValidationErrors?: boolean;
+  questionNumber?: number;
 }) {
-  const showAsterisk = showValidationErrors && def.required && selectedIso2.length === 0;
+  const showError = showValidationErrors && def.required && selectedIso2.length === 0;
   return (
-    <Section className="bg-black/20">
+    <Section className={showError ? "bg-black/20 border-red-500/40" : "bg-black/20"}>
       <div className="text-sm font-medium text-neutral-100">
+        {questionNumber && (
+          <span className="mr-2 text-neutral-500">{questionNumber}.</span>
+        )}
         {def.label}
-        {showAsterisk && <span className="text-red-400"> *</span>}
+        {showError && <span className="text-red-400"> *</span>}
       </div>
 
       <p className="mt-1 text-xs text-neutral-400">
@@ -329,6 +344,10 @@ function CountryMultiSelect({
           )}
         </div>
       </div>
+
+      {showError && (
+        <p className="mt-3 text-xs text-red-400">Please select at least one country</p>
+      )}
     </Section>
   );
 }
@@ -445,7 +464,9 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
         </p>
       </Section>
 
-      {spec.questions.map((def) => {
+      {spec.questions.map((def, idx) => {
+        const questionNumber = idx + 1;
+
         if (def.type === "country_multi_select_iso2") {
           return (
             <CountryMultiSelect
@@ -462,6 +483,7 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
               inputRef={inputRef}
               listRef={listRef}
               showValidationErrors={showValidationErrors}
+              questionNumber={questionNumber}
             />
           );
         }
@@ -475,6 +497,7 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
               checked={checked}
               onToggle={(v) => setQ(def.code, v)}
               showValidationErrors={showValidationErrors}
+              questionNumber={questionNumber}
             />
           );
         }
@@ -487,6 +510,7 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
             value={value}
             onSet={(v) => setQ(def.code, v)}
             showValidationErrors={showValidationErrors}
+            questionNumber={questionNumber}
           />
         );
       })}

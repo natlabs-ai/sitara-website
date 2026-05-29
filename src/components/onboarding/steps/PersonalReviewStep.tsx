@@ -609,6 +609,7 @@ export const PersonalReviewStep: React.FC<PersonalReviewStepProps> = ({
               onChange={(e) => setValue("privacyPolicyAccepted", e.target.checked)}
               style={{ accentColor: GOLD }}
               className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+              data-testid="privacy-policy-accept"
             />
             <span className="text-xs text-neutral-200">
               I have read and agree to the{" "}
@@ -633,6 +634,7 @@ export const PersonalReviewStep: React.FC<PersonalReviewStepProps> = ({
               onChange={(e) => setValue("termsAccepted", e.target.checked)}
               style={{ accentColor: GOLD }}
               className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950"
+              data-testid="terms-accept"
             />
             <span className="text-xs text-neutral-200">
               I accept the{" "}

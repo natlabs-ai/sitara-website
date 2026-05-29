@@ -50,28 +50,42 @@ export class CorporateSetupPage {
     // Business orientation radio
     await this.page.locator(`input[name="biz_orientation"][value="${data.bizOrientation}"]`).click()
 
-    // Country of Incorporation — SearchableCountrySelect (custom text input + dropdown)
+    // Country of Incorporation — GoldCombobox (custom text input + ul/button dropdown)
     const countryInput = this.page.getByPlaceholder('Start typing to search…')
     await countryInput.click()
     await countryInput.fill(data.incCountry.slice(0, 5))
-    await this.page.getByRole('listitem').filter({ hasText: data.incCountry }).first().click()
+    // GoldCombobox renders dropdown items as <button type="button"> inside a <ul>
+    await this.page.locator('ul button').filter({ hasText: data.incCountry }).first().click()
 
     // Deterministic Q1: takes ownership of metals
-    const q1Buttons = this.page.locator('div').filter({ hasText: /Does the business ever take ownership of precious metals\?/ }).last()
-    await q1Buttons.getByRole('button', { name: data.takesOwnership ? 'Yes' : 'No' }).click()
+    // .filter({ has: button }) excludes the inner text-only div and gives us the block container
+    const q1Block = this.page.locator('div')
+      .filter({ hasText: /Does the business ever take ownership of precious metals/ })
+      .filter({ has: this.page.locator('button[type="button"]') })
+      .last()
+    await q1Block.getByRole('button', { name: data.takesOwnership ? 'Yes' : 'No' }).click()
 
     // Deterministic Q2: holds client assets or funds
-    const q2Buttons = this.page.locator('div').filter({ hasText: /Does the business ever hold client assets or client funds/ }).last()
-    await q2Buttons.getByRole('button', { name: data.holdsClientAssets ? 'Yes' : 'No' }).click()
+    const q2Block = this.page.locator('div')
+      .filter({ hasText: /Does the business ever hold client assets or client funds/ })
+      .filter({ has: this.page.locator('button[type="button"]') })
+      .last()
+    await q2Block.getByRole('button', { name: data.holdsClientAssets ? 'Yes' : 'No' }).click()
 
     // Settlement facilitation follow-up (only if Q2 = Yes)
     if (data.holdsClientAssets && data.settlementFacilitation !== undefined) {
-      const sfButtons = this.page.locator('div').filter({ hasText: /do you facilitate settlement/ }).last()
-      await sfButtons.getByRole('button', { name: data.settlementFacilitation ? 'Yes' : 'No' }).click()
+      const sfBlock = this.page.locator('div')
+        .filter({ hasText: /do you facilitate settlement/i })
+        .filter({ has: this.page.locator('button[type="button"]') })
+        .last()
+      await sfBlock.getByRole('button', { name: data.settlementFacilitation ? 'Yes' : 'No' }).click()
     }
 
     // Deterministic Q3: acts as intermediary
-    const q3Buttons = this.page.locator('div').filter({ hasText: /Does the business ever arrange or execute precious-metal transactions for clients/ }).last()
-    await q3Buttons.getByRole('button', { name: data.actsAsIntermediary ? 'Yes' : 'No' }).click()
+    const q3Block = this.page.locator('div')
+      .filter({ hasText: /Does the business ever arrange or execute precious-metal transactions for clients/ })
+      .filter({ has: this.page.locator('button[type="button"]') })
+      .last()
+    await q3Block.getByRole('button', { name: data.actsAsIntermediary ? 'Yes' : 'No' }).click()
   }
 }

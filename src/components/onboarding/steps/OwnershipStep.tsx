@@ -109,6 +109,7 @@ interface OwnerDocUploaderProps {
   fieldId: string;
   label: string;
   description?: string;
+  required?: boolean;
   category: string;
   tenantId?: string | null;
   applicationId?: string | null;
@@ -121,6 +122,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
   fieldId: _fieldId,
   label,
   description,
+  required,
   category,
   tenantId,
   applicationId,
@@ -218,7 +220,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
 
   return (
     <div className="rounded-lg border border-neutral-800 bg-black/20 p-3">
-      <FormField label={label} helperText={description}>
+      <FormField label={label} helperText={description} required={required}>
         <DocumentUploadControl
           status={uploadStatus}
           errorMessage={error}
@@ -493,6 +495,7 @@ function OwnerModal({
       onClose={onClose}
       title={`${isIndividual ? "Individual Owner" : "Entity Owner"} Details`}
       size="lg"
+      closeOnBackdropClick={false}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={isSaving}>
@@ -578,12 +581,12 @@ function OwnerModal({
               Individual Information
             </div>
 
-            {/* Document uploads for individuals */}
-            <div className="grid gap-3 md:grid-cols-2 mb-4">
+            {/* 1. ID Document upload — auto-fills the fields below */}
+            <div className="mb-4">
               <OwnerDocumentUploader
                 fieldId={`owner_${draft.id || "temp"}_id_doc`}
                 label="Passport / ID Document"
-                description="Upload to auto-extract name, nationality, and DOB"
+                description="Upload to auto-extract name, nationality, and date of birth"
                 category={`owner_id_${draft.id || Date.now()}`}
                 tenantId={tenantId}
                 applicationId={applicationId}
@@ -591,23 +594,11 @@ function OwnerModal({
                 onUploaded={handleIndividualIdUploaded}
                 testId="owner-id-doc"
               />
-
-              <OwnerDocumentUploader
-                fieldId={`owner_${draft.id || "temp"}_address_doc`}
-                label="Proof of Address"
-                description="Bank statement, utility bill, or lease agreement"
-                category={`owner_address_${draft.id || Date.now()}`}
-                tenantId={tenantId}
-                applicationId={applicationId}
-                applicantId={applicantId}
-                onUploaded={handleIndividualAddressUploaded}
-                testId="owner-address-doc"
-              />
             </div>
 
-            {/* Manual entry fields */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField label="Full Name" required htmlFor="individual_full_name">
+            {/* 2. Personal details — auto-filled from ID or entered manually */}
+            <div className="grid gap-4 md:grid-cols-2 mb-4">
+              <FormField label="Full Name" required htmlFor="individual_full_name" className="md:col-span-2">
                 <Input
                   id="individual_full_name"
                   value={draft.individual_full_name}
@@ -638,6 +629,20 @@ function OwnerModal({
                 />
               </FormField>
             </div>
+
+            {/* 3. Proof of Address — required, separate from ID */}
+            <OwnerDocumentUploader
+              fieldId={`owner_${draft.id || "temp"}_address_doc`}
+              label="Proof of Address"
+              description="Bank statement, utility bill, or lease agreement"
+              required
+              category={`owner_address_${draft.id || Date.now()}`}
+              tenantId={tenantId}
+              applicationId={applicationId}
+              applicantId={applicantId}
+              onUploaded={handleIndividualAddressUploaded}
+              testId="owner-address-doc"
+            />
           </Section>
         )}
 
@@ -677,7 +682,7 @@ function OwnerModal({
 
             {/* Manual entry fields */}
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label="Legal Name" required htmlFor="entity_legal_name">
+              <FormField label="Legal Name" required htmlFor="entity_legal_name" className="md:col-span-2">
                 <Input
                   id="entity_legal_name"
                   value={draft.entity_legal_name}
@@ -866,6 +871,11 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
     }
     if (ownershipPct > 100) {
       alert("Ownership percentage cannot exceed 100%");
+      return;
+    }
+
+    if (draft.owner_type === "individual" && !draft.individual_address_document_id) {
+      alert("Please upload a Proof of Address document");
       return;
     }
 

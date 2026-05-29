@@ -194,21 +194,40 @@ export default function OnboardingRenderer({
     setShowValidationErrors(false);
   }, [stepIdx]);
 
+  // Silently refresh the access token using the refresh_token cookie.
+  // Returns true if the refresh succeeded.
+  const tryRefreshToken = React.useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Save draft to backend (silent on success, shows error on failure)
   const saveDraft = React.useCallback(async (currentAnswers: Record<string, any>, currentStep: Step) => {
     if (!effectiveApplicationId || readOnly) return;
 
+    const doPatch = () => fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_step_id: currentStep.id,
+        draft_answers: currentAnswers,
+      }),
+    });
+
     try {
       setIsSaving(true);
-      const res = await fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_step_id: currentStep.id,
-          draft_answers: currentAnswers,
-        }),
-      });
+      let res = await doPatch();
+
+      // Token expired — try once to refresh then retry
+      if (res.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) res = await doPatch();
+      }
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
@@ -231,7 +250,7 @@ export default function OnboardingRenderer({
     } finally {
       setIsSaving(false);
     }
-  }, [effectiveApplicationId, readOnly, STORAGE_KEY]);
+  }, [effectiveApplicationId, readOnly, STORAGE_KEY, tryRefreshToken]);
 
   const saveAndExit = React.useCallback(async () => {
     if (!effectiveApplicationId || readOnly) return;
@@ -239,18 +258,26 @@ export default function OnboardingRenderer({
     const currentStep = spec.steps[stepIdx];
     if (!currentStep) return;
 
+    const doPatch = () => fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_step_id: currentStep.id,
+        draft_answers: answers,
+      }),
+    });
+
     let redirecting = false;
     try {
       setIsSaving(true);
-      const res = await fetch(`/api/kora/applications/${effectiveApplicationId}/draft`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_step_id: currentStep.id,
-          draft_answers: answers,
-        }),
-      });
+      let res = await doPatch();
+
+      // Token expired — try once to refresh then retry
+      if (res.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) res = await doPatch();
+      }
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({}));
@@ -284,7 +311,7 @@ export default function OnboardingRenderer({
     } finally {
       if (!redirecting) setIsSaving(false);
     }
-  }, [effectiveApplicationId, readOnly, stepIdx, spec.steps, answers, STORAGE_KEY]);
+  }, [effectiveApplicationId, readOnly, stepIdx, spec.steps, answers, STORAGE_KEY, tryRefreshToken]);
 
   const visibleSteps = React.useMemo(() => {
     const isBusiness = answers.accountType === "business";
@@ -397,6 +424,9 @@ export default function OnboardingRenderer({
       // Update both local state and answers to persist the submitted flag
       setHasSubmitted(true);
       setAnswers((prev) => ({ ...prev, _applicationSubmitted: true }));
+
+      // Scroll to top so the success message is the first thing the user sees
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       console.error("onSubmit handler failed", e);
       setGlobalError(

@@ -8,7 +8,7 @@ import {
   DEV_MODE,
 } from "../onboardingShared";
 import { Section, Button, Alert } from "@/components/ui";
-import { checkEmailAvailability } from "@/lib/koraClient";
+import { checkEmailAvailability, sendEmailOtp, verifyEmailOtp, sendPhoneOtp, verifyPhoneOtp } from "@/lib/koraClient";
 
 export function AccountStep({
   answers,
@@ -27,6 +27,11 @@ export function AccountStep({
   const [mode, setMode] = React.useState<'login' | 'signup'>(
     answers.authMode || 'signup'
   );
+
+  const [emailOtpLoading, setEmailOtpLoading] = React.useState(false);
+  const [emailOtpError, setEmailOtpError] = React.useState<string | null>(null);
+  const [phoneOtpLoading, setPhoneOtpLoading] = React.useState(false);
+  const [phoneOtpError, setPhoneOtpError] = React.useState<string | null>(null);
 
   // Update mode in answers when changed and clear errors
   React.useEffect(() => {
@@ -127,10 +132,18 @@ export function AccountStep({
     updateE164(dial, v);
   }
 
-  function sendSmsOtp() {
+  async function sendSmsOtp() {
     if (!answers.phone) return;
-    if (DEV_MODE) setValue("phoneOtp", "000000");
-    // TODO: call POST /api/auth/otp/phone to send a real OTP in production
+    setPhoneOtpLoading(true);
+    setPhoneOtpError(null);
+    try {
+      const result = await sendPhoneOtp(answers.phone);
+      if (result.dev_code) setValue("phoneOtp", result.dev_code);
+    } catch (e: any) {
+      setPhoneOtpError(e.message || "Failed to send code. Try again.");
+    } finally {
+      setPhoneOtpLoading(false);
+    }
   }
 
   return (
@@ -236,21 +249,42 @@ export function AccountStep({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => {
+                onClick={async () => {
                   if (!answers.email) return;
-                  if (DEV_MODE) setValue("emailOtp", "000000");
-                  // TODO: call POST /api/auth/otp/email to send a real OTP in production
+                  setEmailOtpLoading(true);
+                  setEmailOtpError(null);
+                  try {
+                    const result = await sendEmailOtp(answers.email);
+                    if (result.dev_code) setValue("emailOtp", result.dev_code);
+                  } catch (e: any) {
+                    setEmailOtpError(e.message || "Failed to send code. Try again.");
+                  } finally {
+                    setEmailOtpLoading(false);
+                  }
                 }}
+                disabled={emailOtpLoading || !answers.email}
                 data-testid="email-otp-send"
               >
-                Send
+                {emailOtpLoading ? "Sending…" : "Send"}
               </Button>
               <Button
                 variant={answers.emailVerified ? "primary" : "secondary"}
                 size="sm"
-                onClick={() =>
-                  setValue("emailVerified", !!answers.email && !!answers.emailOtp)
-                }
+                onClick={async () => {
+                  if (!answers.email || !answers.emailOtp) return;
+                  setEmailOtpLoading(true);
+                  setEmailOtpError(null);
+                  try {
+                    await verifyEmailOtp(answers.email, answers.emailOtp);
+                    setValue("emailVerified", true);
+                  } catch (e: any) {
+                    setEmailOtpError(e.message || "Invalid code.");
+                    setValue("emailVerified", false);
+                  } finally {
+                    setEmailOtpLoading(false);
+                  }
+                }}
+                disabled={emailOtpLoading || !answers.email || !answers.emailOtp}
                 data-testid="email-verify"
               >
                 {answers.emailVerified ? "Verified" : "Verify"}
@@ -259,6 +293,9 @@ export function AccountStep({
           </div>
         )}
       </Section>
+      {emailOtpError && (
+        <p className="text-xs text-red-400 -mt-3">{emailOtpError}</p>
+      )}
 
       {/* Mobile - Only show in signup mode */}
       {mode === 'signup' && (
@@ -306,18 +343,33 @@ export function AccountStep({
                 onChange={(e) => setValue("phoneOtp", e.target.value)}
                 data-testid="phone-otp-input"
               />
-              <Button variant="secondary" size="sm" onClick={sendSmsOtp} data-testid="phone-otp-send">
-                Send
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={sendSmsOtp}
+                disabled={phoneOtpLoading || !answers.phone}
+                data-testid="phone-otp-send"
+              >
+                {phoneOtpLoading ? "Sending…" : "Send"}
               </Button>
               <Button
                 variant={answers.phoneVerified ? "primary" : "secondary"}
                 size="sm"
-                onClick={() =>
-                  setValue(
-                    "phoneVerified",
-                    !!answers.phone && !!answers.phoneOtp
-                  )
-                }
+                onClick={async () => {
+                  if (!answers.phone || !answers.phoneOtp) return;
+                  setPhoneOtpLoading(true);
+                  setPhoneOtpError(null);
+                  try {
+                    await verifyPhoneOtp(answers.phone, answers.phoneOtp);
+                    setValue("phoneVerified", true);
+                  } catch (e: any) {
+                    setPhoneOtpError(e.message || "Invalid code.");
+                    setValue("phoneVerified", false);
+                  } finally {
+                    setPhoneOtpLoading(false);
+                  }
+                }}
+                disabled={phoneOtpLoading || !answers.phone || !answers.phoneOtp}
                 data-testid="phone-verify"
               >
                 {answers.phoneVerified ? "Verified" : "Verify"}
@@ -332,6 +384,9 @@ export function AccountStep({
             </span>
           </p>
         </Section>
+      )}
+      {phoneOtpError && (
+        <p className="text-xs text-red-400 -mt-3">{phoneOtpError}</p>
       )}
 
       {/* Password */}

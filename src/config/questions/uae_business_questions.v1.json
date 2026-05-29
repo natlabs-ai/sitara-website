@@ -33,7 +33,6 @@
       "required": true,
       "options": [
         { "value": "yes", "label": "Yes" },
-        { "value": "partial", "label": "Partially / Pending" },
         { "value": "no", "label": "No" }
       ]
     },
@@ -44,8 +43,7 @@
       "required": true,
       "options": [
         { "value": "yes", "label": "Yes" },
-        { "value": "no", "label": "No" },
-        { "value": "unsure", "label": "Not sure" }
+        { "value": "no", "label": "No" }
       ]
     },
     {
@@ -73,8 +71,7 @@
       "required": true,
       "options": [
         { "value": "yes", "label": "Yes" },
-        { "value": "no", "label": "No" },
-        { "value": "partial", "label": "Partially / In progress" }
+        { "value": "no", "label": "No" }
       ]
     },
     {

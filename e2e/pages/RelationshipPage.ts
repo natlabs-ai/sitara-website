@@ -54,7 +54,10 @@ export class RelationshipPage {
   }
 
   async waitForStep() {
-    await this.page.waitForSelector('[data-testid="next-button"]')
+    // Wait for content unique to this step — the frequency <select> element.
+    // Do NOT use next-button: it lives in the persistent toolbar and is always
+    // present, so it resolves immediately even while ownership is still shown.
+    await this.page.waitForSelector('#relationship_frequency')
   }
 
   async clickNext() {

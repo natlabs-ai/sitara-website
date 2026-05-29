@@ -16,11 +16,11 @@ export class AccountSelectionPage {
   }
 
   get businessRadio() {
-    return this.page.locator('#radio-accountType-business')
+    return this.page.getByRole('radio', { name: 'Business' })
   }
 
   get individualRadio() {
-    return this.page.locator('#radio-accountType-individual')
+    return this.page.getByRole('radio', { name: 'Personal' })
   }
 
   get signatoryRadio() {
@@ -49,14 +49,18 @@ export class AccountSelectionPage {
 
   /** Selects business account type, signatory role, then advances to the next step. */
   async selectBusiness() {
-    await this.businessRadio.click()
-    await this.signatoryRadio.click()
+    // Use check() instead of click() — for React controlled radios, check() correctly
+    // triggers the synthetic onChange so React state updates and signingRole renders.
+    await this.businessRadio.check()
+    // Explicitly wait for the signingRole field to appear (showIf: accountType === 'business')
+    await this.page.waitForSelector('#radio-signingRole-signatory', { state: 'visible' })
+    await this.signatoryRadio.check()
     await this.clickNext()
   }
 
   /** Selects individual account type, then advances to the next step. */
   async selectIndividual() {
-    await this.individualRadio.click()
+    await this.individualRadio.check()
     await this.clickNext()
   }
 }

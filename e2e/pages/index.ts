@@ -1,5 +1,7 @@
 export { LoginPage } from './LoginPage'
 export { DashboardPage } from './DashboardPage'
+export { ProfilePage } from './ProfilePage'
+export { RiskDeclarationsPage } from './RiskDeclarationsPage'
 export { AccountSelectionPage } from './AccountSelectionPage'
 export { AccountStepPage } from './AccountStepPage'
 export { IdentityPage } from './IdentityPage'
