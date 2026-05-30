@@ -95,7 +95,19 @@ function IndividualSummary({ answers }: { answers: Record<string, any> }) {
         <Row label="Nationality" value={answers.nationality} />
         <Row label="Date of birth" value={answers.dateOfBirth} />
         <Row label="Occupation" value={answers.occupation} />
-        <Row label="Source of income" value={answers.sourceOfIncome} />
+        <Row label="Source of income" value={(() => {
+          const raw = answers.sourceOfIncome;
+          if (!raw) return undefined;
+          if (typeof raw === "string") return raw;
+          const LABEL: Record<string, string> = {
+            salary: "Salary / employment income", business_profits: "Business profits",
+            rental: "Rental income", investments: "Investment returns",
+            pension: "Pension / retirement funds", inheritance: "Inheritance / gift", other: "Other",
+          };
+          const { selected = [], other_details = "" } = raw as { selected?: string[]; other_details?: string };
+          const labels = selected.map((v: string) => LABEL[v] ?? v).join(", ");
+          return other_details.trim() ? `${labels} (${other_details.trim()})` : labels;
+        })()} />
       </SummarySection>
 
       <SummarySection title="Services">

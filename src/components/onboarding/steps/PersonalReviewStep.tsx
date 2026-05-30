@@ -444,7 +444,20 @@ export const PersonalReviewStep: React.FC<PersonalReviewStepProps> = ({
           <div className="flex items-center justify-between gap-3">
             <span className="text-neutral-400">Source of income</span>
             <span className="text-neutral-100">
-              {answers.sourceOfIncome || "Not provided"}
+              {(() => {
+                const raw = answers.sourceOfIncome;
+                if (!raw) return "Not provided";
+                if (typeof raw === "string") return raw;
+                const LABEL: Record<string, string> = {
+                  salary: "Salary / employment income", business_profits: "Business profits",
+                  rental: "Rental income", investments: "Investment returns",
+                  pension: "Pension / retirement funds", inheritance: "Inheritance / gift", other: "Other",
+                };
+                const { selected = [], other_details = "" } = raw as { selected?: string[]; other_details?: string };
+                if (!selected.length) return "Not provided";
+                const labels = selected.map((v) => LABEL[v] ?? v).join(", ");
+                return other_details.trim() ? `${labels} (${other_details.trim()})` : labels;
+              })()}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3">

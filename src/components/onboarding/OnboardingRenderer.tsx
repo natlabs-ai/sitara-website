@@ -523,9 +523,15 @@ export default function OnboardingRenderer({
       const hasOccupation =
         typeof answers.occupation === "string" &&
         answers.occupation.trim().length > 0;
-      const hasSource =
-        typeof answers.sourceOfIncome === "string" &&
-        answers.sourceOfIncome.trim().length > 0;
+      const hasSource = (() => {
+        const raw = answers.sourceOfIncome;
+        if (typeof raw === "string") return raw.trim().length > 0;
+        if (raw && typeof raw === "object") {
+          const sel = (raw as { selected?: string[] }).selected;
+          return Array.isArray(sel) && sel.length > 0;
+        }
+        return false;
+      })();
       const services = Array.isArray(answers.selectedServices)
         ? (answers.selectedServices as unknown[])
         : [];
@@ -932,7 +938,25 @@ export default function OnboardingRenderer({
           full_name: String(answers.fullName || ""),
           nationality: String(answers.nationality || ""),
           occupation: String(answers.occupation || ""),
-          source_of_income: String(answers.sourceOfIncome || ""),
+          source_of_income: (() => {
+            const INCOME_LABEL: Record<string, string> = {
+              salary: "Salary / employment income",
+              business_profits: "Business profits",
+              rental: "Rental income",
+              investments: "Investment returns",
+              pension: "Pension / retirement funds",
+              inheritance: "Inheritance / gift",
+              other: "Other",
+            };
+            const raw = answers.sourceOfIncome;
+            if (typeof raw === "string") return raw;
+            if (raw && typeof raw === "object") {
+              const { selected = [], other_details = "" } = raw as { selected?: string[]; other_details?: string };
+              const labels = selected.map((v) => INCOME_LABEL[v] ?? v).join(", ");
+              return other_details.trim() ? `${labels} (${other_details.trim()})` : labels;
+            }
+            return "";
+          })(),
           expected_frequency:
             (answers.expectedFrequency as string | undefined) || undefined,
           expected_value:
@@ -1573,7 +1597,20 @@ export default function OnboardingRenderer({
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="text-neutral-400">Source of income</span>
                 <span className="text-neutral-100">
-                  {formatMaybe(answers.sourceOfIncome)}
+                  {(() => {
+                    const raw = answers.sourceOfIncome;
+                    if (!raw) return "—";
+                    if (typeof raw === "string") return raw;
+                    const { selected = [], other_details = "" } = raw as { selected?: string[]; other_details?: string };
+                    if (!selected.length) return "—";
+                    const INCOME_LABEL: Record<string, string> = {
+                      salary: "Salary / employment income", business_profits: "Business profits",
+                      rental: "Rental income", investments: "Investment returns",
+                      pension: "Pension / retirement funds", inheritance: "Inheritance / gift", other: "Other",
+                    };
+                    const labels = selected.map((v) => INCOME_LABEL[v] ?? v).join(", ");
+                    return other_details.trim() ? `${labels} (${other_details.trim()})` : labels;
+                  })()}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs">
