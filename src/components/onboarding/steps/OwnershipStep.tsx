@@ -61,6 +61,8 @@ type LocalOwnerDraft = {
 
   // Common
   is_ubo: boolean;
+  is_pep: boolean | null;
+  is_sanctioned: boolean | null;
   notes: string;
 
   // UI state
@@ -737,6 +739,66 @@ function OwnerModal({
           </Section>
         )}
 
+          {/* PEP / Sanctions — individual owners only */}
+        {isIndividual && (
+          <div className="space-y-4">
+            <FormField
+              label="Is this individual a Politically Exposed Person (PEP)?"
+              required
+              htmlFor="is_pep"
+              helperText="A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer)."
+            >
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="owner_is_pep"
+                    checked={draft.is_pep === true}
+                    onChange={() => setDraft({ ...draft, is_pep: true })}
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="owner_is_pep"
+                    checked={draft.is_pep === false}
+                    onChange={() => setDraft({ ...draft, is_pep: false })}
+                  />
+                  No
+                </label>
+              </div>
+            </FormField>
+
+            <FormField
+              label="Is this individual subject to any international sanctions?"
+              required
+              htmlFor="is_sanctioned"
+            >
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="owner_is_sanctioned"
+                    checked={draft.is_sanctioned === true}
+                    onChange={() => setDraft({ ...draft, is_sanctioned: true })}
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="owner_is_sanctioned"
+                    checked={draft.is_sanctioned === false}
+                    onChange={() => setDraft({ ...draft, is_sanctioned: false })}
+                  />
+                  No
+                </label>
+              </div>
+            </FormField>
+          </div>
+        )}
+
           {/* Notes */}
         <FormField label="Notes (optional)" htmlFor="notes">
           <Textarea
@@ -806,6 +868,8 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
     entity_legal_existence_document_id: null,
     entity_ownership_proof_document_id: null,
     is_ubo: false,
+    is_pep: null,
+    is_sanctioned: null,
     notes: "",
     isSaved: false,
     isEditing: true,
@@ -839,6 +903,8 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
       entity_legal_existence_document_id: owner.entity_legal_existence_document_id || null,
       entity_ownership_proof_document_id: owner.entity_ownership_proof_document_id || null,
       is_ubo: autoUbo, // Auto-set based on ownership percentage
+      is_pep: owner.is_pep ?? null,
+      is_sanctioned: owner.is_sanctioned ?? null,
       notes: owner.notes || "",
       isSaved: true,
       isEditing: true,
@@ -879,6 +945,16 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
       return;
     }
 
+    if (draft.owner_type === "individual" && draft.is_pep === null) {
+      alert("Please answer the PEP declaration");
+      return;
+    }
+
+    if (draft.owner_type === "individual" && draft.is_sanctioned === null) {
+      alert("Please answer the sanctions declaration");
+      return;
+    }
+
     setModalSaving(true);
     setError(null);
 
@@ -905,6 +981,8 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
           entity_legal_existence_document_id: draft.entity_legal_existence_document_id,
           entity_ownership_proof_document_id: draft.entity_ownership_proof_document_id,
           is_ubo: finalIsUbo, // Auto-calculated based on ownership percentage
+          is_pep: draft.is_pep,
+          is_sanctioned: draft.is_sanctioned,
           notes: draft.notes || null,
         };
 
@@ -930,6 +1008,8 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
           entity_legal_existence_document_id: draft.entity_legal_existence_document_id,
           entity_ownership_proof_document_id: draft.entity_ownership_proof_document_id,
           is_ubo: finalIsUbo, // Auto-calculated based on ownership percentage
+          is_pep: draft.is_pep,
+          is_sanctioned: draft.is_sanctioned,
           notes: draft.notes || null,
         };
 

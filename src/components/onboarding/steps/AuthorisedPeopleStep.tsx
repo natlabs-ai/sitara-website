@@ -43,6 +43,8 @@ type LocalPersonDraft = {
   role: string;
   id_document_id: string | null;
   address_document_id: string | null;
+  is_pep: boolean | null;
+  is_sanctioned: boolean | null;
   notes: string;
 
   // UI state
@@ -264,6 +266,16 @@ const PersonModal: React.FC<{
       return;
     }
 
+    if (draft.is_pep === null) {
+      setErrorMsg("Please answer the PEP declaration");
+      return;
+    }
+
+    if (draft.is_sanctioned === null) {
+      setErrorMsg("Please answer the sanctions declaration");
+      return;
+    }
+
     setSaving(true);
     setErrorMsg(null);
 
@@ -378,6 +390,63 @@ const PersonModal: React.FC<{
         </div>
       </Section>
 
+      {/* PEP declaration */}
+      <FormField
+        label="Is this person a Politically Exposed Person (PEP)?"
+        required
+        htmlFor="signatory_is_pep"
+        helperText="A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer)."
+      >
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="signatory_is_pep"
+              checked={draft.is_pep === true}
+              onChange={() => setDraft((prev) => prev && { ...prev, is_pep: true })}
+            />
+            Yes
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="signatory_is_pep"
+              checked={draft.is_pep === false}
+              onChange={() => setDraft((prev) => prev && { ...prev, is_pep: false })}
+            />
+            No
+          </label>
+        </div>
+      </FormField>
+
+      {/* Sanctions declaration */}
+      <FormField
+        label="Is this person subject to any international sanctions?"
+        required
+        htmlFor="signatory_is_sanctioned"
+      >
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="signatory_is_sanctioned"
+              checked={draft.is_sanctioned === true}
+              onChange={() => setDraft((prev) => prev && { ...prev, is_sanctioned: true })}
+            />
+            Yes
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="signatory_is_sanctioned"
+              checked={draft.is_sanctioned === false}
+              onChange={() => setDraft((prev) => prev && { ...prev, is_sanctioned: false })}
+            />
+            No
+          </label>
+        </div>
+      </FormField>
+
       {/* Notes */}
       <FormField label="Notes (Optional)" htmlFor="notes">
         <Textarea
@@ -436,6 +505,8 @@ export default function AuthorisedPeopleStep({
       role: "",
       id_document_id: null,
       address_document_id: null,
+      is_pep: null,
+      is_sanctioned: null,
       notes: "",
       isSaved: false,
       isEditing: true,
@@ -451,6 +522,8 @@ export default function AuthorisedPeopleStep({
       role: person.role || "",
       id_document_id: person.id_document_id || null,
       address_document_id: person.address_document_id || null,
+      is_pep: person.is_pep ?? null,
+      is_sanctioned: person.is_sanctioned ?? null,
       notes: person.notes || "",
       isSaved: true,
       isEditing: true,
@@ -471,6 +544,8 @@ export default function AuthorisedPeopleStep({
         role: draft.role || null,
         id_document_id: draft.id_document_id || null,
         address_document_id: draft.address_document_id || null,
+        is_pep: draft.is_pep,
+        is_sanctioned: draft.is_sanctioned,
         notes: draft.notes || null,
       };
 
@@ -487,6 +562,8 @@ export default function AuthorisedPeopleStep({
         role: draft.role || null,
         id_document_id: draft.id_document_id || null,
         address_document_id: draft.address_document_id || null,
+        is_pep: draft.is_pep,
+        is_sanctioned: draft.is_sanctioned,
         notes: draft.notes || null,
       };
 

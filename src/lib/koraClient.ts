@@ -235,6 +235,8 @@ export type BeneficialOwner = {
   entity_ownership_proof_document_id?: string | null;
   control_mechanisms?: string[] | null;
   is_ubo?: boolean;
+  is_pep?: boolean | null;
+  is_sanctioned?: boolean | null;
   verification_status: string;
   notes?: string | null;
   created_at: string;
@@ -261,6 +263,8 @@ export type BeneficialOwnerCreatePayload = {
   entity_ownership_proof_document_id?: string | null;
   control_mechanisms?: string[] | null;
   is_ubo?: boolean;
+  is_pep?: boolean | null;
+  is_sanctioned?: boolean | null;
   notes?: string | null;
 };
 
@@ -280,6 +284,8 @@ export type AuthorizedPerson = {
   role?: string | null;
   id_document_id?: string | null;
   address_document_id?: string | null;
+  is_pep?: boolean | null;
+  is_sanctioned?: boolean | null;
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -294,6 +300,8 @@ export type AuthorizedPersonCreatePayload = {
   role?: string | null;
   id_document_id?: string | null;
   address_document_id?: string | null;
+  is_pep?: boolean | null;
+  is_sanctioned?: boolean | null;
   notes?: string | null;
 };
 

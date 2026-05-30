@@ -16,7 +16,7 @@ import {
 
 const PROFILE = {
   occupation: 'Software Engineer',
-  sourceOfIncome: 'Salary from full-time employment',
+  sourceOfIncome: 'salary',
   services: ['Buy gold'],
 }
 

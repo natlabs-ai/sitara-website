@@ -6,6 +6,8 @@ export interface AuthorisedPersonData {
   role: string
   idFile: string
   addressFile: string
+  isPep?: boolean
+  isSanctioned?: boolean
 }
 
 export class AuthorisedPeoplePage {
@@ -79,6 +81,14 @@ export class AuthorisedPeoplePage {
 
     // Upload proof of address (optional but we always provide it)
     await this.uploadFile('ap-address-doc', data.addressFile)
+
+    // PEP declaration — first radio = Yes (index 0), second = No (index 1)
+    const pepRadios = this.page.locator('input[name="signatory_is_pep"]')
+    await pepRadios.nth(data.isPep ? 0 : 1).click()
+
+    // Sanctions declaration
+    const sanctionRadios = this.page.locator('input[name="signatory_is_sanctioned"]')
+    await sanctionRadios.nth(data.isSanctioned ? 0 : 1).click()
 
     await this.saveApButton.click()
   }

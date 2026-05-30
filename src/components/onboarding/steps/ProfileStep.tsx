@@ -12,6 +12,16 @@ interface ProfileStepProps {
   showValidationErrors?: boolean;
 }
 
+const INCOME_OPTIONS = [
+  { value: "salary", label: "Salary / employment income" },
+  { value: "business_profits", label: "Business profits" },
+  { value: "rental", label: "Rental income" },
+  { value: "investments", label: "Investment returns" },
+  { value: "pension", label: "Pension / retirement funds" },
+  { value: "inheritance", label: "Inheritance / gift" },
+  { value: "other", label: "Other (please specify)" },
+] as const;
+
 const individualServiceOptions = [
   { value: "buy_gold", label: "Buy gold" },
   { value: "sell_gold", label: "Sell gold" },
@@ -28,7 +38,23 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
   const nationality = (answers.nationality as string) || "";
 
   const occupation = (answers.occupation as string) || "";
-  const sourceOfIncome = (answers.sourceOfIncome as string) || "";
+  const sourceOfIncomeRaw = answers.sourceOfIncome as
+    | { selected?: string[]; other_details?: string }
+    | string
+    | undefined;
+  const sourceOfIncomeSelected: string[] =
+    sourceOfIncomeRaw && typeof sourceOfIncomeRaw === "object"
+      ? (sourceOfIncomeRaw.selected ?? [])
+      : [];
+  const sourceOfIncomeOther: string =
+    sourceOfIncomeRaw && typeof sourceOfIncomeRaw === "object"
+      ? (sourceOfIncomeRaw.other_details ?? "")
+      : typeof sourceOfIncomeRaw === "string"
+      ? sourceOfIncomeRaw
+      : "";
+  const incomeValid =
+    sourceOfIncomeSelected.length > 0 &&
+    (!sourceOfIncomeSelected.includes("other") || sourceOfIncomeOther.trim().length > 0);
 
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const touch = (field: string) =>
@@ -115,18 +141,51 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
           label="Source of income"
           required
           htmlFor="sourceOfIncome"
-          helperText="Describe the main source(s) of your income. This is used for risk assessment and CDD."
-          error="This field is required."
-          showError={(touched.sourceOfIncome || showValidationErrors) && !sourceOfIncome.trim()}
+          helperText="Select all that apply. This is used for risk assessment and CDD."
+          error={
+            sourceOfIncomeSelected.length === 0
+              ? "Please select at least one source of income"
+              : "Please describe your other source(s) of income"
+          }
+          showError={(touched.sourceOfIncome || showValidationErrors) && !incomeValid}
         >
-          <Textarea
-            id="sourceOfIncome"
-            value={sourceOfIncome}
-            onChange={(value) => setValue("sourceOfIncome", value)}
-            onBlur={() => touch("sourceOfIncome")}
-            placeholder="Salary, business profits, investment income, rental income, etc."
-            rows={3}
-          />
+          <div className="space-y-2" id="sourceOfIncome">
+            {INCOME_OPTIONS.map((opt) => (
+              <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sourceOfIncomeSelected.includes(opt.value)}
+                  onChange={(e) => {
+                    const next = e.target.checked
+                      ? [...sourceOfIncomeSelected, opt.value]
+                      : sourceOfIncomeSelected.filter((v) => v !== opt.value);
+                    setValue("sourceOfIncome", {
+                      selected: next,
+                      other_details: sourceOfIncomeOther,
+                    });
+                    touch("sourceOfIncome");
+                  }}
+                />
+                {opt.label}
+              </label>
+            ))}
+          </div>
+          {sourceOfIncomeSelected.includes("other") && (
+            <div className="mt-2">
+              <Textarea
+                id="sourceOfIncomeOther"
+                value={sourceOfIncomeOther}
+                onChange={(value) =>
+                  setValue("sourceOfIncome", {
+                    selected: sourceOfIncomeSelected,
+                    other_details: value,
+                  })
+                }
+                placeholder="Please describe your other source(s) of income"
+                rows={2}
+              />
+            </div>
+          )}
         </FormField>
 
         {/* Optional risk questions */}

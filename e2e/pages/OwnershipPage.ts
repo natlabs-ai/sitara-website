@@ -8,6 +8,8 @@ export interface IndividualOwnerData {
   ownershipPct: number
   idFile: string
   addressFile: string
+  isPep?: boolean
+  isSanctioned?: boolean
 }
 
 export class OwnershipPage {
@@ -100,6 +102,14 @@ export class OwnershipPage {
 
     // Upload proof of address
     await this.uploadFile('owner-address-doc', data.addressFile)
+
+    // PEP declaration — first radio = Yes (index 0), second = No (index 1)
+    const pepRadios = this.page.locator('input[name="owner_is_pep"]')
+    await pepRadios.nth(data.isPep ? 0 : 1).click()
+
+    // Sanctions declaration
+    const sanctionRadios = this.page.locator('input[name="owner_is_sanctioned"]')
+    await sanctionRadios.nth(data.isSanctioned ? 0 : 1).click()
 
     await this.saveOwnerButton.click()
   }
