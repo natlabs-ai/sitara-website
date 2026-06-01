@@ -1830,7 +1830,7 @@ export default function OnboardingRenderer({
         steps={visibleSteps}
         currentIndex={visibleIdx}
         activeClassName="bg-[--gold-color]"
-        inactiveClassName="bg-neutral-700"
+        inactiveClassName="bg-[--gold-color]/25"
       />
 
       {/* Show global error for all steps except login (login step shows error inline) */}

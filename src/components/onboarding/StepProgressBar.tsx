@@ -9,7 +9,7 @@ export default function StepProgressBar({
   steps,
   currentIndex,
   activeClassName = "bg-[--gold-color]",
-  inactiveClassName = "bg-neutral-700",
+  inactiveClassName = "bg-[--gold-color]/25",
 }: StepProgressBarProps) {
   const current = steps[currentIndex];
   if (!current) return null;
