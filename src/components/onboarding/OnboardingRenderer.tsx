@@ -27,6 +27,7 @@ import {
   visibleByRules,
   DEV_MODE,
 } from "./onboardingShared";
+import StepProgressBar from "./StepProgressBar";
 import { FieldRenderer } from "./FieldRenderer";
 import { AccountStep } from "./steps/AccountStep";
 import { OwnershipStep } from "./steps/OwnershipStep";
@@ -1825,31 +1826,12 @@ export default function OnboardingRenderer({
         }
       `}</style>
 
-      <nav className="no-print mb-6 flex flex-wrap items-center gap-3 text-sm">
-        {visibleSteps.map((s, i) => {
-          const isActive = s.id === step.id;
-          return (
-            <div key={s.id} className="flex items-center gap-2">
-              <span
-                className={`inline-flex h-6 w-6 items-center justify-center rounded-full border ${
-                  isActive
-                    ? "border-[--gold-color] text-[--gold-color]"
-                    : "border-neutral-700 text-neutral-400"
-                }`}
-              >
-                {i + 1}
-              </span>
-              <span className={isActive ? "text-[--gold-color]" : "text-neutral-400"}>
-                {s.label}
-              </span>
-              {i < visibleSteps.length - 1 && (
-                <span className="mx-2 text-neutral-600">—</span>
-              )}
-            </div>
-          );
-        })}
-        <style>{`:root{--gold-color:${GOLD}}`}</style>
-      </nav>
+      <StepProgressBar
+        steps={visibleSteps}
+        currentIndex={visibleIdx}
+        activeClassName="bg-[--gold-color]"
+        inactiveClassName="bg-neutral-700"
+      />
 
       {/* Show global error for all steps except login (login step shows error inline) */}
       {globalError && step.id !== "login" && (
