@@ -1829,8 +1829,9 @@ export default function OnboardingRenderer({
       <StepProgressBar
         steps={visibleSteps}
         currentIndex={visibleIdx}
-        activeClassName="bg-[--gold-color]"
+        activeClassName=""
         inactiveClassName=""
+        activeStyle={{ backgroundColor: GOLD }}
         inactiveStyle={{ backgroundColor: "rgba(191,167,111,0.25)" }}
       />
 
