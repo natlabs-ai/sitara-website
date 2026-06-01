@@ -1,15 +1,19 @@
+import React from "react";
+
 interface StepProgressBarProps {
   steps: { id: string; label: string }[];
   currentIndex: number;
   activeClassName?: string;
   inactiveClassName?: string;
+  inactiveStyle?: React.CSSProperties;
 }
 
 export default function StepProgressBar({
   steps,
   currentIndex,
   activeClassName = "bg-[--gold-color]",
-  inactiveClassName = "bg-[--gold-color]/25",
+  inactiveClassName = "bg-neutral-700",
+  inactiveStyle,
 }: StepProgressBarProps) {
   const current = steps[currentIndex];
   if (!current) return null;
@@ -31,6 +35,7 @@ export default function StepProgressBar({
             className={`h-1 flex-1 rounded-full transition-colors ${
               i <= currentIndex ? activeClassName : inactiveClassName
             }`}
+            style={i > currentIndex ? inactiveStyle : undefined}
           />
         ))}
       </div>
