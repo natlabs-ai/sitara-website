@@ -16,6 +16,7 @@ export type CreateApplicationPayload = {
   phone_number?: string | null;
   phone_e164?: string | null;
   password?: string | null;
+  origin_url?: string | null;
 };
 
 export type CreateApplicationResponse = {

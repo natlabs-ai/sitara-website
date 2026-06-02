@@ -763,6 +763,7 @@ export default function OnboardingRenderer({
             phone_number: answers.phoneNational || undefined,
             phone_e164: answers.phone || undefined,
             password: answers.password || undefined,
+            origin_url: typeof window !== "undefined" ? window.location.origin : null,
           };
 
           const res = await createApplication(payload);
