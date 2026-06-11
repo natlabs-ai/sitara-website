@@ -3,7 +3,7 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import OnboardingRenderer from "@/components/onboarding/OnboardingRenderer";
 import sitaraSchema from "@/config/sitara_onboarding_schema.json";
 import type { Spec } from "@/components/onboarding/onboardingShared";
@@ -20,6 +20,7 @@ const spec = sitaraSchema as unknown as Spec;
 type PreFormStep = "entry" | "account-type" | "business-context" | "checklist" | "returning-login" | "status" | "done";
 
 function OnboardPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resume");
   const viewId = searchParams.get("view");
@@ -199,7 +200,7 @@ function OnboardPageInner() {
         {showPreForm ? (
           <div className="mx-auto max-w-md pt-6">
             {preFormStep === "entry" && (
-              <EntryScreen onNew={() => setPreFormStep("account-type")} onContinue={() => setPreFormStep("returning-login")} />
+              <EntryScreen onNew={() => setPreFormStep("account-type")} onContinue={() => router.push("/login")} />
             )}
             {preFormStep === "account-type" && (
               <AccountTypeSelection onSelect={handleAccountTypeSelect} />
