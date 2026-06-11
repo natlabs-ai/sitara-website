@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/koraClient";
 import { useAuth } from "@/contexts/AuthContext";
+import Navbar from "@/components/Navbar";
 
 const GOLD = "#bfa76f";
 
@@ -49,25 +50,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Top bar */}
-      <header className="flex items-center justify-between border-b border-neutral-900 px-6 py-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-200 transition"
-        >
-          <span>←</span>
-          <span>Back to site</span>
-        </Link>
-        <Link
-          href="/"
-          className="text-sm font-semibold tracking-[0.45em] text-amber-400"
-        >
-          SITARA
-        </Link>
-      </header>
+      <Navbar variant="focus" />
 
       {/* Card */}
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <main className="flex flex-1 items-center justify-center px-4 pt-28 pb-12">
         <div className="w-full max-w-sm">
           {/* Heading */}
           <div className="mb-8 text-center">
