@@ -3,6 +3,7 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 import { useSearchParams } from "next/navigation";
 import OnboardingRenderer from "@/components/onboarding/OnboardingRenderer";
 import sitaraSchema from "@/config/sitara_onboarding_schema.json";
@@ -193,20 +194,9 @@ function OnboardPageInner() {
 
   return (
     <div className="min-h-screen bg-black text-neutral-100">
-      <header className="flex items-center justify-between border-b border-neutral-900 px-6 py-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xs text-neutral-300 hover:text-neutral-100"
-        >
-          <span className="text-sm">←</span>
-          <span>Back to site</span>
-        </Link>
-        <div className="text-xs font-semibold tracking-[0.45em] text-neutral-200">
-          S&nbsp;I&nbsp;T&nbsp;A&nbsp;R&nbsp;A
-        </div>
-      </header>
+      <Navbar variant="focus" />
 
-      <main className="px-4 pb-12 pt-6 md:px-8">
+      <main className="px-4 pb-12 pt-16 md:px-8">
         {showPreForm ? (
           <div className="mx-auto max-w-md pt-6">
             {preFormStep === "entry" && (
