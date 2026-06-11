@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Services from "@/components/Services";
@@ -34,7 +34,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <Header />
+      <Navbar variant="marketing" />
       <Hero
         onPrimary={() => scrollTo("contact")}
         onSecondary={() => scrollTo("services")}
