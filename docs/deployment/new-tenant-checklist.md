@@ -14,11 +14,34 @@ Use this guide every time you deploy the Sitara website for a new tenant.
 
 ## Step 2 — Generate a Kora API key for the tenant
 
-The API key authenticates the Sitara website as an authorised caller for that tenant. It is **shown only once** — store it immediately.
+The API key authenticates the Sitara website as an authorised caller for that tenant. The raw key is **shown only once** — store it immediately in a password manager and in Vercel.
 
-1. In Kora admin: Tenant → Settings → **Generate API Key**
-2. Copy the raw key (`kora_xxxxxxxx…`) — it cannot be retrieved after this screen
-3. Store it securely (password manager / Vercel env vars)
+> **Note:** There is no UI for this yet. Use the script below.
+
+1. Find the tenant's `id` from the database:
+   ```sql
+   SELECT id, name, code FROM tenants WHERE code = 'your-tenant-code';
+   ```
+
+2. In the Kora backend directory, update `TENANT_ID` in `backend/generate_tenant_key.py` to match, then run:
+   ```
+   cd c:\Users\laken\kora\backend
+   python generate_tenant_key.py
+   ```
+
+3. The script prints:
+   - **Raw API key** (`kora_xxxxxxxx…`) — copy this to Vercel as `KORA_TENANT_API_KEY`
+   - **SQL UPDATE** — run this against the staging/production database to store the key hash
+
+4. Run the printed SQL against the database and verify `1 row affected`:
+   ```sql
+   UPDATE tenants
+   SET api_key_hash = '<hash>',
+       api_key_prefix = '<prefix>'
+   WHERE id = '<tenant-id>';
+   ```
+
+5. After updating Vercel (Step 3 below), trigger a **new redeploy** — env var changes are not picked up by existing deployments.
 
 ---
 
@@ -49,4 +72,14 @@ Apply to: **Production**, **Preview**, and **Development** as appropriate.
 
 - `KORA_TENANT_API_KEY` is a **server-side secret** — never prefix it with `NEXT_PUBLIC_`
 - `NEXT_PUBLIC_KORA_TENANT_CODE` is **not a secret** — it's sent in the request body to identify the tenant
-- If an API key is lost, regenerate it in Kora admin and update Vercel immediately
+- If an API key is lost, re-run `generate_tenant_key.py`, apply the new SQL, update Vercel, and redeploy
+
+## Common Pitfalls
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Invalid or inactive tenant API key` | No key generated yet (`api_key_prefix` is null in DB) | Run `generate_tenant_key.py` and apply the SQL |
+| `Invalid or inactive tenant API key` after updating Vercel | Redeploy not triggered after env var change | Trigger a new deployment in Vercel |
+| `Failed to create application` with 404 | Wrong `KORA_API_URL` (e.g. pointing at frontend, not backend) | Set URL to the Azure Container Apps backend URL |
+| `Failed to create application` with double slash in URL | `KORA_API_URL` has a trailing slash | Remove trailing slash from the env var value |
+| Email check works but account creation fails | Two different endpoints — email check doesn't require API key, account creation does | API key not configured correctly; check the above rows |
