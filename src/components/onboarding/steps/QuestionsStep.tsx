@@ -167,7 +167,6 @@ function CountryMultiSelect({
   def,
   countryQuery,
   setCountryQuery,
-  countryOptions: _countryOptions,
   filteredCountryOptions,
   selectedIso2,
   toggleCountry,
@@ -181,7 +180,6 @@ function CountryMultiSelect({
   def: QuestionDef;
   countryQuery: string;
   setCountryQuery: (v: string) => void;
-  countryOptions: Array<{ value: string; label: string }>;
   filteredCountryOptions: Array<{ value: string; label: string }>;
   selectedIso2: string[];
   toggleCountry: (iso2: string) => void;
@@ -358,7 +356,10 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
   const spec = questionSpec as QuestionnaireSpec;
 
   // Store everything under one stable object for easy persistence later
-  const q = (answers.questionnaire as Record<string, any> | undefined) ?? {};
+  const q = React.useMemo(
+    () => (answers.questionnaire as Record<string, any> | undefined) ?? {},
+    [answers.questionnaire],
+  );
 
   const setQ = React.useCallback(
     (code: string, value: any) => {
@@ -474,7 +475,6 @@ export default function QuestionsStep({ answers, setValue, showValidationErrors 
               def={def}
               countryQuery={countryQuery}
               setCountryQuery={setCountryQuery}
-              countryOptions={countryOptions}
               filteredCountryOptions={filteredCountryOptions}
               selectedIso2={selectedIso2}
               toggleCountry={toggleCountry}

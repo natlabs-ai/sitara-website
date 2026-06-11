@@ -797,11 +797,22 @@ export default function ReviewSubmitStep({
   const evidence: EvidencePackResponse | null =
     (answers.evidencePack as EvidencePackResponse | null) ?? null;
 
-  const requiredTypes: string[] = evidence?.derived?.required_document_types ?? [];
-  const missingTypes: string[] = evidence?.derived?.missing_document_types ?? [];
-  const latestByType: Record<string, string> = evidence?.derived?.latest_documents_by_type ?? {};
-
-  const documents = Array.isArray(evidence?.documents) ? evidence!.documents : [];
+  const requiredTypes = React.useMemo<string[]>(
+    () => evidence?.derived?.required_document_types ?? [],
+    [evidence],
+  );
+  const missingTypes = React.useMemo<string[]>(
+    () => evidence?.derived?.missing_document_types ?? [],
+    [evidence],
+  );
+  const latestByType = React.useMemo<Record<string, string>>(
+    () => evidence?.derived?.latest_documents_by_type ?? {},
+    [evidence],
+  );
+  const documents = React.useMemo(
+    () => (Array.isArray(evidence?.documents) ? evidence!.documents : []),
+    [evidence],
+  );
 
   const _latestDocFor = React.useCallback(
     (docType: string) => {

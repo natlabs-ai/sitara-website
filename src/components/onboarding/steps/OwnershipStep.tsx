@@ -1047,6 +1047,7 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
 
   React.useEffect(() => {
     setValue("beneficialOwners_total_pct", totalOwnership);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalOwnership]);
 
   if (loading) {
