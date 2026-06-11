@@ -4,7 +4,7 @@ import { useState } from "react";
 import { login } from "@/lib/koraClient";
 
 type Props = {
-  onSuccess: (result: { applicant_id: string; email: string; applications: any[] }) => void;
+  onSuccess: (result: { applicant_id: string; email: string; applications: Record<string, unknown>[] }) => void;
   onBack: () => void;
 };
 
@@ -23,8 +23,8 @@ export default function ReturningLogin({ onSuccess, onBack }: Props) {
       const result = await login({ email, password });
       if (typeof window !== "undefined") localStorage.setItem("kora_access_token", result.access_token);
       onSuccess({ applicant_id: result.applicant_id, email: result.email, applications: result.applications ?? [] });
-    } catch (err: any) {
-      setError(err?.message || "Invalid email or password. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
