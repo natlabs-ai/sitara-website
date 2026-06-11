@@ -411,6 +411,16 @@ export default function OnboardingRenderer({
     if (visibleIdx > 0) goToVisibleIndex(visibleIdx - 1);
   }
 
+  function goToStep(stepId: string) {
+    const absolute = spec.steps.findIndex((s) => s.id === stepId);
+    if (absolute >= 0) {
+      if (effectiveApplicationId && !readOnly) {
+        saveDraft(answers, step).catch(() => {});
+      }
+      setStepIdx(absolute);
+    }
+  }
+
   /** Final submit handler (Submit button on the last step) */
   async function handleSubmit() {
     // If already submitted, don't submit again
@@ -1364,6 +1374,7 @@ export default function OnboardingRenderer({
             setValue={setValue}
             setGlobalError={setGlobalError}
             isSubmitting={isSubmittingStep}
+            goToStep={goToStep}
           />
 
           <div className="grid gap-4 md:grid-cols-2">
