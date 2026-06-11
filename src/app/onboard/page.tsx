@@ -2,7 +2,6 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useSearchParams } from "next/navigation";
 import OnboardingRenderer from "@/components/onboarding/OnboardingRenderer";

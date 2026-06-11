@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { deleteApplication } from "@/lib/koraClient";
+import Navbar from "@/components/Navbar";
 
 const GOLD = "#bfa76f";
 
@@ -49,7 +50,7 @@ function AccountTypeBadge({ type }: { type: string }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated, logout, refreshUser } = useAuth();
+  const { user, isLoading, isAuthenticated, refreshUser } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Refresh on every dashboard visit so application statuses reflect the
@@ -77,11 +78,6 @@ export default function DashboardPage() {
     return null; // Will redirect to login
   }
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/";
-  };
-
   const handleDelete = async (applicationId: string, externalRef: string) => {
     if (!confirm(`Are you sure you want to delete application ${externalRef}? This cannot be undone.`)) {
       return;
@@ -101,34 +97,10 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-neutral-800 bg-neutral-950">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href="/"
-                className="text-xl tracking-[0.35em] text-amber-400 font-medium"
-              >
-                SITARA
-              </Link>
-              <p className="text-sm text-neutral-400 mt-0.5">
-                Welcome back, {user.email}
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm text-neutral-100 transition hover:bg-neutral-800"
-              data-testid="logout-button"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar variant="app" />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 pt-24 sm:px-6 lg:px-8">
         {/* Applications Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
