@@ -25,7 +25,7 @@ const wordmarkCls = "text-xl tracking-[0.35em] text-amber-400 font-medium";
 
 export default function Navbar({ variant }: { variant: NavbarVariant }) {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
 
   const close = () => setOpen(false);
@@ -72,7 +72,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             )}
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => { logout(); router.push("/"); }}
             className="rounded-lg border border-neutral-700 bg-transparent px-4 py-2 text-sm text-neutral-100 transition hover:bg-neutral-800"
             data-testid="logout-button"
           >
@@ -102,7 +102,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             </li>
           ))}
 
-          {isAuthenticated ? (
+          {!isLoading && (isAuthenticated ? (
             <>
               <li className="text-sm text-neutral-500 max-w-[160px] truncate">
                 {user?.email}
@@ -145,7 +145,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
                 </Link>
               </li>
             </>
-          )}
+          ))}
         </ul>
 
         {/* Mobile menu button */}
@@ -153,9 +153,10 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
           className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-neutral-700 text-neutral-200"
           aria-label="Open menu"
           aria-expanded={open}
+          aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" />
           </svg>
         </button>
@@ -163,11 +164,12 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
 
       {/* Mobile dropdown */}
       <div
+        id="mobile-menu"
         className={`md:hidden transition-[max-height] duration-300 overflow-hidden ${
           open ? "max-h-96" : "max-h-0"
         }`}
       >
-        <ul className="mx-auto max-w-screen-xl px-4 sm:px-6 md:px-8 py-2 space-y-1">
+        <ul className="mx-auto max-w-screen-xl px-4 sm:px-6 py-2 space-y-1">
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
               <a
@@ -180,7 +182,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             </li>
           ))}
 
-          {isAuthenticated ? (
+          {!isLoading && (isAuthenticated ? (
             <>
               <li className="px-3 py-2 text-sm text-neutral-500 truncate">{user?.email}</li>
               <li>
@@ -224,7 +226,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
                 </Link>
               </li>
             </>
-          )}
+          ))}
         </ul>
       </div>
     </header>
