@@ -1,55 +1,65 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import OnboardingRenderer from "@/components/onboarding/OnboardingRenderer";
 import sitaraSchema from "@/config/sitara_onboarding_schema.json";
 import type { Spec } from "@/components/onboarding/onboardingShared";
 import { submitApplication } from "@/lib/koraClient";
+import EntryScreen from "@/components/onboarding/EntryScreen";
+import AccountTypeSelection from "@/components/onboarding/AccountTypeSelection";
+import BusinessContext from "@/components/onboarding/BusinessContext";
+import BeforeYouBegin from "@/components/onboarding/BeforeYouBegin";
+import ReturningLogin from "@/components/onboarding/ReturningLogin";
+import ApplicationStatus from "@/components/onboarding/ApplicationStatus";
 
-const spec = sitaraSchema as Spec;
+const spec = sitaraSchema as unknown as Spec;
+
+type PreFormStep = "entry" | "account-type" | "business-context" | "checklist" | "returning-login" | "status" | "done";
 
 function OnboardPageInner() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resume");
   const viewId = searchParams.get("view");
-  const mode = searchParams.get("mode"); // "login" | null (null → signup)
 
-  const [initialAnswers, setInitialAnswers] = React.useState<Record<string, any>>(
-    mode === "login" ? { authMode: "login" } : {}
-  );
-  const [initialStepId, setInitialStepId] = React.useState<string | null>(
-    mode === "login" ? "login" : null
-  );
-  const [isReadOnly, setIsReadOnly] = React.useState(false);
-  // Start in loading state when resuming/viewing so we don't flash step 1
-  // before the draft data arrives (prevents Playwright race in E2E tests and
-  // avoids a visual flicker for real users).
-  const [isLoading, setIsLoading] = React.useState(!!(resumeId || viewId));
+  const [initialAnswers, setInitialAnswers] = useState<Record<string, any>>({});
+  const [initialStepId, setInitialStepId] = useState<string | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!(resumeId || viewId));
+  const [resolvedAppId, setResolvedAppId] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  const [preFormStep, setPreFormStep] = useState<PreFormStep>("entry");
+  const [preFormAccountType, setPreFormAccountType] = useState<"personal" | "business" | null>(null);
+  const [preFormCountry, setPreFormCountry] = useState<string | null>(null);
+  const [preFormRole, setPreFormRole] = useState<"signatory" | "employee" | null>(null);
+  const [returningApp, setReturningApp] = useState<any | null>(null);
+  const [noAppFound, setNoAppFound] = useState(false);
+
+  useEffect(() => {
     async function loadApplication() {
       if (!resumeId && !viewId) return;
       const appId = resumeId || viewId;
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/kora/applications/${appId}/resume`);
+        const res = await fetch(`/api/kora/applications/${appId}/resume`, { credentials: "include" });
         if (!res.ok) throw new Error("Failed to load application");
         const data = await res.json();
         const isSubmitted = data.status === "submitted";
         setInitialAnswers({
-          // Always seed IDs from the authoritative response so they're available
-          // even if the draft was saved before these values were persisted
           koraApplicationId: String(data.application_id),
           koraTenantId: String(data.tenant_id),
-          ...data.draft_answers || {},
+          ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
+          ...(data.draft_answers || {}),
+          accountType: data.account_type,
+          _passedLogin: true,
           _applicationSubmitted: isSubmitted,
         });
-        // For submitted applications always land on the summary step
-        setInitialStepId(isSubmitted ? "submit" : data.current_step_id);
+        setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
         setIsReadOnly(!data.can_edit);
+        setResolvedAppId(appId);
+        setPreFormStep("done");
       } catch {
         try {
           const stored = localStorage.getItem("sitara_onboarding_answers_v1");
@@ -60,6 +70,7 @@ function OnboardPageInner() {
       }
     }
     loadApplication();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeId, viewId]);
 
   const handleSubmit = React.useCallback(async (data: Record<string, any>) => {
@@ -68,6 +79,65 @@ function OnboardPageInner() {
     await submitApplication(applicationId);
   }, []);
 
+  const handleAccountTypeSelect = (type: "personal" | "business") => {
+    setPreFormAccountType(type);
+    setPreFormStep(type === "business" ? "business-context" : "checklist");
+  };
+
+  const handleBusinessContextContinue = (country: string, role: "signatory" | "employee") => {
+    setPreFormCountry(country);
+    setPreFormRole(role);
+    setPreFormStep("checklist");
+  };
+
+  const handlePreFormStart = () => {
+    const accountTypeValue = preFormAccountType === "personal" ? "individual" : "business";
+    setInitialAnswers((prev) => ({
+      ...prev,
+      accountType: accountTypeValue,
+      ...(preFormRole ? { signingRole: preFormRole } : {}),
+      _passedAccountSelection: true,
+    }));
+    setPreFormStep("done");
+  };
+
+  const handleReturningLoginSuccess = (result: { applications: any[] }) => {
+    const match = result.applications[0] ?? null;
+    if (match) {
+      setReturningApp(match);
+      setNoAppFound(false);
+    } else {
+      setNoAppFound(true);
+      setReturningApp(null);
+    }
+    setPreFormStep("status");
+  };
+
+  const handleStatusContinue = async (appId: string) => {
+    try {
+      const res = await fetch(`/api/kora/applications/${appId}/resume`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        const isSubmitted = data.status === "submitted";
+        setInitialAnswers({
+          koraApplicationId: String(data.application_id),
+          koraTenantId: String(data.tenant_id),
+          ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
+          ...(data.draft_answers || {}),
+          accountType: data.account_type,
+          _passedLogin: true,
+          _applicationSubmitted: isSubmitted,
+        });
+        setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
+        setIsReadOnly(!data.can_edit);
+        setResolvedAppId(appId);
+      }
+    } catch {
+      // proceed anyway
+    }
+    setPreFormStep("done");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -75,6 +145,9 @@ function OnboardPageInner() {
       </div>
     );
   }
+
+  const isResuming = !!(resumeId || viewId);
+  const showPreForm = !isResuming && preFormStep !== "done";
 
   return (
     <div className="min-h-screen bg-black text-neutral-100">
@@ -92,14 +165,56 @@ function OnboardPageInner() {
       </header>
 
       <main className="px-4 pb-12 pt-6 md:px-8">
-        <OnboardingRenderer
-          spec={spec}
-          onSubmit={handleSubmit}
-          initialAnswers={initialAnswers}
-          initialStepId={initialStepId}
-          applicationId={resumeId || viewId || undefined}
-          readOnly={isReadOnly}
-        />
+        {showPreForm ? (
+          <div className="mx-auto max-w-md pt-6">
+            {preFormStep === "entry" && (
+              <EntryScreen onNew={() => setPreFormStep("account-type")} onContinue={() => setPreFormStep("returning-login")} />
+            )}
+            {preFormStep === "account-type" && (
+              <AccountTypeSelection onSelect={handleAccountTypeSelect} />
+            )}
+            {preFormStep === "business-context" && (
+              <BusinessContext onContinue={handleBusinessContextContinue} onBack={() => setPreFormStep("account-type")} />
+            )}
+            {preFormStep === "checklist" && preFormAccountType === "personal" && (
+              <BeforeYouBegin accountType="personal" onStart={handlePreFormStart} onBack={() => setPreFormStep("account-type")} />
+            )}
+            {preFormStep === "checklist" && preFormAccountType === "business" && preFormCountry && preFormRole && (
+              <BeforeYouBegin accountType="business" country={preFormCountry} role={preFormRole} onStart={handlePreFormStart} onBack={() => setPreFormStep("business-context")} />
+            )}
+            {preFormStep === "returning-login" && (
+              <ReturningLogin onSuccess={handleReturningLoginSuccess} onBack={() => setPreFormStep("entry")} />
+            )}
+            {preFormStep === "status" && noAppFound && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-100 mb-1">No application found</h2>
+                <p className="text-sm text-neutral-400 mb-6">We couldn&apos;t find an existing application for this account.</p>
+                <button onClick={() => { setPreFormStep("account-type"); setNoAppFound(false); }}
+                  className="w-full rounded-xl border border-[#bfa76f] bg-[#bfa76f]/10 px-4 py-2.5 text-sm font-medium text-[#bfa76f] hover:bg-[#bfa76f]/20 transition-colors">
+                  Start a new application
+                </button>
+              </div>
+            )}
+            {preFormStep === "status" && returningApp && (
+              <ApplicationStatus
+                status={returningApp.status}
+                appId={returningApp.id}
+                rejectionReason={returningApp.rejection_reason}
+                onContinue={handleStatusContinue}
+                onStartNew={() => { setReturningApp(null); setPreFormStep("account-type"); }}
+              />
+            )}
+          </div>
+        ) : (
+          <OnboardingRenderer
+            spec={spec}
+            onSubmit={handleSubmit}
+            initialAnswers={initialAnswers}
+            initialStepId={initialStepId}
+            applicationId={resolvedAppId || resumeId || viewId || undefined}
+            readOnly={isReadOnly}
+          />
+        )}
       </main>
     </div>
   );
@@ -107,12 +222,12 @@ function OnboardPageInner() {
 
 export default function OnboardPage() {
   return (
-    <React.Suspense fallback={
+    <Suspense fallback={
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-neutral-400">Loading…</div>
       </div>
     }>
       <OnboardPageInner />
-    </React.Suspense>
+    </Suspense>
   );
 }
