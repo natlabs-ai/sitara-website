@@ -139,6 +139,7 @@ function OnboardPageInner() {
       ...(preFormRole ? { signingRole: preFormRole } : {}),
       _passedAccountSelection: true,
     }));
+    setInitialStepId("login");
     setPreFormStep("done");
   };
 
