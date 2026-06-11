@@ -39,34 +39,65 @@ function OnboardPageInner() {
 
   useEffect(() => {
     async function loadApplication() {
-      if (!resumeId && !viewId) return;
-      const appId = resumeId || viewId;
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/kora/applications/${appId}/resume`, { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load application");
-        const data = await res.json();
-        const isSubmitted = data.status === "submitted";
-        setInitialAnswers({
-          koraApplicationId: String(data.application_id),
-          koraTenantId: String(data.tenant_id),
-          ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
-          ...(data.draft_answers || {}),
-          accountType: data.account_type,
-          _passedLogin: true,
-          _applicationSubmitted: isSubmitted,
-        });
-        setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
-        setIsReadOnly(!data.can_edit);
-        setResolvedAppId(appId);
-        setPreFormStep("done");
-      } catch {
+      if (resumeId || viewId) {
+        const appId = resumeId || viewId;
+        setIsLoading(true);
         try {
-          const stored = localStorage.getItem("sitara_onboarding_answers_v1");
-          if (stored) setInitialAnswers(JSON.parse(stored));
-        } catch {}
-      } finally {
-        setIsLoading(false);
+          const res = await fetch(`/api/kora/applications/${appId}/resume`, { credentials: "include" });
+          if (!res.ok) throw new Error("Failed to load application");
+          const data = await res.json();
+          const isSubmitted = data.status === "submitted";
+          setInitialAnswers({
+            koraApplicationId: String(data.application_id),
+            koraTenantId: String(data.tenant_id),
+            ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
+            ...(data.draft_answers || {}),
+            accountType: data.account_type,
+            _passedLogin: true,
+            _applicationSubmitted: isSubmitted,
+          });
+          setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
+          setIsReadOnly(!data.can_edit);
+          setResolvedAppId(appId);
+          setPreFormStep("done");
+        } catch {
+          try {
+            const stored = localStorage.getItem("sitara_onboarding_answers_v1");
+            if (stored) setInitialAnswers(JSON.parse(stored));
+          } catch {}
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        const savedAppId = typeof window !== "undefined" ? localStorage.getItem("kora_active_app_sitara") : null;
+        if (savedAppId) {
+          const token = typeof window !== "undefined" ? localStorage.getItem("kora_access_token") : null;
+          setIsLoading(true);
+          try {
+            const res = await fetch(`/api/kora/applications/${savedAppId}/resume`, {
+              credentials: "include",
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setInitialAnswers({
+                ...(data.draft_answers || {}),
+                koraApplicationId: String(data.application_id),
+                koraTenantId: String(data.tenant_id),
+                ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
+                accountType: data.account_type,
+                _passedLogin: true,
+                _applicationSubmitted: data.status === "submitted",
+              });
+              setInitialStepId(data.current_step_id || "identity");
+              setIsReadOnly(!data.can_edit);
+              setResolvedAppId(savedAppId);
+              setPreFormStep("done");
+            }
+          } finally {
+            setIsLoading(false);
+          }
+        }
       }
     }
     loadApplication();
