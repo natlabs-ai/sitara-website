@@ -69,7 +69,7 @@
     },
     {
       "id": "login",
-      "label": "Login",
+      "label": "Sign Up",
       "fields": [
         { "id": "email", "label": "Email", "type": "email", "required": true },
         {

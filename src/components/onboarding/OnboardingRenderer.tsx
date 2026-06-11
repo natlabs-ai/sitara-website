@@ -335,6 +335,10 @@ export default function OnboardingRenderer({
       if (hasPassedLogin && (s.id === "accountSelection" || s.id === "login")) {
         return false;
       }
+      // When coming from pre-form, account type was already selected — hide that step
+      if (answers._passedAccountSelection && s.id === "accountSelection") {
+        return false;
+      }
 
       // Hide Questions step on Basic business path
       if (isBasicBusinessPath && s.id === "questionnaire") return false;

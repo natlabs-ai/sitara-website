@@ -179,35 +179,6 @@ export function AccountStep({
         </Alert>
       )}
 
-      {/* Login/Signup Toggle */}
-      <div className="mb-6">
-        <div className="flex gap-3">
-          <Button
-            variant={mode === 'signup' ? 'primary' : 'secondary'}
-            onClick={() => setMode('signup')}
-            fullWidth
-            size="lg"
-            data-testid="mode-signup"
-          >
-            Create Account
-          </Button>
-          <Button
-            variant={mode === 'login' ? 'primary' : 'secondary'}
-            onClick={() => setMode('login')}
-            fullWidth
-            size="lg"
-            data-testid="mode-login"
-          >
-            Log In
-          </Button>
-        </div>
-        <p className="mt-3 text-sm text-neutral-400 text-center">
-          {mode === 'signup'
-            ? 'New to Sitara? Create your account to get started.'
-            : 'Already have an account? Log in to continue.'}
-        </p>
-      </div>
-
       {/* Email */}
       <Section>
         <div className="mb-2 text-sm font-semibold text-neutral-100">
@@ -439,6 +410,24 @@ export function AccountStep({
           </p>
         )}
       </Section>
+
+      <p className="text-center text-xs text-neutral-500 pt-1">
+        {mode === 'signup' ? (
+          <>
+            Already have an account?{" "}
+            <button type="button" onClick={() => setMode('login')} className="text-[#bfa76f] hover:underline font-medium">
+              Log in
+            </button>
+          </>
+        ) : (
+          <>
+            New here?{" "}
+            <button type="button" onClick={() => setMode('signup')} className="text-[#bfa76f] hover:underline font-medium">
+              Create an account
+            </button>
+          </>
+        )}
+      </p>
     </div>
   );
 }
