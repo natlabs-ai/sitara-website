@@ -62,7 +62,7 @@ export function AccountStep({
     // Debounce the check
     const timeoutId = setTimeout(async () => {
       try {
-        const result = await checkEmailAvailability('sitara-core', email);
+        const result = await checkEmailAvailability('sitara-star-diamonds-f-z-e', email);
 
         if (!result.available && setGlobalError) {
           setGlobalError(

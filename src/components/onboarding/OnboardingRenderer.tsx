@@ -768,7 +768,7 @@ export default function OnboardingRenderer({
             answers.accountType === "business" ? "business" : "individual";
 
           const payload = {
-            tenant_code: "sitara-core",
+            tenant_code: "sitara-star-diamonds-f-z-e",
             account_type: accountType,
             email: String(answers.email || ""),
             phone_country_code: answers.phoneDial
