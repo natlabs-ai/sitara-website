@@ -12,12 +12,9 @@ import EntryScreen from "@/components/onboarding/EntryScreen";
 import AccountTypeSelection from "@/components/onboarding/AccountTypeSelection";
 import BusinessContext from "@/components/onboarding/BusinessContext";
 import BeforeYouBegin from "@/components/onboarding/BeforeYouBegin";
-import ReturningLogin from "@/components/onboarding/ReturningLogin";
-import ApplicationStatus from "@/components/onboarding/ApplicationStatus";
-
 const spec = sitaraSchema as unknown as Spec;
 
-type PreFormStep = "entry" | "account-type" | "business-context" | "checklist" | "returning-login" | "status" | "done";
+type PreFormStep = "entry" | "account-type" | "business-context" | "checklist" | "done";
 
 function OnboardPageInner() {
   const router = useRouter();
@@ -29,25 +26,20 @@ function OnboardPageInner() {
   const [initialAnswers, setInitialAnswers] = useState<Record<string, any>>({});
   const [initialStepId, setInitialStepId] = useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [isLoading, setIsLoading] = useState(!!(resumeId || viewId || mode === "login"));
+  const [isLoading, setIsLoading] = useState(!!(resumeId || viewId));
   const [resolvedAppId, setResolvedAppId] = useState<string | null>(null);
 
   const [preFormStep, setPreFormStep] = useState<PreFormStep>("entry");
   const [preFormAccountType, setPreFormAccountType] = useState<"personal" | "business" | null>(null);
   const [preFormCountry, setPreFormCountry] = useState<string | null>(null);
   const [preFormRole, setPreFormRole] = useState<"signatory" | "employee" | null>(null);
-  const [returningApp, setReturningApp] = useState<any | null>(null);
-  const [noAppFound, setNoAppFound] = useState(false);
 
   useEffect(() => {
+    if (mode === "login") {
+      router.replace("/login");
+      return;
+    }
     async function loadApplication() {
-      if (mode === "login") {
-        setInitialAnswers({ authMode: "login" });
-        setInitialStepId("login");
-        setPreFormStep("done");
-        setIsLoading(false);
-        return;
-      }
       if (resumeId || viewId) {
         const appId = resumeId || viewId;
         setIsLoading(true);
@@ -144,43 +136,6 @@ function OnboardPageInner() {
     setPreFormStep("done");
   };
 
-  const handleReturningLoginSuccess = (result: { applications: any[] }) => {
-    const match = result.applications[0] ?? null;
-    if (match) {
-      setReturningApp(match);
-      setNoAppFound(false);
-    } else {
-      setNoAppFound(true);
-      setReturningApp(null);
-    }
-    setPreFormStep("status");
-  };
-
-  const handleStatusContinue = async (appId: string) => {
-    try {
-      const res = await fetch(`/api/kora/applications/${appId}/resume`, { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        const isSubmitted = data.status === "submitted";
-        setInitialAnswers({
-          koraApplicationId: String(data.application_id),
-          koraTenantId: String(data.tenant_id),
-          ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
-          ...(data.draft_answers || {}),
-          accountType: data.account_type,
-          _passedLogin: true,
-          _applicationSubmitted: isSubmitted,
-        });
-        setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
-        setIsReadOnly(!data.can_edit);
-        setResolvedAppId(appId);
-        setPreFormStep("done");
-      }
-    } catch {
-      // fetch error — do not transition
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -213,28 +168,6 @@ function OnboardPageInner() {
             )}
             {preFormStep === "checklist" && preFormAccountType === "business" && preFormCountry && preFormRole && (
               <BeforeYouBegin accountType="business" country={preFormCountry} role={preFormRole} onStart={handlePreFormStart} onBack={() => setPreFormStep("business-context")} />
-            )}
-            {preFormStep === "returning-login" && (
-              <ReturningLogin onSuccess={handleReturningLoginSuccess} onBack={() => setPreFormStep("entry")} />
-            )}
-            {preFormStep === "status" && noAppFound && (
-              <div>
-                <h2 className="text-lg font-semibold text-neutral-100 mb-1">No application found</h2>
-                <p className="text-sm text-neutral-400 mb-6">We couldn&apos;t find an existing application for this account.</p>
-                <button onClick={() => { setPreFormStep("account-type"); setNoAppFound(false); }}
-                  className="w-full rounded-xl border border-[#bfa76f] bg-[#bfa76f]/10 px-4 py-2.5 text-sm font-medium text-[#bfa76f] hover:bg-[#bfa76f]/20 transition-colors">
-                  Start a new application
-                </button>
-              </div>
-            )}
-            {preFormStep === "status" && returningApp && (
-              <ApplicationStatus
-                status={returningApp.status}
-                appId={returningApp.id}
-                rejectionReason={returningApp.rejection_reason}
-                onContinue={handleStatusContinue}
-                onStartNew={() => { setReturningApp(null); setPreFormStep("account-type"); }}
-              />
             )}
           </div>
         ) : (

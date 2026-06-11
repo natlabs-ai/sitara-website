@@ -4,6 +4,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   DEV_MODE,
 } from "../onboardingShared";
@@ -23,6 +24,7 @@ export function AccountStep({
   setGlobalError?: (error: string | null) => void;
   showValidationErrors?: boolean;
 }) {
+  const router = useRouter();
   // Add mode state for login vs signup
   const [mode, setMode] = React.useState<'login' | 'signup'>(
     answers.authMode || 'signup'
@@ -169,7 +171,7 @@ export function AccountStep({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setMode('login')}
+                onClick={() => router.push('/login')}
                 className="mt-2 underline"
               >
                 Switch to Log In
@@ -415,7 +417,7 @@ export function AccountStep({
         {mode === 'signup' ? (
           <>
             Already have an account?{" "}
-            <button type="button" onClick={() => setMode('login')} className="text-[#bfa76f] hover:underline font-medium">
+            <button type="button" onClick={() => router.push('/login')} className="text-[#bfa76f] hover:underline font-medium">
               Log in
             </button>
           </>
