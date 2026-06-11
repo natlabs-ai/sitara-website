@@ -34,6 +34,7 @@ import { OwnershipStep } from "./steps/OwnershipStep";
 import { IdentityStep } from "./steps/IdentityStep";
 import { ProfileStep } from "./steps/ProfileStep";
 import BusinessDocumentsStep from "./steps/BusinessDocumentsStep";
+import { BusinessStep } from "./steps/BusinessProfileStep";
 import RelationshipProfileStep from "./steps/RelationshipProfileStep";
 import AuthorisedPeopleStep from "./steps/AuthorisedPeopleStep";
 import ReviewSubmitStep from "./steps/ReviewSubmitStep";
@@ -1326,20 +1327,6 @@ export default function OnboardingRenderer({
 
     // Step 4: Business model (orientation + country + deterministic questions)
     if (step.id === "corporateSetup") {
-      const incCountryField = step.fields.find((f) => f.id === "incCountry");
-
-      // Inject country options from src/data/countries.ts
-      const incCountryEnhanced: any = incCountryField
-        ? {
-            ...incCountryField,
-            type: "select",
-            options: countries.map((c) => ({
-              value: c.name, // store name (lowest risk). If you prefer ISO, use c.code.
-              label: c.name,
-            })),
-          }
-        : null;
-
       return (
         <div className="space-y-5">
           {/* Optional orientation (UX only; no logic) */}
@@ -1387,21 +1374,13 @@ export default function OnboardingRenderer({
             </div>
           </section>
 
-          {/* Country of Incorporation (required) */}
-          {incCountryEnhanced ? (
-            <FieldRenderer
-              f={incCountryEnhanced}
-              answers={answers}
-              setValue={setValue}
-            />
-          ) : (
-            <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 text-sm text-neutral-300">
-              Missing required field: incCountry
-            </div>
-          )}
-
-          {/* Deterministic questions (required) */}
-          <DeterministicQuestions />
+          {/* Country + deterministic questions via BusinessStep */}
+          <BusinessStep
+            step={step}
+            answers={answers}
+            setValue={setValue}
+            showValidationErrors={showValidationErrors}
+          />
         </div>
       );
     }
