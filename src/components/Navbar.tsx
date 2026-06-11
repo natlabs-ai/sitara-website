@@ -25,7 +25,7 @@ const wordmarkCls = "text-xl tracking-[0.35em] text-amber-400 font-medium";
 
 export default function Navbar({ variant }: { variant: NavbarVariant }) {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
   const close = () => setOpen(false);
@@ -102,7 +102,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             </li>
           ))}
 
-          {!isLoading && (isAuthenticated ? (
+          {isAuthenticated ? (
             <>
               <li className="text-sm text-neutral-500 max-w-[160px] truncate">
                 {user?.email}
@@ -145,7 +145,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
                 </Link>
               </li>
             </>
-          ))}
+          )}
         </ul>
 
         {/* Mobile menu button */}
@@ -182,7 +182,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             </li>
           ))}
 
-          {!isLoading && (isAuthenticated ? (
+          {isAuthenticated ? (
             <>
               <li className="px-3 py-2 text-sm text-neutral-500 truncate">{user?.email}</li>
               <li>
@@ -226,7 +226,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
                 </Link>
               </li>
             </>
-          ))}
+          )}
         </ul>
       </div>
     </header>
