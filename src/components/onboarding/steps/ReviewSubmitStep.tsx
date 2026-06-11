@@ -470,6 +470,310 @@ type ReviewSubmitStepProps = {
   goToStep?: (stepId: string) => void;
 };
 
+// ─── IndividualCards props ────────────────────────────────────────────────────
+
+type IndividualCardsProps = {
+  answers: Record<string, any>;
+  goToStep?: (stepId: string) => void;
+};
+
+function IndividualCards({ answers, goToStep }: IndividualCardsProps) {
+  const a = answers;
+  const idFields = (a.idConfirmedFields as Record<string, any>) ?? {};
+  const get = (key: string) => idFields[key] ?? a[key];
+
+  const isUAE = String(a.nationality ?? "").toLowerCase() === "ae" ||
+    String(a.countryOfResidence ?? "").toLowerCase() === "ae";
+
+  // Status helpers
+  const hasIdentity = !!(get("fullName") || get("dateOfBirth") || get("nationality"));
+  const hasProfile = !!(a.occupation || a.sourceOfIncome);
+  const pepRisk = !!(a.ind_pepSelf === true || a.ind_pepSelf === "true" ||
+    a.ind_sanctionsSelf === true || a.ind_sanctionsSelf === "true" ||
+    a.ind_thirdPartyUse === true || a.ind_thirdPartyUse === "true");
+  const hasPassport = !!(a.passportDocId || a.idDocumentDocId);
+  const hasAddress = !!a.proofOfAddressDocId;
+  const hasEmiratesId = !!(a.emiratesIdFrontDocId && a.emiratesIdBackDocId);
+  const docsOk = hasPassport && (!isUAE || hasEmiratesId) && hasAddress;
+
+  // Source of income display
+  const soi = a.sourceOfIncome;
+  let soiDisplay = "—";
+  if (soi) {
+    if (typeof soi === "string") {
+      soiDisplay = soi;
+    } else if (typeof soi === "object") {
+      const { selected = [], other_details = "" } = soi as { selected?: string[]; other_details?: string };
+      const INCOME_LABEL: Record<string, string> = {
+        salary: "Salary / employment income", business_profits: "Business profits",
+        rental: "Rental income", investments: "Investment returns",
+        pension: "Pension / retirement funds", inheritance: "Inheritance / gift", other: "Other",
+      };
+      const labels = (selected as string[]).map((v) => INCOME_LABEL[v] ?? v).join(", ");
+      soiDisplay = other_details?.trim() ? `${labels} (${other_details.trim()})` : labels || "—";
+    }
+  }
+
+  return (
+    <>
+      {/* 1. Account */}
+      <ReviewCard
+        title="Account"
+        preview={a.email}
+        status={a.email ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("login") : undefined}
+      >
+        <FieldRow label="Email" value={a.email} />
+        <FieldRow label="Phone" value={a.phone} />
+      </ReviewCard>
+
+      {/* 2. Identity */}
+      <ReviewCard
+        title="Identity"
+        preview={get("fullName")}
+        status={hasIdentity ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("identity") : undefined}
+      >
+        <FieldRow label="Full name" value={get("fullName")} />
+        <FieldRow label="Date of birth" value={get("dateOfBirth")} />
+        <FieldRow label="Nationality" value={get("nationality")} />
+        <FieldRow label="Passport number" value={get("passportNumber")} />
+        <FieldRow label="Country of residence" value={get("countryOfResidence")} />
+      </ReviewCard>
+
+      {/* 3. Profile & Expected Use */}
+      <ReviewCard
+        title="Profile & Expected Use"
+        preview={a.occupation}
+        status={hasProfile ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("profile") : undefined}
+      >
+        <FieldRow label="Occupation" value={a.occupation} />
+        <FieldRow label="Source of income" value={soiDisplay} />
+        <FieldRow label="Service categories" value={a.selectedServices} />
+        <FieldRow label="Expected frequency" value={a.expectedFrequency} />
+        <FieldRow label="Expected value" value={a.expectedValue} />
+      </ReviewCard>
+
+      {/* 4. Risk Declarations */}
+      <ReviewCard
+        title="Risk Declarations"
+        status={pepRisk ? "attention" : "complete"}
+        onEdit={goToStep ? () => goToStep("riskDeclarations") : undefined}
+      >
+        <FieldRow label="Politically exposed person (PEP)" value={a.ind_pepSelf === true || a.ind_pepSelf === "true" ? "Yes" : "No"} />
+        <FieldRow label="Sanctions / restrictions" value={a.ind_sanctionsSelf === true || a.ind_sanctionsSelf === "true" ? "Yes" : "No"} />
+        <FieldRow label="Acting on behalf of third party" value={a.ind_thirdPartyUse === true || a.ind_thirdPartyUse === "true" ? "Yes" : "No"} />
+      </ReviewCard>
+
+      {/* 5. Documents */}
+      <ReviewCard
+        title="Documents"
+        status={docsOk ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("identity") : undefined}
+      >
+        <div className="space-y-1 py-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-neutral-400">Passport / ID</span>
+            <span className={hasPassport ? "text-emerald-300" : "text-neutral-400"}>
+              {hasPassport ? "Uploaded" : "Not uploaded"}
+            </span>
+          </div>
+          {isUAE && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-400">Emirates ID (front + back)</span>
+              <span className={hasEmiratesId ? "text-emerald-300" : "text-neutral-400"}>
+                {hasEmiratesId ? "Uploaded" : "Not uploaded"}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-neutral-400">Proof of address</span>
+            <span className={hasAddress ? "text-emerald-300" : "text-neutral-400"}>
+              {hasAddress ? "Uploaded" : "Not uploaded"}
+            </span>
+          </div>
+        </div>
+      </ReviewCard>
+    </>
+  );
+}
+
+// ─── BusinessCards props ──────────────────────────────────────────────────────
+
+type BusinessCardsProps = {
+  answers: Record<string, any>;
+  goToStep?: (stepId: string) => void;
+  beneficialOwners: BeneficialOwner[];
+  authorizedPersons: AuthorizedPerson[];
+  documents: EvidencePackDocument[];
+  evidence: EvidencePackResponse | null;
+  missingTypes: string[];
+  loading: boolean;
+  loadError: string | null;
+  handleViewDocument: (docId: string) => void;
+};
+
+function BusinessCards({
+  answers,
+  goToStep,
+  beneficialOwners,
+  authorizedPersons,
+  documents,
+  evidence,
+  missingTypes,
+  loading,
+  loadError,
+  handleViewDocument,
+}: BusinessCardsProps) {
+  const a = answers;
+
+  const hasCash = Array.isArray(a.relationship_payment_methods)
+    ? (a.relationship_payment_methods as string[]).includes("cash")
+    : String(a.relationship_payment_methods ?? "").includes("cash");
+
+  const hasOwners = beneficialOwners.length > 0 || !!(a.owners && Array.isArray(a.owners) && a.owners.length > 0);
+  const hasPersons = authorizedPersons.length > 0;
+
+  const amlFields = ["pep_exposure", "sanctions_screening", "ubo_disclosed_verified", "aml_policy", "kyc_sops"];
+  const amlFilled = amlFields.filter((f) => a[f] !== undefined && a[f] !== null && a[f] !== "").length;
+
+  const hasDocuments = documents.length > 0;
+
+  return (
+    <>
+      {/* 1. Account */}
+      <ReviewCard
+        title="Account"
+        preview={a.email}
+        status={a.email ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("login") : undefined}
+      >
+        <FieldRow label="Email" value={a.email} />
+        <FieldRow label="Phone" value={a.phone} />
+      </ReviewCard>
+
+      {/* 2. Company Identity */}
+      <ReviewCard
+        title="Company Identity"
+        preview={a.incCountry}
+        status={a.incCountry ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("companyDetails") : undefined}
+      >
+        <FieldRow label="Country of incorporation" value={a.incCountry} />
+        <FieldRow label="Company name" value={a.companyName} />
+        <FieldRow label="Registration number" value={a.registrationNumber} />
+      </ReviewCard>
+
+      {/* 3. Relationship Profile */}
+      <ReviewCard
+        title="Relationship Profile"
+        status={hasCash ? "attention" : (a.transaction_direction ? "complete" : "incomplete")}
+        onEdit={goToStep ? () => goToStep("relationship") : undefined}
+      >
+        <FieldRow label="Transaction direction" value={a.transaction_direction} />
+        <FieldRow label="Products / services" value={a.relationship_products} />
+        <FieldRow label="Frequency" value={a.relationship_frequency} />
+        <FieldRow label="Value band (USD)" value={a.relationship_value_band_usd} />
+        <FieldRow label="Payment methods" value={a.relationship_payment_methods} />
+        {hasCash && (
+          <div className="text-xs text-amber-300 py-1">
+            ⚠ Cash payment method selected — additional scrutiny may apply.
+          </div>
+        )}
+      </ReviewCard>
+
+      {/* 4. Beneficial Owners */}
+      <ReviewCard
+        title="Beneficial Owners"
+        status={hasOwners ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("ownership") : undefined}
+      >
+        {beneficialOwners.length > 0 ? (
+          <div className="space-y-2 py-2">
+            {beneficialOwners.map((owner) => (
+              <OwnerCard
+                key={owner.id}
+                owner={owner}
+                documents={documents}
+                onViewDocument={handleViewDocument}
+              />
+            ))}
+          </div>
+        ) : Array.isArray(a.owners) && a.owners.length > 0 ? (
+          <div className="space-y-1 py-1">
+            {(a.owners as any[]).map((o, i) => (
+              <div key={o.id ?? i} className="text-xs text-neutral-300">
+                {o.name || "—"}{o.share != null ? ` — ${o.share}%` : ""}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-neutral-400 py-1">No owners recorded.</div>
+        )}
+      </ReviewCard>
+
+      {/* 5. Authorised Persons */}
+      <ReviewCard
+        title="Authorised Persons"
+        status={hasPersons ? "complete" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("authorisedPeople") : undefined}
+      >
+        {authorizedPersons.length > 0 ? (
+          <div className="space-y-2 py-2">
+            {authorizedPersons.map((person) => (
+              <SignatoryCard
+                key={person.id}
+                person={person}
+                documents={documents}
+                onViewDocument={handleViewDocument}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-neutral-400 py-1">No authorised persons recorded.</div>
+        )}
+      </ReviewCard>
+
+      {/* 6. AML Compliance */}
+      <ReviewCard
+        title="AML Compliance"
+        preview={`${amlFilled}/${amlFields.length} answered`}
+        status={amlFilled === amlFields.length ? "complete" : amlFilled > 0 ? "attention" : "incomplete"}
+        onEdit={goToStep ? () => goToStep("questionnaire") : undefined}
+      >
+        <FieldRow label="PEP exposure" value={a.pep_exposure} />
+        <FieldRow label="Sanctions screening" value={a.sanctions_screening} />
+        <FieldRow label="UBO disclosed & verified" value={a.ubo_disclosed_verified} />
+        <FieldRow label="AML policy in place" value={a.aml_policy} />
+        <FieldRow label="KYC SOPs in place" value={a.kyc_sops} />
+      </ReviewCard>
+
+      {/* 7. Documents */}
+      <ReviewCard
+        title="Documents"
+        status={!evidence ? "incomplete" : (missingTypes.length === 0 || DEV_MODE) ? "complete" : "attention"}
+        onEdit={goToStep ? () => goToStep("companyDetails") : undefined}
+      >
+        {!evidence ? (
+          <div className="text-xs text-neutral-400 py-1">
+            {loading ? "Loading evidence pack…" : loadError ?? "Evidence pack not loaded yet."}
+          </div>
+        ) : hasDocuments ? (
+          <div className="text-xs text-neutral-300 py-1">
+            {documents.length} document{documents.length !== 1 ? "s" : ""} uploaded.
+            {missingTypes.length > 0 && !DEV_MODE && (
+              <span className="text-amber-300 ml-1">{missingTypes.length} missing.</span>
+            )}
+          </div>
+        ) : (
+          <div className="text-xs text-neutral-400 py-1">No documents uploaded yet.</div>
+        )}
+      </ReviewCard>
+    </>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ReviewSubmitStep({
@@ -635,287 +939,27 @@ export default function ReviewSubmitStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBusiness, applicationId, !!evidence, isStale]);
 
-  // ─── Individual flow cards ────────────────────────────────────────────────
-
-  function IndividualCards() {
-    const a = answers;
-    const idFields = (a.idConfirmedFields as Record<string, any>) ?? {};
-    const get = (key: string) => idFields[key] ?? a[key];
-
-    const isUAE = String(a.nationality ?? "").toLowerCase() === "ae" ||
-      String(a.countryOfResidence ?? "").toLowerCase() === "ae";
-
-    // Status helpers
-    const hasIdentity = !!(get("fullName") || get("dateOfBirth") || get("nationality"));
-    const hasProfile = !!(a.occupation || a.sourceOfIncome);
-    const pepRisk = !!(a.ind_pepSelf === true || a.ind_pepSelf === "true" ||
-      a.ind_sanctionsSelf === true || a.ind_sanctionsSelf === "true" ||
-      a.ind_thirdPartyUse === true || a.ind_thirdPartyUse === "true");
-    const hasPassport = !!(a.passportDocId || a.idDocumentDocId);
-    const hasAddress = !!a.proofOfAddressDocId;
-    const hasEmiratesId = !!(a.emiratesIdFrontDocId && a.emiratesIdBackDocId);
-    const docsOk = hasPassport && (!isUAE || hasEmiratesId) && hasAddress;
-
-    // Source of income display
-    const soi = a.sourceOfIncome;
-    let soiDisplay = "—";
-    if (soi) {
-      if (typeof soi === "string") {
-        soiDisplay = soi;
-      } else if (typeof soi === "object") {
-        const { selected = [], other_details = "" } = soi as { selected?: string[]; other_details?: string };
-        const INCOME_LABEL: Record<string, string> = {
-          salary: "Salary / employment income", business_profits: "Business profits",
-          rental: "Rental income", investments: "Investment returns",
-          pension: "Pension / retirement funds", inheritance: "Inheritance / gift", other: "Other",
-        };
-        const labels = (selected as string[]).map((v) => INCOME_LABEL[v] ?? v).join(", ");
-        soiDisplay = other_details?.trim() ? `${labels} (${other_details.trim()})` : labels || "—";
-      }
-    }
-
-    return (
-      <>
-        {/* 1. Account */}
-        <ReviewCard
-          title="Account"
-          preview={a.email}
-          status={a.email ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("login") : undefined}
-        >
-          <FieldRow label="Email" value={a.email} />
-          <FieldRow label="Phone" value={a.phone} />
-        </ReviewCard>
-
-        {/* 2. Identity */}
-        <ReviewCard
-          title="Identity"
-          preview={get("fullName")}
-          status={hasIdentity ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("identity") : undefined}
-        >
-          <FieldRow label="Full name" value={get("fullName")} />
-          <FieldRow label="Date of birth" value={get("dateOfBirth")} />
-          <FieldRow label="Nationality" value={get("nationality")} />
-          <FieldRow label="Passport number" value={get("passportNumber")} />
-          <FieldRow label="Country of residence" value={get("countryOfResidence")} />
-        </ReviewCard>
-
-        {/* 3. Profile & Expected Use */}
-        <ReviewCard
-          title="Profile & Expected Use"
-          preview={a.occupation}
-          status={hasProfile ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("profile") : undefined}
-        >
-          <FieldRow label="Occupation" value={a.occupation} />
-          <FieldRow label="Source of income" value={soiDisplay} />
-          <FieldRow label="Service categories" value={a.selectedServices} />
-          <FieldRow label="Expected frequency" value={a.expectedFrequency} />
-          <FieldRow label="Expected value" value={a.expectedValue} />
-        </ReviewCard>
-
-        {/* 4. Risk Declarations */}
-        <ReviewCard
-          title="Risk Declarations"
-          status={pepRisk ? "attention" : "complete"}
-          onEdit={goToStep ? () => goToStep("riskDeclarations") : undefined}
-        >
-          <FieldRow label="Politically exposed person (PEP)" value={a.ind_pepSelf === true || a.ind_pepSelf === "true" ? "Yes" : "No"} />
-          <FieldRow label="Sanctions / restrictions" value={a.ind_sanctionsSelf === true || a.ind_sanctionsSelf === "true" ? "Yes" : "No"} />
-          <FieldRow label="Acting on behalf of third party" value={a.ind_thirdPartyUse === true || a.ind_thirdPartyUse === "true" ? "Yes" : "No"} />
-        </ReviewCard>
-
-        {/* 5. Documents */}
-        <ReviewCard
-          title="Documents"
-          status={docsOk ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("identity") : undefined}
-        >
-          <div className="space-y-1 py-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-neutral-400">Passport / ID</span>
-              <span className={hasPassport ? "text-emerald-300" : "text-neutral-400"}>
-                {hasPassport ? "Uploaded" : "Not uploaded"}
-              </span>
-            </div>
-            {isUAE && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-neutral-400">Emirates ID (front + back)</span>
-                <span className={hasEmiratesId ? "text-emerald-300" : "text-neutral-400"}>
-                  {hasEmiratesId ? "Uploaded" : "Not uploaded"}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-neutral-400">Proof of address</span>
-              <span className={hasAddress ? "text-emerald-300" : "text-neutral-400"}>
-                {hasAddress ? "Uploaded" : "Not uploaded"}
-              </span>
-            </div>
-          </div>
-        </ReviewCard>
-      </>
-    );
-  }
-
-  // ─── Business flow cards ──────────────────────────────────────────────────
-
-  function BusinessCards() {
-    const a = answers;
-
-    const hasCash = Array.isArray(a.relationship_payment_methods)
-      ? (a.relationship_payment_methods as string[]).includes("cash")
-      : String(a.relationship_payment_methods ?? "").includes("cash");
-
-    const hasOwners = beneficialOwners.length > 0 || !!(a.owners && Array.isArray(a.owners) && a.owners.length > 0);
-    const hasPersons = authorizedPersons.length > 0;
-
-    const amlFields = ["pep_exposure", "sanctions_screening", "ubo_disclosed_verified", "aml_policy", "kyc_sops"];
-    const amlFilled = amlFields.filter((f) => a[f] !== undefined && a[f] !== null && a[f] !== "").length;
-
-    const hasDocuments = documents.length > 0;
-
-    return (
-      <>
-        {/* 1. Account */}
-        <ReviewCard
-          title="Account"
-          preview={a.email}
-          status={a.email ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("login") : undefined}
-        >
-          <FieldRow label="Email" value={a.email} />
-          <FieldRow label="Phone" value={a.phone} />
-        </ReviewCard>
-
-        {/* 2. Company Identity */}
-        <ReviewCard
-          title="Company Identity"
-          preview={a.incCountry}
-          status={a.incCountry ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("companyDetails") : undefined}
-        >
-          <FieldRow label="Country of incorporation" value={a.incCountry} />
-          <FieldRow label="Company name" value={a.companyName} />
-          <FieldRow label="Registration number" value={a.registrationNumber} />
-        </ReviewCard>
-
-        {/* 3. Relationship Profile */}
-        <ReviewCard
-          title="Relationship Profile"
-          status={hasCash ? "attention" : (a.transaction_direction ? "complete" : "incomplete")}
-          onEdit={goToStep ? () => goToStep("relationship") : undefined}
-        >
-          <FieldRow label="Transaction direction" value={a.transaction_direction} />
-          <FieldRow label="Products / services" value={a.relationship_products} />
-          <FieldRow label="Frequency" value={a.relationship_frequency} />
-          <FieldRow label="Value band (USD)" value={a.relationship_value_band_usd} />
-          <FieldRow label="Payment methods" value={a.relationship_payment_methods} />
-          {hasCash && (
-            <div className="text-xs text-amber-300 py-1">
-              ⚠ Cash payment method selected — additional scrutiny may apply.
-            </div>
-          )}
-        </ReviewCard>
-
-        {/* 4. Beneficial Owners */}
-        <ReviewCard
-          title="Beneficial Owners"
-          status={hasOwners ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("ownership") : undefined}
-        >
-          {beneficialOwners.length > 0 ? (
-            <div className="space-y-2 py-2">
-              {beneficialOwners.map((owner) => (
-                <OwnerCard
-                  key={owner.id}
-                  owner={owner}
-                  documents={documents}
-                  onViewDocument={handleViewDocument}
-                />
-              ))}
-            </div>
-          ) : Array.isArray(a.owners) && a.owners.length > 0 ? (
-            <div className="space-y-1 py-1">
-              {(a.owners as any[]).map((o, i) => (
-                <div key={o.id ?? i} className="text-xs text-neutral-300">
-                  {o.name || "—"}{o.share != null ? ` — ${o.share}%` : ""}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs text-neutral-400 py-1">No owners recorded.</div>
-          )}
-        </ReviewCard>
-
-        {/* 5. Authorised Persons */}
-        <ReviewCard
-          title="Authorised Persons"
-          status={hasPersons ? "complete" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("authorisedPeople") : undefined}
-        >
-          {authorizedPersons.length > 0 ? (
-            <div className="space-y-2 py-2">
-              {authorizedPersons.map((person) => (
-                <SignatoryCard
-                  key={person.id}
-                  person={person}
-                  documents={documents}
-                  onViewDocument={handleViewDocument}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs text-neutral-400 py-1">No authorised persons recorded.</div>
-          )}
-        </ReviewCard>
-
-        {/* 6. AML Compliance */}
-        <ReviewCard
-          title="AML Compliance"
-          preview={`${amlFilled}/${amlFields.length} answered`}
-          status={amlFilled === amlFields.length ? "complete" : amlFilled > 0 ? "attention" : "incomplete"}
-          onEdit={goToStep ? () => goToStep("questionnaire") : undefined}
-        >
-          <FieldRow label="PEP exposure" value={a.pep_exposure} />
-          <FieldRow label="Sanctions screening" value={a.sanctions_screening} />
-          <FieldRow label="UBO disclosed & verified" value={a.ubo_disclosed_verified} />
-          <FieldRow label="AML policy in place" value={a.aml_policy} />
-          <FieldRow label="KYC SOPs in place" value={a.kyc_sops} />
-        </ReviewCard>
-
-        {/* 7. Documents */}
-        <ReviewCard
-          title="Documents"
-          status={!evidence ? "incomplete" : (missingTypes.length === 0 || DEV_MODE) ? "complete" : "attention"}
-          onEdit={goToStep ? () => goToStep("companyDetails") : undefined}
-        >
-          {!evidence ? (
-            <div className="text-xs text-neutral-400 py-1">
-              {loading ? "Loading evidence pack…" : loadError ?? "Evidence pack not loaded yet."}
-            </div>
-          ) : hasDocuments ? (
-            <div className="text-xs text-neutral-300 py-1">
-              {documents.length} document{documents.length !== 1 ? "s" : ""} uploaded.
-              {missingTypes.length > 0 && !DEV_MODE && (
-                <span className="text-amber-300 ml-1">{missingTypes.length} missing.</span>
-              )}
-            </div>
-          ) : (
-            <div className="text-xs text-neutral-400 py-1">No documents uploaded yet.</div>
-          )}
-        </ReviewCard>
-      </>
-    );
-  }
-
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-3">
       {/* Review cards */}
-      {isBusiness ? <BusinessCards /> : <IndividualCards />}
+      {isBusiness ? (
+        <BusinessCards
+          answers={answers}
+          goToStep={goToStep}
+          beneficialOwners={beneficialOwners}
+          authorizedPersons={authorizedPersons}
+          documents={documents}
+          evidence={evidence}
+          missingTypes={missingTypes}
+          loading={loading}
+          loadError={loadError}
+          handleViewDocument={handleViewDocument}
+        />
+      ) : (
+        <IndividualCards answers={answers} goToStep={goToStep} />
+      )}
 
       {/* Business: evidence pack detail section */}
       {isBusiness && (
@@ -1031,26 +1075,6 @@ export default function ReviewSubmitStep({
           </div>
         </Section>
       )}
-
-      {/* Declaration checkbox */}
-      <div className="rounded-xl border border-neutral-800 bg-black/30 p-4">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded border-neutral-600 bg-black/40 accent-[#bfa76f]"
-            checked={!!answers.submitDeclarationAccepted}
-            onChange={(e) => setValue("submitDeclarationAccepted", e.target.checked)}
-          />
-          <span className="text-sm text-neutral-200">
-            I confirm that all information provided is accurate and complete to the best of my knowledge.
-          </span>
-        </label>
-        {!answers.submitDeclarationAccepted && (
-          <p className="mt-2 text-[11px] text-neutral-500 pl-7">
-            You must accept this declaration before submitting.
-          </p>
-        )}
-      </div>
 
       <input type="hidden" value={String(isComplete)} readOnly />
     </div>

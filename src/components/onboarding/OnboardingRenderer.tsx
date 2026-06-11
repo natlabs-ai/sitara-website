@@ -412,13 +412,12 @@ export default function OnboardingRenderer({
   }
 
   function goToStep(stepId: string) {
-    const absolute = spec.steps.findIndex((s) => s.id === stepId);
-    if (absolute >= 0) {
-      if (effectiveApplicationId && !readOnly) {
-        saveDraft(answers, step).catch(() => {});
-      }
-      setStepIdx(absolute);
+    const visibleIdx = visibleSteps.findIndex((s) => s.id === stepId);
+    if (visibleIdx === -1) return; // step not visible, no-op
+    if (effectiveApplicationId && !readOnly) {
+      saveDraft(answers, step).catch(() => {});
     }
+    goToVisibleIndex(visibleIdx);
   }
 
   /** Final submit handler (Submit button on the last step) */
