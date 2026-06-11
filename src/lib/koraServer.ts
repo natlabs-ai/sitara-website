@@ -4,7 +4,7 @@
  * Reads secret env vars that must never reach the browser.
  */
 
-const KORA_API_URL    = process.env.KORA_API_URL;
+const KORA_API_URL    = process.env.KORA_API_URL?.replace(/\/$/, "");
 const KORA_TENANT_KEY = process.env.KORA_TENANT_API_KEY;
 
 if (!KORA_API_URL || !KORA_TENANT_KEY) {
