@@ -118,7 +118,9 @@ export default function BeforeYouBegin(props: Props) {
           <DocList items={docs.company} />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">Authorised signatory</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">
+            {props.role === "signatory" ? "Your documents (Authorised Signatory)" : "Authorised signatory documents"}
+          </p>
           <DocList items={docs.signatory} />
         </div>
         <div className="flex gap-2.5 rounded-xl border border-neutral-800 bg-black/30 px-4 py-3">

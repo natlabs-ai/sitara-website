@@ -23,11 +23,12 @@ function OnboardPageInner() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resume");
   const viewId = searchParams.get("view");
+  const mode = searchParams.get("mode");
 
   const [initialAnswers, setInitialAnswers] = useState<Record<string, any>>({});
   const [initialStepId, setInitialStepId] = useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [isLoading, setIsLoading] = useState(!!(resumeId || viewId));
+  const [isLoading, setIsLoading] = useState(!!(resumeId || viewId || mode === "login"));
   const [resolvedAppId, setResolvedAppId] = useState<string | null>(null);
 
   const [preFormStep, setPreFormStep] = useState<PreFormStep>("entry");
@@ -39,6 +40,13 @@ function OnboardPageInner() {
 
   useEffect(() => {
     async function loadApplication() {
+      if (mode === "login") {
+        setInitialAnswers({ authMode: "login" });
+        setInitialStepId("login");
+        setPreFormStep("done");
+        setIsLoading(false);
+        return;
+      }
       if (resumeId || viewId) {
         const appId = resumeId || viewId;
         setIsLoading(true);
@@ -93,6 +101,8 @@ function OnboardPageInner() {
               setIsReadOnly(!data.can_edit);
               setResolvedAppId(savedAppId);
               setPreFormStep("done");
+            } else {
+              localStorage.removeItem("kora_active_app_sitara");
             }
           } finally {
             setIsLoading(false);
@@ -102,7 +112,7 @@ function OnboardPageInner() {
     }
     loadApplication();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resumeId, viewId]);
+  }, [resumeId, viewId, mode]);
 
   const handleSubmit = React.useCallback(async (data: Record<string, any>) => {
     const applicationId = data.koraApplicationId;
@@ -162,11 +172,11 @@ function OnboardPageInner() {
         setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
         setIsReadOnly(!data.can_edit);
         setResolvedAppId(appId);
+        setPreFormStep("done");
       }
     } catch {
-      // proceed anyway
+      // fetch error — do not transition
     }
-    setPreFormStep("done");
   };
 
   if (isLoading) {

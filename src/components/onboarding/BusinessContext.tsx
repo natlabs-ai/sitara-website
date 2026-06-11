@@ -48,10 +48,14 @@ function CountrySelect({ value, onChange }: { value: string; onChange: (v: strin
 export default function BusinessContext({ onContinue, onBack }: Props) {
   const [country, setCountry] = useState("");
   const [role, setRole] = useState<Role | "">("");
+  const [detected, setDetected] = useState(false);
 
   useEffect(() => {
-    const detected = detectCountryFromTimezone();
-    if (detected && countries.some((c) => c.name === detected)) setCountry(detected);
+    const d = detectCountryFromTimezone();
+    if (d && countries.some((c) => c.name === d)) {
+      setCountry(d);
+      setDetected(true);
+    }
   }, []);
 
   const canContinue = country !== "" && role !== "";
@@ -66,7 +70,7 @@ export default function BusinessContext({ onContinue, onBack }: Props) {
         <div>
           <label className="block text-xs font-medium text-neutral-400 mb-1.5">Where is your business registered?</label>
           <CountrySelect value={country} onChange={setCountry} />
-          {country && <p className="mt-1 text-xs text-neutral-500">Detected from your location — change if needed.</p>}
+          {detected && country && <p className="mt-1 text-xs text-neutral-500">Detected from your location — change if needed.</p>}
         </div>
 
         <div>
