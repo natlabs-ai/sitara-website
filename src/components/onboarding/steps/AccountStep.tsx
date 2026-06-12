@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   DEV_MODE,
 } from "../onboardingShared";
-import { Section, Button, Alert } from "@/components/ui";
+import { Section, Button, Alert, FormField } from "@/components/ui";
 import { checkEmailAvailability, sendEmailOtp, verifyEmailOtp, sendPhoneOtp, verifyPhoneOtp } from "@/lib/koraClient";
 import { countries as allCountries } from "@/data/countries";
 
@@ -162,9 +162,12 @@ export function AccountStep({
 
       {/* Email */}
       <Section>
-        <div className="mb-2 text-sm font-semibold text-neutral-100">
-          Email{showValidationErrors && !answers.email && <span className="text-red-400"> *</span>}
-        </div>
+        <FormField
+          label="Email"
+          required
+          showError={showValidationErrors && !answers.email}
+          error="Email is required."
+        >
         {mode === 'login' ? (
           <input
             type="email"
@@ -248,6 +251,7 @@ export function AccountStep({
           </div>
           </>
         )}
+        </FormField>
       </Section>
       {emailOtpError && (
         <p className="text-xs text-red-400 -mt-3">{emailOtpError}</p>
@@ -259,9 +263,12 @@ export function AccountStep({
       {/* Mobile - Only show in signup mode */}
       {mode === 'signup' && (
         <Section>
-          <div className="mb-2 text-sm font-semibold text-neutral-100">
-            Mobile{showValidationErrors && !answers.phone && <span className="text-red-400"> *</span>}
-          </div>
+          <FormField
+            label="Mobile"
+            required
+            showError={showValidationErrors && !answers.phone}
+            error="Mobile number is required."
+          >
           <div className="space-y-3">
             {/* Row 1: country selector + dial+number */}
             <div className="grid grid-cols-[1fr_2fr] gap-3">
@@ -337,6 +344,7 @@ export function AccountStep({
               </Button>
             </div>
           </div>
+          </FormField>
 
           <p className="mt-2 text-xs text-neutral-400">
             Full number:{" "}
@@ -355,37 +363,47 @@ export function AccountStep({
 
       {/* Password */}
       <Section>
-        <div className="mb-2 text-sm font-semibold text-neutral-100">
-          {mode === 'login' ? 'Password' : 'Set Password'}{showValidationErrors && !answers.password && <span className="text-red-400"> *</span>}
-        </div>
-        <input
-          type="password"
-          className={baseInput}
-          placeholder={mode === 'login' ? 'Enter your password' : 'Minimum 8 characters'}
-          value={answers.password || ""}
-          onChange={(e) => {
-            setValue("password", e.target.value);
-            if (answers.confirmPassword) setValue("passwordMatch", true);
-          }}
-          data-testid="account-password"
-        />
+        <FormField
+          label={mode === 'login' ? 'Password' : 'Set Password'}
+          required
+          showError={showValidationErrors && !answers.password}
+          error="Password is required."
+        >
+          <input
+            type="password"
+            className={baseInput}
+            placeholder={mode === 'login' ? 'Enter your password' : 'Minimum 8 characters'}
+            value={answers.password || ""}
+            onChange={(e) => {
+              setValue("password", e.target.value);
+              if (answers.confirmPassword) setValue("passwordMatch", true);
+            }}
+            data-testid="account-password"
+          />
+        </FormField>
 
         {mode === 'signup' && (
           <>
-            <div className="mt-4 mb-2 text-sm font-semibold text-neutral-100">
-              Confirm Password{showValidationErrors && !answers.confirmPassword && <span className="text-red-400"> *</span>}
+            <div className="mt-4">
+              <FormField
+                label="Confirm Password"
+                required
+                showError={showValidationErrors && !answers.confirmPassword}
+                error="Please confirm your password."
+              >
+                <input
+                  type="password"
+                  className={baseInput}
+                  placeholder="Re-enter password"
+                  value={answers.confirmPassword || ""}
+                  onChange={(e) => {
+                    setValue("confirmPassword", e.target.value);
+                    setValue("passwordMatch", e.target.value === answers.password);
+                  }}
+                  data-testid="account-confirm-password"
+                />
+              </FormField>
             </div>
-            <input
-              type="password"
-              className={baseInput}
-              placeholder="Re-enter password"
-              value={answers.confirmPassword || ""}
-              onChange={(e) => {
-                setValue("confirmPassword", e.target.value);
-                setValue("passwordMatch", e.target.value === answers.password);
-              }}
-              data-testid="account-confirm-password"
-            />
 
             {answers.confirmPassword &&
               answers.password &&
