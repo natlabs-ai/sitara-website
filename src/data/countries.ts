@@ -162,5 +162,4 @@ export const countries: Country[] = [
   { code: "YE", name: "Yemen", dial: "967" },
   { code: "ZM", name: "Zambia", dial: "260" },
   { code: "ZW", name: "Zimbabwe", dial: "263" },
-  // ...add the remaining ISO countries/territories here
 ].sort((a, b) => a.name.localeCompare(b.name));
