@@ -62,7 +62,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
       <header className={shellCls} style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className={innerCls}>
           <div>
-            <Link href="/dashboard" className={wordmarkCls} aria-label="Sitara dashboard">
+            <Link href="/" className={wordmarkCls} aria-label="Sitara home">
               SITARA
             </Link>
             {user?.email && (
