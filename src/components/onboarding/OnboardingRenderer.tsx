@@ -149,6 +149,7 @@ export default function OnboardingRenderer({
   // Save & Return state (silent by default, only shows errors)
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [showSaved, setShowSaved] = React.useState(false);
 
   // Validation reveal state: controls when required field indicators are shown
   // Set to true when user clicks Next and validation fails; reset on step change
@@ -196,6 +197,16 @@ export default function OnboardingRenderer({
     setShowValidationErrors(false);
   }, [stepIdx]);
 
+  // Scroll to first error indicator when validation errors are revealed
+  React.useEffect(() => {
+    if (!showValidationErrors) return;
+    const id = requestAnimationFrame(() => {
+      const el = document.querySelector('.text-red-400');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showValidationErrors]);
+
   // Silently refresh the access token using the refresh_token cookie.
   // Returns true if the refresh succeeded.
   const tryRefreshToken = React.useCallback(async (): Promise<boolean> => {
@@ -238,8 +249,10 @@ export default function OnboardingRenderer({
         return;
       }
 
-      // Success: clear any previous error (silent - no UI feedback)
+      // Success: clear any previous error and show brief confirmation
       setSaveError(null);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 4000);
 
       // Also update localStorage as backup
       if (typeof window !== "undefined") {
@@ -288,8 +301,10 @@ export default function OnboardingRenderer({
         return;
       }
 
-      // Success: clear error and navigate away silently
+      // Success: clear error and show brief confirmation before navigating away
       setSaveError(null);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 4000);
 
       // Also update localStorage as backup
       if (typeof window !== "undefined") {
@@ -1764,6 +1779,9 @@ export default function OnboardingRenderer({
                   {/* Error message - only shown when save fails */}
                   {saveError && (
                     <span className="text-xs text-red-400">{saveError}</span>
+                  )}
+                  {!saveError && showSaved && (
+                    <span className="text-xs text-emerald-400">Saved</span>
                   )}
 
                   <Button

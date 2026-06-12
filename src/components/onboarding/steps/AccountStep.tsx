@@ -35,6 +35,8 @@ export function AccountStep({
   const [emailOtpError, setEmailOtpError] = React.useState<string | null>(null);
   const [phoneOtpLoading, setPhoneOtpLoading] = React.useState(false);
   const [phoneOtpError, setPhoneOtpError] = React.useState<string | null>(null);
+  const [emailOtpSent, setEmailOtpSent] = React.useState(false);
+  const [phoneOtpSent, setPhoneOtpSent] = React.useState(false);
 
   // Update mode in answers when changed and clear errors
   React.useEffect(() => {
@@ -128,6 +130,8 @@ export function AccountStep({
     try {
       const result = await sendPhoneOtp(answers.phone);
       if (result.dev_code) setValue("phoneOtp", result.dev_code);
+      setPhoneOtpSent(true);
+      setTimeout(() => setPhoneOtpSent(false), 5000);
     } catch (e: any) {
       setPhoneOtpError(e.message || "Failed to send code. Try again.");
     } finally {
@@ -216,6 +220,8 @@ export function AccountStep({
                   try {
                     const result = await sendEmailOtp(answers.email);
                     if (result.dev_code) setValue("emailOtp", result.dev_code);
+                    setEmailOtpSent(true);
+                    setTimeout(() => setEmailOtpSent(false), 5000);
                   } catch (e: any) {
                     setEmailOtpError(e.message || "Failed to send code. Try again.");
                   } finally {
@@ -255,6 +261,9 @@ export function AccountStep({
       </Section>
       {emailOtpError && (
         <p className="text-xs text-red-400 -mt-3">{emailOtpError}</p>
+      )}
+      {emailOtpSent && !emailOtpError && (
+        <p className="text-xs text-emerald-400 -mt-3">Code sent to {answers.email}</p>
       )}
 
       {/* Mobile - Only show in signup mode */}
@@ -347,6 +356,9 @@ export function AccountStep({
       )}
       {phoneOtpError && (
         <p className="text-xs text-red-400 -mt-3">{phoneOtpError}</p>
+      )}
+      {phoneOtpSent && !phoneOtpError && (
+        <p className="text-xs text-emerald-400">Code sent to +{dial} {national}</p>
       )}
 
       {/* Password */}
