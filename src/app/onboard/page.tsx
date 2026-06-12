@@ -155,7 +155,13 @@ function OnboardPageInner() {
         {showPreForm ? (
           <div className="mx-auto max-w-md pt-6">
             {preFormStep === "entry" && (
-              <EntryScreen onNew={() => setPreFormStep("account-type")} onContinue={() => router.push("/login")} />
+              <EntryScreen
+                onNew={() => setPreFormStep("account-type")}
+                onContinue={() => {
+                  const token = typeof window !== "undefined" ? localStorage.getItem("kora_access_token") : null;
+                  router.push(token ? "/dashboard" : "/login");
+                }}
+              />
             )}
             {preFormStep === "account-type" && (
               <AccountTypeSelection onSelect={handleAccountTypeSelect} />

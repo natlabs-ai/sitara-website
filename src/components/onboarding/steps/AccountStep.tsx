@@ -69,7 +69,7 @@ export function AccountStep({
 
         if (!result.available && setGlobalError) {
           setGlobalError(
-            "This email is already registered. Please use the 'Log In' option above."
+            "This email is already registered."
           );
         }
       } catch (error) {
@@ -155,21 +155,19 @@ export function AccountStep({
 
       {/* Error Message */}
       {globalError && (
-        <Alert variant="error" className="mb-6">
-          <div className="flex-1">
+        <>
+          <Alert variant="error" className="mb-2">
             <p className="text-sm text-red-200 font-medium">{globalError}</p>
-            {globalError.includes('already registered') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/login')}
-                className="mt-2 underline"
-              >
-                Switch to Log In
-              </Button>
-            )}
-          </div>
-        </Alert>
+          </Alert>
+          {globalError.includes('already registered') && (
+            <p className="text-center text-xs text-neutral-500 mb-4">
+              Already have an account?{" "}
+              <button type="button" onClick={() => router.push('/login')} className="text-[#bfa76f] hover:underline font-medium">
+                Log in
+              </button>
+            </p>
+          )}
+        </>
       )}
 
       {/* Email */}
@@ -187,76 +185,78 @@ export function AccountStep({
             data-testid="account-email"
           />
         ) : (
-          <div className="grid md:grid-cols-3 gap-3 items-center">
+          <>
+          {/* Full-width email input */}
+          <input
+            type="email"
+            className={baseInput}
+            placeholder="name@example.com"
+            value={answers.email || ""}
+            onChange={(e) => {
+              setValue("email", e.target.value);
+              setValue("emailVerified", false);
+            }}
+            data-testid="account-email"
+          />
+          {/* OTP row below */}
+          <div className="mt-3 flex gap-2 items-center">
             <input
-              type="email"
-              className={`${baseInput} md:col-span-2`}
-              placeholder="name@example.com"
-              value={answers.email || ""}
-              onChange={(e) => {
-                setValue("email", e.target.value);
-                setValue("emailVerified", false);
-              }}
-              data-testid="account-email"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              className={`${baseInput} flex-1`}
+              placeholder="Email OTP"
+              value={answers.emailOtp || ""}
+              onChange={(e) => setValue("emailOtp", e.target.value)}
+              data-testid="email-otp-input"
             />
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                className={baseInput}
-                placeholder="Email OTP"
-                value={answers.emailOtp || ""}
-                onChange={(e) => setValue("emailOtp", e.target.value)}
-                data-testid="email-otp-input"
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={async () => {
-                  if (!answers.email) return;
-                  setEmailOtpLoading(true);
-                  setEmailOtpError(null);
-                  try {
-                    const result = await sendEmailOtp(answers.email);
-                    if (result.dev_code) setValue("emailOtp", result.dev_code);
-                    setEmailOtpSent(true);
-                    setTimeout(() => setEmailOtpSent(false), 5000);
-                  } catch (e: any) {
-                    setEmailOtpError(e.message || "Failed to send code. Try again.");
-                  } finally {
-                    setEmailOtpLoading(false);
-                  }
-                }}
-                disabled={emailOtpLoading || !answers.email}
-                data-testid="email-otp-send"
-              >
-                {emailOtpLoading ? "Sending…" : "Send"}
-              </Button>
-              <Button
-                variant={answers.emailVerified ? "primary" : "secondary"}
-                size="sm"
-                onClick={async () => {
-                  if (!answers.email || !answers.emailOtp) return;
-                  setEmailOtpLoading(true);
-                  setEmailOtpError(null);
-                  try {
-                    await verifyEmailOtp(answers.email, answers.emailOtp);
-                    setValue("emailVerified", true);
-                  } catch (e: any) {
-                    setEmailOtpError(e.message || "Invalid code.");
-                    setValue("emailVerified", false);
-                  } finally {
-                    setEmailOtpLoading(false);
-                  }
-                }}
-                disabled={emailOtpLoading || !answers.email || !answers.emailOtp}
-                data-testid="email-verify"
-              >
-                {answers.emailVerified ? "Verified" : "Verify"}
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                if (!answers.email) return;
+                setEmailOtpLoading(true);
+                setEmailOtpError(null);
+                try {
+                  const result = await sendEmailOtp(answers.email);
+                  if (result.dev_code) setValue("emailOtp", result.dev_code);
+                  setEmailOtpSent(true);
+                  setTimeout(() => setEmailOtpSent(false), 5000);
+                } catch (e: any) {
+                  setEmailOtpError(e.message || "Failed to send code. Try again.");
+                } finally {
+                  setEmailOtpLoading(false);
+                }
+              }}
+              disabled={emailOtpLoading || !answers.email}
+              data-testid="email-otp-send"
+            >
+              {emailOtpLoading ? "Sending…" : "Send"}
+            </Button>
+            <Button
+              variant={answers.emailVerified ? "primary" : "secondary"}
+              size="sm"
+              onClick={async () => {
+                if (!answers.email || !answers.emailOtp) return;
+                setEmailOtpLoading(true);
+                setEmailOtpError(null);
+                try {
+                  await verifyEmailOtp(answers.email, answers.emailOtp);
+                  setValue("emailVerified", true);
+                } catch (e: any) {
+                  setEmailOtpError(e.message || "Invalid code.");
+                  setValue("emailVerified", false);
+                } finally {
+                  setEmailOtpLoading(false);
+                }
+              }}
+              disabled={emailOtpLoading || !answers.email || !answers.emailOtp}
+              data-testid="email-verify"
+            >
+              {answers.emailVerified ? "Verified" : "Verify"}
+            </Button>
           </div>
+          </>
         )}
       </Section>
       {emailOtpError && (
@@ -272,41 +272,43 @@ export function AccountStep({
           <div className="mb-2 text-sm font-semibold text-neutral-100">
             Mobile{showValidationErrors && !answers.phone && <span className="text-red-400"> *</span>}
           </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <select
-              className={baseInput}
-              value={currentIso}
-              onChange={(e) => onCountryChange(e.target.value)}
-              aria-label="Country"
-              title="Country"
-            >
-              {countries.map((c) => (
-                <option key={c.iso2} value={c.iso2}>
-                  {c.name} (+{c.dial})
-                </option>
-              ))}
-            </select>
-
-            <div className="flex">
-              <span className="inline-flex items-center px-3 rounded-l-lg border border-neutral-800 bg-neutral-900 text-neutral-200">
-                +{dial}
-              </span>
-              <input
-                type="tel"
-                className={`${baseInput} rounded-l-none`}
-                placeholder="501234567"
-                value={national}
-                onChange={(e) => onNationalChange(e.target.value)}
-                data-testid="phone-national-input"
-              />
+          <div className="space-y-3">
+            {/* Row 1: country selector + dial+number */}
+            <div className="grid grid-cols-[1fr_2fr] gap-3">
+              <select
+                className={baseInput}
+                value={currentIso}
+                onChange={(e) => onCountryChange(e.target.value)}
+                aria-label="Country"
+                title="Country"
+              >
+                {countries.map((c) => (
+                  <option key={c.iso2} value={c.iso2}>
+                    {c.name} (+{c.dial})
+                  </option>
+                ))}
+              </select>
+              <div className="flex">
+                <span className="inline-flex items-center px-3 rounded-l-lg border border-neutral-800 bg-neutral-900 text-neutral-200">
+                  +{dial}
+                </span>
+                <input
+                  type="tel"
+                  className={`${baseInput} rounded-l-none`}
+                  placeholder="501234567"
+                  value={national}
+                  onChange={(e) => onNationalChange(e.target.value)}
+                  data-testid="phone-national-input"
+                />
+              </div>
             </div>
-
-            <div className="flex items-center gap-2">
+            {/* Row 2: OTP + Send + Verify */}
+            <div className="flex gap-2 items-center">
               <input
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
-                className={baseInput}
+                className={`${baseInput} flex-1`}
                 placeholder="SMS OTP"
                 value={answers.phoneOtp || ""}
                 onChange={(e) => setValue("phoneOtp", e.target.value)}

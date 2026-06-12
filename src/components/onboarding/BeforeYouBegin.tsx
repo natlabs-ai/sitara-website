@@ -129,6 +129,12 @@ export default function BeforeYouBegin(props: Props) {
           </svg>
           <p className="text-xs text-neutral-500">{docs.footer}</p>
         </div>
+        <div className="mt-5 flex gap-2.5 rounded-xl border border-neutral-800 bg-black/30 px-4 py-3">
+          <svg className="h-4 w-4 text-neutral-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
+          </svg>
+          <p className="text-xs text-neutral-500">This typically takes 15–20 minutes to complete.</p>
+        </div>
       </div>
 
       <button onClick={props.onStart}
