@@ -11,9 +11,7 @@ import {
 } from "@/components/IdDocumentUploader";
 import { ProofOfAddressUploader } from "@/components/ProofOfAddressUploader";
 import type { IdExtracted } from "@/types/IdExtracted";
-import { countries } from "@/data/countries";
-import { GoldCombobox } from "@/components/GoldCombobox";
-import { Modal, Section, Button, FormField, DocumentUploadControl, type DocumentUploadStatus } from "@/components/ui";
+import { Modal, Section, Button, FormField, DocumentUploadControl, CountryCombobox, type DocumentUploadStatus } from "@/components/ui";
 
 /** Shape of confirmed identity fields (user-edited) */
 export interface ConfirmedIdentityFields {
@@ -46,12 +44,7 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
   setValue,
   showValidationErrors = false,
 }) => {
-  // ---- Country selector (GoldCombobox) ----
-  const countryOptions = React.useMemo(
-    () => countries.map((c) => ({ value: c.name, label: c.name })),
-    [],
-  );
-
+  // ---- Country selector ----
   const handleCountrySelect = (name: string) => {
     const wasUAE = answers.countryOfResidence === "United Arab Emirates";
     const willBeUAE = name === "United Arab Emirates";
@@ -80,7 +73,6 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
   const hasPoA = !showProofOfAddress || !!answers.proofOfAddressDocId;
 
   // Field-level error checks (only shown when showValidationErrors is true)
-  const countryError = showValidationErrors && !hasCountry ? "This field is required." : undefined;
   const passportError = showValidationErrors && !hasPassportDoc ? "This field is required." : undefined;
   const eidFrontError = showValidationErrors && isUAE && !hasEidFront ? "This field is required." : undefined;
   const eidBackError = showValidationErrors && isUAE && !hasEidBack ? "This field is required." : undefined;
@@ -430,17 +422,14 @@ export const IdentityStep: React.FC<IdentityStepProps> = ({
         </div>
       </Modal>
 
-      {/* 1. Country of Residence (GoldCombobox) */}
-      <GoldCombobox
+      {/* 1. Country of Residence */}
+      <CountryCombobox
         label="Country of Residence"
         required
-        showError={!!countryError}
-        error={countryError}
-        value={String(answers.countryOfResidence ?? "")}
+        showError={showValidationErrors && !answers.countryOfResidence}
+        error="Please select your country of residence."
+        value={answers.countryOfResidence ?? null}
         onChange={(v) => handleCountrySelect(v)}
-        options={countryOptions}
-        placeholder="Start typing to search…"
-        emptyText="No matches. Please check your spelling."
       />
 
       {/* 2. Passport / ID – uploader */}

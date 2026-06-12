@@ -31,3 +31,5 @@ export type { YesNoToggleProps } from './YesNoToggle';
 
 export { DocumentUploadControl } from './DocumentUploadControl';
 export type { DocumentUploadControlProps, DocumentUploadStatus } from './DocumentUploadControl';
+
+export { CountryCombobox } from './CountryCombobox';

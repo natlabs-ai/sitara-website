@@ -4,7 +4,6 @@
 
 import React from "react";
 import { countries } from "@/data/countries";
-import { GoldCombobox } from "@/components/GoldCombobox";
 import {
   type BeneficialOwner,
   type BeneficialOwnerCreatePayload,
@@ -28,6 +27,7 @@ import {
   Button,
   Alert,
   DocumentUploadControl,
+  CountryCombobox,
   type DocumentUploadStatus,
 } from "@/components/ui";
 
@@ -278,10 +278,6 @@ function OwnerModal({
     draft.owner_type === "foundation" ||
     draft.owner_type === "other_entity";
 
-  const countryOptions = countries.map((c) => ({
-    value: c.name,
-    label: c.name,
-  }));
 
   // Document upload handlers
   const handleIndividualIdUploaded = async ({
@@ -611,13 +607,11 @@ function OwnerModal({
                 />
               </FormField>
 
-              <GoldCombobox
+              <CountryCombobox
                 label="Nationality"
                 value={draft.individual_nationality}
                 onChange={(v) => setDraft({ ...draft, individual_nationality: v })}
-                options={countryOptions}
                 placeholder="Select country..."
-                emptyText="No matches found"
               />
 
               <FormField label="Date of Birth" htmlFor="individual_date_of_birth">
@@ -695,13 +689,11 @@ function OwnerModal({
                 />
               </FormField>
 
-              <GoldCombobox
+              <CountryCombobox
                 label="Jurisdiction"
                 value={draft.entity_jurisdiction}
                 onChange={(v) => setDraft({ ...draft, entity_jurisdiction: v })}
-                options={countryOptions}
                 placeholder="Select country..."
-                emptyText="No matches found"
               />
 
               <FormField label="Registration Number" htmlFor="entity_registration_number">
