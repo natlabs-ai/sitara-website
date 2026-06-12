@@ -6,8 +6,7 @@ import Link from "next/link";
 import { login } from "@/lib/koraClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
-
-const GOLD = "#bfa76f";
+import { Input, Button } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,23 +75,16 @@ export default function LoginPage() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-xs font-medium text-neutral-400 uppercase tracking-wider"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-300">
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 text-sm text-neutral-100 placeholder-neutral-600 transition focus:outline-none focus:ring-2"
-                style={{ focusRingColor: GOLD } as React.CSSProperties}
-                onFocus={(e) => (e.target.style.borderColor = GOLD)}
-                onBlur={(e) => (e.target.style.borderColor = "")}
+                onChange={setEmail}
                 placeholder="you@example.com"
                 data-testid="login-email"
               />
@@ -100,10 +92,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-xs font-medium text-neutral-400 uppercase tracking-wider"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-300">
                 Password
               </label>
               <div className="relative">
@@ -114,9 +103,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 pr-12 text-sm text-neutral-100 placeholder-neutral-600 transition focus:outline-none focus:ring-2"
-                  onFocus={(e) => (e.target.style.borderColor = GOLD)}
-                  onBlur={(e) => (e.target.style.borderColor = "")}
+                  className="w-full rounded-lg border border-neutral-800 bg-black/60 px-3 py-2 pr-12 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="••••••••"
                   data-testid="login-password"
                 />
@@ -143,15 +130,15 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-lg px-4 py-3 text-sm font-medium text-black transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: GOLD }}
+              variant="primary"
+              fullWidth
+              loading={isSubmitting}
               data-testid="login-submit"
             >
-              {isSubmitting ? "Logging in…" : "Log In"}
-            </button>
+              Log In
+            </Button>
           </form>
 
           {/* Divider */}
@@ -166,8 +153,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{" "}
             <Link
               href="/onboard"
-              className="font-medium transition hover:opacity-80"
-              style={{ color: GOLD }}
+              className="font-medium text-[#bfa76f] transition hover:opacity-80"
             >
               Open an account
             </Link>
