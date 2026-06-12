@@ -832,7 +832,7 @@ export default function OnboardingRenderer({
         if (e?.message?.includes('Email already registered')) {
           console.log("Setting duplicate email error");
           setGlobalError(
-            "This email is already registered. Please use the 'Log In' option above."
+            "This email is already registered. Please log in instead."
           );
         } else if (mode === 'login') {
           setGlobalError(
