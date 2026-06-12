@@ -155,19 +155,9 @@ export function AccountStep({
 
       {/* Error Message */}
       {globalError && (
-        <>
-          <Alert variant="error" className="mb-2">
-            <p className="text-sm text-red-200 font-medium">{globalError}</p>
-          </Alert>
-          {globalError.includes('already registered') && (
-            <p className="text-center text-xs text-neutral-500 mb-4">
-              Already have an account?{" "}
-              <button type="button" onClick={() => router.push('/login')} className="text-[#bfa76f] hover:underline font-medium">
-                Log in
-              </button>
-            </p>
-          )}
-        </>
+        <Alert variant="error" className="mb-2">
+          <p className="text-sm text-red-200 font-medium">{globalError}</p>
+        </Alert>
       )}
 
       {/* Email */}
