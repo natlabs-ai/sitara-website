@@ -99,8 +99,8 @@ export function AccountStep({
   const national = answers.phoneNational || "";
 
   const baseInput =
-    "w-full rounded-lg border border-neutral-800 bg-black/40 text-neutral-100 placeholder:text-neutral-500 px-3 py-2 " +
-    "focus:outline-none focus:ring-1 focus:border-[--gold-color] focus:ring-[--gold-color] transition " +
+    "w-full rounded-lg border border-neutral-800 bg-black/60 text-neutral-100 placeholder:text-neutral-500 px-3 py-2 " +
+    "focus:outline-none focus:ring-1 focus:border-[#bfa76f] focus:ring-[#bfa76f] transition " +
     "autofill-fix";
 
   function updateE164(nextDial: string, nextNational: string) {

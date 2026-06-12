@@ -1162,7 +1162,7 @@ export default function OnboardingRenderer({
                     onChange={(e) =>
                       setValue("signatoryFirstName", e.target.value)
                     }
-                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                    className="w-full rounded-lg border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
 
@@ -1176,7 +1176,7 @@ export default function OnboardingRenderer({
                     onChange={(e) =>
                       setValue("signatoryLastName", e.target.value)
                     }
-                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                    className="w-full rounded-lg border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                   />
                 </div>
               </div>
@@ -1189,7 +1189,7 @@ export default function OnboardingRenderer({
                   type="email"
                   value={answers.signatoryEmail || ""}
                   onChange={(e) => setValue("signatoryEmail", e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
+                  className="w-full rounded-lg border border-neutral-800 bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f]"
                 />
               </div>
             </section>

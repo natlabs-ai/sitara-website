@@ -93,7 +93,7 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
                 onBlur={() => touch("pepDetails")}
                 placeholder="Describe your position or relationship to a PEP"
                 rows={2}
-                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                className={`w-full rounded-lg border bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
                   (touched.pepDetails || showValidationErrors) && !pepDetails.trim()
                     ? "border-red-500/40"
                     : "border-neutral-800"
@@ -156,7 +156,7 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
                 onBlur={() => touch("sanctionsDetails")}
                 placeholder="Describe the sanctions or restrictions"
                 rows={2}
-                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                className={`w-full rounded-lg border bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
                   (touched.sanctionsDetails || showValidationErrors) && !sanctionsDetails.trim()
                     ? "border-red-500/40"
                     : "border-neutral-800"
@@ -219,7 +219,7 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
                 onBlur={() => touch("thirdPartyDetails")}
                 placeholder="Describe who you will be acting on behalf of"
                 rows={2}
-                className={`w-full rounded-xl border bg-black/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
+                className={`w-full rounded-lg border bg-black/60 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-[#bfa76f] focus:outline-none focus:ring-1 focus:ring-[#bfa76f] ${
                   (touched.thirdPartyDetails || showValidationErrors) && !thirdPartyDetails.trim()
                     ? "border-red-500/40"
                     : "border-neutral-800"
