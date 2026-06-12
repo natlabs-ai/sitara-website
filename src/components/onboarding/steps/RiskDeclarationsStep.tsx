@@ -4,7 +4,7 @@
 "use client";
 
 import React from "react";
-import { Section } from "@/components/ui";
+import { Section, YesNoToggle } from "@/components/ui";
 
 interface RiskDeclarationsStepProps {
   answers: Record<string, any>;
@@ -55,33 +55,13 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
             officer) or is a close family member or associate of such a
             person.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setValue("ind_pepSelf", false);
-                setValue("ind_pepSelfDetails", "");
-              }}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                pepSelf === false
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              No
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue("ind_pepSelf", true)}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                pepSelf === true
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              Yes
-            </button>
-          </div>
+          <YesNoToggle
+            value={pepSelf === true ? 'yes' : pepSelf === false ? 'no' : null}
+            onChange={(v) => {
+              setValue("ind_pepSelf", v === 'yes');
+              if (v === 'no') setValue("ind_pepSelfDetails", "");
+            }}
+          />
           {pepSelf === true && (
             <div className="mt-3">
               <label className="mb-1 block text-xs font-medium text-neutral-200">
@@ -118,33 +98,13 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
             This includes international sanctions lists (UN, EU, US, UK) or
             any travel bans, asset freezes, or legal restrictions.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setValue("ind_sanctionsSelf", false);
-                setValue("ind_sanctionsSelfDetails", "");
-              }}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                sanctionsSelf === false
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              No
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue("ind_sanctionsSelf", true)}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                sanctionsSelf === true
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              Yes
-            </button>
-          </div>
+          <YesNoToggle
+            value={sanctionsSelf === true ? 'yes' : sanctionsSelf === false ? 'no' : null}
+            onChange={(v) => {
+              setValue("ind_sanctionsSelf", v === 'yes');
+              if (v === 'no') setValue("ind_sanctionsSelfDetails", "");
+            }}
+          />
           {sanctionsSelf === true && (
             <div className="mt-3">
               <label className="mb-1 block text-xs font-medium text-neutral-200">
@@ -181,33 +141,13 @@ export const RiskDeclarationsStep: React.FC<RiskDeclarationsStepProps> = ({
             This means transacting on behalf of another person or entity,
             rather than for your own account.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setValue("ind_thirdPartyUse", false);
-                setValue("ind_thirdPartyUseDetails", "");
-              }}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                thirdPartyUse === false
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              No
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue("ind_thirdPartyUse", true)}
-              className={`rounded-xl border px-4 py-2 text-sm transition ${
-                thirdPartyUse === true
-                  ? "border-[#bfa76f] bg-[#bfa76f1a] text-[#f5e9c0]"
-                  : "border-neutral-800 bg-black/40 text-neutral-200 hover:bg-black/55"
-              }`}
-            >
-              Yes
-            </button>
-          </div>
+          <YesNoToggle
+            value={thirdPartyUse === true ? 'yes' : thirdPartyUse === false ? 'no' : null}
+            onChange={(v) => {
+              setValue("ind_thirdPartyUse", v === 'yes');
+              if (v === 'no') setValue("ind_thirdPartyUseDetails", "");
+            }}
+          />
           {thirdPartyUse === true && (
             <div className="mt-3">
               <label className="mb-1 block text-xs font-medium text-neutral-200">

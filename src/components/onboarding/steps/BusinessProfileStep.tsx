@@ -4,7 +4,7 @@
 import React from "react";
 import type { Step } from "../onboardingShared";
 import { countries } from "@/data/countries";
-import { Section } from "@/components/ui";
+import { Section, YesNoToggle } from "@/components/ui";
 
 /** ---------- Searchable Country Select (stores ISO code) ---------- */
 
@@ -114,32 +114,6 @@ const SearchableCountrySelect: React.FC<SearchableCountrySelectProps> = ({
   );
 };
 
-/** ---------- Yes/No Question ---------- */
-
-interface YesNoQuestionProps {
-  label: string;
-  value: boolean | undefined;
-  onChange: (val: boolean) => void;
-  children?: React.ReactNode;
-}
-
-const YesNoQuestion: React.FC<YesNoQuestionProps> = ({ label, value, onChange, children }) => (
-  <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
-    <p className="text-sm text-neutral-200">{label}</p>
-    <div className="flex gap-2">
-      {([true, false] as const).map((opt) => (
-        <button key={String(opt)} type="button" onClick={() => onChange(opt)}
-          className={`rounded-lg border px-5 py-1.5 text-sm font-medium transition ${
-            value === opt ? "border-[#bfa76f] bg-[#bfa76f]/15 text-[#bfa76f]" : "border-neutral-700 text-neutral-300 hover:border-neutral-500"
-          }`}>
-          {opt ? "Yes" : "No"}
-        </button>
-      ))}
-    </div>
-    {children}
-  </div>
-);
-
 /** ---------- Main Business Profile Step ---------- */
 
 export interface BusinessProfileStepProps {
@@ -184,31 +158,36 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
           </p>
         </div>
         <div className="space-y-3">
-          <YesNoQuestion
-            label="Does the business ever take ownership of precious metals?"
-            value={answers.takes_ownership_of_metals as boolean | undefined}
-            onChange={(v) => setValue("takes_ownership_of_metals", v)}
-          />
-          <YesNoQuestion
-            label="Does the business hold client assets or funds?"
-            value={holdsAssets}
-            onChange={(v) => { setValue("holds_client_assets_or_funds", v); if (!v) setValue("settlement_facilitation", undefined); }}
-          >
+          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+            <p className="text-sm text-neutral-200">Does the business ever take ownership of precious metals?</p>
+            <YesNoToggle
+              value={answers.takes_ownership_of_metals === true ? 'yes' : answers.takes_ownership_of_metals === false ? 'no' : null}
+              onChange={(v) => setValue("takes_ownership_of_metals", v === 'yes')}
+            />
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+            <p className="text-sm text-neutral-200">Does the business hold client assets or funds?</p>
+            <YesNoToggle
+              value={holdsAssets === true ? 'yes' : holdsAssets === false ? 'no' : null}
+              onChange={(v) => { setValue("holds_client_assets_or_funds", v === 'yes'); if (v === 'no') setValue("settlement_facilitation", undefined); }}
+            />
             {holdsAssets === true && (
-              <div className="pl-3 border-l border-neutral-700">
-                <YesNoQuestion
-                  label="Do you facilitate settlement (escrow-style)?"
-                  value={answers.settlement_facilitation as boolean | undefined}
-                  onChange={(v) => setValue("settlement_facilitation", v)}
+              <div className="pl-3 border-l border-neutral-700 space-y-3">
+                <p className="text-sm text-neutral-200">Do you facilitate settlement (escrow-style)?</p>
+                <YesNoToggle
+                  value={answers.settlement_facilitation === true ? 'yes' : answers.settlement_facilitation === false ? 'no' : null}
+                  onChange={(v) => setValue("settlement_facilitation", v === 'yes')}
                 />
               </div>
             )}
-          </YesNoQuestion>
-          <YesNoQuestion
-            label="Does the business arrange or execute transactions for clients?"
-            value={answers.acts_as_intermediary as boolean | undefined}
-            onChange={(v) => setValue("acts_as_intermediary", v)}
-          />
+          </div>
+          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+            <p className="text-sm text-neutral-200">Does the business arrange or execute transactions for clients?</p>
+            <YesNoToggle
+              value={answers.acts_as_intermediary === true ? 'yes' : answers.acts_as_intermediary === false ? 'no' : null}
+              onChange={(v) => setValue("acts_as_intermediary", v === 'yes')}
+            />
+          </div>
         </div>
         {showValidationErrors &&
           (answers.takes_ownership_of_metals === undefined ||
