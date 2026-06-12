@@ -1740,7 +1740,7 @@ export default function OnboardingRenderer({
                     console.warn("Failed to clear onboarding data", e);
                   }
                 }
-                router.push("/");
+                router.push("/dashboard");
               }}
             >
               Finish

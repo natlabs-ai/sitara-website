@@ -10,6 +10,7 @@ import {
 } from "../onboardingShared";
 import { Section, Button, Alert } from "@/components/ui";
 import { checkEmailAvailability, sendEmailOtp, verifyEmailOtp, sendPhoneOtp, verifyPhoneOtp } from "@/lib/koraClient";
+import { countries as allCountries } from "@/data/countries";
 
 export function AccountStep({
   answers,
@@ -81,28 +82,14 @@ export function AccountStep({
 
   const countries = React.useMemo(
     () =>
-      [
-        { name: "Australia", iso2: "AU", dial: "61" },
-        { name: "Bahrain", iso2: "BH", dial: "973" },
-        { name: "Canada", iso2: "CA", dial: "1" },
-        { name: "France", iso2: "FR", dial: "33" },
-        { name: "Germany", iso2: "DE", dial: "49" },
-        { name: "Hong Kong", iso2: "HK", dial: "852" },
-        { name: "India", iso2: "IN", dial: "91" },
-        { name: "Kuwait", iso2: "KW", dial: "965" },
-        { name: "Nigeria", iso2: "NG", dial: "234" },
-        { name: "Oman", iso2: "OM", dial: "968" },
-        { name: "Pakistan", iso2: "PK", dial: "92" },
-        { name: "Qatar", iso2: "QA", dial: "974" },
-        { name: "Saudi Arabia", iso2: "SA", dial: "966" },
-        { name: "Singapore", iso2: "SG", dial: "65" },
-        { name: "South Africa", iso2: "ZA", dial: "27" },
-        { name: "Switzerland", iso2: "CH", dial: "41" },
-        { name: "Turkey", iso2: "TR", dial: "90" },
-        { name: "United Arab Emirates", iso2: "AE", dial: "971" },
-        { name: "United Kingdom", iso2: "GB", dial: "44" },
-        { name: "United States", iso2: "US", dial: "1" },
-      ].sort((a, b) => a.name.localeCompare(b.name)),
+      allCountries
+        .filter((c) => c?.name && c?.code && c?.dial)
+        .map((c) => ({
+          name: c.name,
+          iso2: c.code.toUpperCase(),
+          dial: c.dial,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     []
   );
 
