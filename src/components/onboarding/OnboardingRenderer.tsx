@@ -626,11 +626,14 @@ export default function OnboardingRenderer({
       // DEV: allow skipping required uploads during testing
       if (DEV_MODE) return !isSubmittingStep;
 
-      const hasLegal = hasDocs(answers.legal_existence_files);
-      const hasRegisteredAddress = hasDocs(answers.registered_address_files);
+      const hasLegal = hasDocs(answers.legal_existence_proof_files);
+      const hasRegisteredAddress = hasDocs(answers.business_address_proof_files);
       const hasTax = hasDocs(answers.tax_registration_files);
+      const hasAddressClassification =
+        answers.addressClassification === "registered" ||
+        answers.addressClassification === "operating";
 
-      return hasLegal && hasRegisteredAddress && hasTax && !isSubmittingStep;
+      return hasLegal && hasRegisteredAddress && hasTax && hasAddressClassification && !isSubmittingStep;
     }
 
     // Relationship (business-only)
