@@ -3,7 +3,7 @@
 
 import React from "react";
 import type { Step } from "../onboardingShared";
-import { Section, YesNoToggle, CountryCombobox } from "@/components/ui";
+import { YesNoToggle, CountryCombobox } from "@/components/ui";
 
 /** ---------- Main Business Profile Step ---------- */
 
@@ -28,7 +28,7 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
       {step.fields.some((f) => f.id === "incCountry") && (() => {
         const f = step.fields.find((f) => f.id === "incCountry")!;
         return (
-          <Section key={f.id}>
+          <div key={f.id}>
             <CountryCombobox
               label={f.label || "Country of Incorporation"}
               required={f.required}
@@ -38,21 +38,16 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
               showError={showValidationErrors && f.required && !answers.incCountry}
               error="Please select the country of incorporation."
             />
-          </Section>
+          </div>
         );
       })()}
 
-      {/* Business activity questions */}
-      <Section>
-        <div className="mb-4">
-          <p className="text-sm font-semibold text-neutral-100">Business activity</p>
-          <p className="mt-0.5 text-xs text-neutral-400">
-            These questions determine which compliance documents apply to your business.
-          </p>
-        </div>
+      {/* Activities */}
+      <div>
+        <p className="mb-3 text-sm font-semibold text-neutral-100">Activities</p>
         <div className="divide-y divide-neutral-800">
           {/* Q1 */}
-          <div className="flex flex-col gap-3 py-4 first:pt-0" data-testid="q-takes-ownership-row">
+          <div className="flex flex-col items-start gap-3 py-4 first:pt-0" data-testid="q-takes-ownership-row">
             <p className="text-sm text-neutral-200">Does the business ever take ownership of precious metals?</p>
             <YesNoToggle
               testId="q-takes-ownership"
@@ -62,7 +57,7 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
           </div>
 
           {/* Q2 + conditional settlement follow-up */}
-          <div className="flex flex-col gap-3 py-4" data-testid="q-holds-assets-row">
+          <div className="flex flex-col items-start gap-3 py-4" data-testid="q-holds-assets-row">
             <p className="text-sm text-neutral-200">Does the business hold client assets or funds?</p>
             <YesNoToggle
               testId="q-holds-assets"
@@ -70,7 +65,7 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
               onChange={(v) => { setValue("holds_client_assets_or_funds", v === 'yes'); if (v === 'no') setValue("settlement_facilitation", undefined); }}
             />
             {holdsAssets === true && (
-              <div className="mt-1 pl-3 border-l border-neutral-700 flex flex-col gap-3">
+              <div className="mt-1 pl-3 border-l border-neutral-700 flex flex-col items-start gap-3">
                 <p className="text-sm text-neutral-200">Do you facilitate settlement (escrow-style)?</p>
                 <YesNoToggle
                   testId="q-settlement-facilitation"
@@ -82,7 +77,7 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
           </div>
 
           {/* Q3 */}
-          <div className="flex flex-col gap-3 py-4" data-testid="q-acts-intermediary-row">
+          <div className="flex flex-col items-start gap-3 py-4" data-testid="q-acts-intermediary-row">
             <p className="text-sm text-neutral-200">Does the business arrange or execute transactions for clients?</p>
             <YesNoToggle
               testId="q-acts-intermediary"
@@ -98,7 +93,7 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
            (holdsAssets === true && answers.settlement_facilitation === undefined)) && (
           <p className="mt-3 text-xs text-red-400">Please answer all questions above.</p>
         )}
-      </Section>
+      </div>
     </div>
   );
 };

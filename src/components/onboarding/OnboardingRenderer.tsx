@@ -1220,16 +1220,10 @@ export default function OnboardingRenderer({
     // Step 4: Business model (orientation + country + deterministic questions)
     if (step.id === "corporateSetup") {
       return (
-        <div className="space-y-5">
-          {/* Optional orientation (UX only; no logic) */}
-          <section className="rounded-2xl border border-neutral-800 bg-black/30 p-5">
-            <h2 className="text-sm font-semibold text-neutral-100">Business</h2>
-            <p className="mt-1 text-xs text-neutral-400">
-              We&apos;ll ask a few questions to understand how your business interacts
-              with precious metals.
-            </p>
-
-            <p className="mt-4 text-sm font-medium text-neutral-100">
+        <div className="space-y-6">
+          {/* Business relationship (UX only; no logic) */}
+          <div>
+            <p className="text-sm font-medium text-neutral-100">
               Which best describes your business relationship with precious metals?
             </p>
             <div
@@ -1259,7 +1253,7 @@ export default function OnboardingRenderer({
                 </SelectableCard>
               ))}
             </div>
-          </section>
+          </div>
 
           {/* Country + deterministic questions via BusinessStep */}
           <BusinessStep
