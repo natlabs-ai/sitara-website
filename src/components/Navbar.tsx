@@ -48,15 +48,15 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             <span>←</span>
             <span>Back to site</span>
           </Link>
-          <div className="flex flex-col items-end">
-            <Link href="/" className={wordmarkCls} aria-label="Sitara home">
-              SITARA
-            </Link>
+          <div className="flex items-center gap-3">
             {user?.email && (
-              <span className="mt-0.5 text-xs text-neutral-400 truncate max-w-[200px]">
+              <span className="text-xs text-neutral-400 truncate max-w-[200px]">
                 {user.email}
               </span>
             )}
+            <Link href="/" className={wordmarkCls} aria-label="Sitara home">
+              SITARA
+            </Link>
           </div>
         </div>
       </header>
