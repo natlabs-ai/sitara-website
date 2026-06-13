@@ -1733,6 +1733,20 @@ export default function OnboardingRenderer({
         </div>
       )}
 
+      {/* Logged-in email chip — shown on all steps after account creation */}
+      {answers.email && step.id !== "login" && step.id !== "accountSelection" && (
+        <div className="flex justify-end mb-1 no-print">
+          <div className="flex items-center gap-1.5 rounded-full border border-[#bfa76f]/20 bg-[#bfa76f]/5 px-3 py-1">
+            <svg className="w-3 h-3 text-[#bfa76f]/60 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            </svg>
+            <span className="text-[11px] text-[#bfa76f]/70 font-medium tracking-wide truncate max-w-[200px]">
+              {answers.email}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-5">{renderStepContent()}</div>
 
       <div className="no-print mt-6 flex justify-between items-center">
