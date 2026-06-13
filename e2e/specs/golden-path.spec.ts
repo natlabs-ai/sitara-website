@@ -85,8 +85,8 @@ test.describe('Business onboarding — golden path', () => {
     await identity.waitForStep()
     await identity.fill('Bahrain')
     await identity.clickNext()
-    // Wait for corporateSetup sentinel (biz_orientation radio)
-    await page.waitForSelector('input[name="biz_orientation"]')
+    // Wait for corporateSetup sentinel (biz_orientation selectable card)
+    await page.waitForSelector('[data-testid="orientation-activity"]')
 
     // -------------------------------------------------------------------------
     // 5. corporateSetup

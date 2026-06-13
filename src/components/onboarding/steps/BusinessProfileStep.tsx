@@ -44,39 +44,48 @@ export const BusinessStep: React.FC<BusinessProfileStepProps> = ({
 
       {/* Business activity questions */}
       <Section>
-        <div className="mb-3">
+        <div className="mb-4">
           <p className="text-sm font-semibold text-neutral-100">Business activity</p>
           <p className="mt-0.5 text-xs text-neutral-400">
             These questions determine which compliance documents apply to your business.
           </p>
         </div>
-        <div className="space-y-3">
-          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+        <div className="divide-y divide-neutral-800">
+          {/* Q1 */}
+          <div className="flex flex-col gap-3 py-4 first:pt-0" data-testid="q-takes-ownership-row">
             <p className="text-sm text-neutral-200">Does the business ever take ownership of precious metals?</p>
             <YesNoToggle
+              testId="q-takes-ownership"
               value={answers.takes_ownership_of_metals === true ? 'yes' : answers.takes_ownership_of_metals === false ? 'no' : null}
               onChange={(v) => setValue("takes_ownership_of_metals", v === 'yes')}
             />
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+
+          {/* Q2 + conditional settlement follow-up */}
+          <div className="flex flex-col gap-3 py-4" data-testid="q-holds-assets-row">
             <p className="text-sm text-neutral-200">Does the business hold client assets or funds?</p>
             <YesNoToggle
+              testId="q-holds-assets"
               value={holdsAssets === true ? 'yes' : holdsAssets === false ? 'no' : null}
               onChange={(v) => { setValue("holds_client_assets_or_funds", v === 'yes'); if (v === 'no') setValue("settlement_facilitation", undefined); }}
             />
             {holdsAssets === true && (
-              <div className="pl-3 border-l border-neutral-700 space-y-3">
+              <div className="mt-1 pl-3 border-l border-neutral-700 flex flex-col gap-3">
                 <p className="text-sm text-neutral-200">Do you facilitate settlement (escrow-style)?</p>
                 <YesNoToggle
+                  testId="q-settlement-facilitation"
                   value={answers.settlement_facilitation === true ? 'yes' : answers.settlement_facilitation === false ? 'no' : null}
                   onChange={(v) => setValue("settlement_facilitation", v === 'yes')}
                 />
               </div>
             )}
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-black/30 p-4 space-y-3">
+
+          {/* Q3 */}
+          <div className="flex flex-col gap-3 py-4" data-testid="q-acts-intermediary-row">
             <p className="text-sm text-neutral-200">Does the business arrange or execute transactions for clients?</p>
             <YesNoToggle
+              testId="q-acts-intermediary"
               value={answers.acts_as_intermediary === true ? 'yes' : answers.acts_as_intermediary === false ? 'no' : null}
               onChange={(v) => setValue("acts_as_intermediary", v === 'yes')}
             />

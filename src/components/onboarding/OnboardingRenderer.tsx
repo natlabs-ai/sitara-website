@@ -45,7 +45,7 @@ import PersonalReviewStep from "./steps/PersonalReviewStep";
 // ✅ NEW: Questions step (business only)
 import QuestionsStep from "./steps/QuestionsStep";
 // UI component library
-import { Button } from "@/components/ui";
+import { Button, SelectableCard } from "@/components/ui";
 
 /** ---------- Helpers ---------- */
 function safeText(v: any): string {
@@ -1229,40 +1229,35 @@ export default function OnboardingRenderer({
               with precious metals.
             </p>
 
-            <div className="mt-4 rounded-xl border border-neutral-800 bg-black/25 p-4">
-              <div className="text-sm font-medium text-neutral-100">
-                Which best describes your business relationship with precious
-                metals?
-              </div>
-              <div className="mt-3 space-y-2">
-                {[
-                  {
-                    value: "activity",
-                    label:
-                      "We trade, source, refine, manufacture, or sell precious metals",
-                  },
-                  {
-                    value: "services",
-                    label:
-                      "We provide services or infrastructure to the precious-metals industry",
-                  },
-                ].map((opt) => (
-                  <label
-                    key={opt.value}
-                    className="flex cursor-pointer items-start gap-2 text-xs text-neutral-200"
-                  >
-                    <input
-                      type="radio"
-                      name="biz_orientation"
-                      value={opt.value}
-                      checked={answers.biz_orientation === opt.value}
-                      onChange={() => setValue("biz_orientation", opt.value)}
-                      className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[--gold-color] focus:ring-[--gold-color]"
-                    />
-                    <span>{opt.label}</span>
-                  </label>
-                ))}
-              </div>
+            <p className="mt-4 text-sm font-medium text-neutral-100">
+              Which best describes your business relationship with precious metals?
+            </p>
+            <div
+              role="radiogroup"
+              aria-label="Business relationship with precious metals"
+              className="mt-3 space-y-2"
+            >
+              {[
+                {
+                  value: "activity",
+                  label:
+                    "We trade, source, refine, manufacture, or sell precious metals",
+                },
+                {
+                  value: "services",
+                  label:
+                    "We provide services or infrastructure to the precious-metals industry",
+                },
+              ].map((opt) => (
+                <SelectableCard
+                  key={opt.value}
+                  testId={`orientation-${opt.value}`}
+                  selected={answers.biz_orientation === opt.value}
+                  onSelect={() => setValue("biz_orientation", opt.value)}
+                >
+                  {opt.label}
+                </SelectableCard>
+              ))}
             </div>
           </section>
 
