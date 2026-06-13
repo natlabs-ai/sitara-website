@@ -52,6 +52,7 @@ function OnboardPageInner() {
             koraApplicationId: String(data.application_id),
             koraTenantId: String(data.tenant_id),
             ...(data.applicant_id ? { koraApplicantId: String(data.applicant_id) } : {}),
+            ...(data.applicant_email ? { email: data.applicant_email } : {}),
             ...(data.draft_answers || {}),
             accountType: data.account_type,
             _passedLogin: true,
@@ -82,6 +83,7 @@ function OnboardPageInner() {
             if (res.ok) {
               const data = await res.json();
               setInitialAnswers({
+                ...(data.applicant_email ? { email: data.applicant_email } : {}),
                 ...(data.draft_answers || {}),
                 koraApplicationId: String(data.application_id),
                 koraTenantId: String(data.tenant_id),
