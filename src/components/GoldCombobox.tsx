@@ -36,6 +36,7 @@ export function GoldCombobox({
   emptyText = "No matches. Try a different spelling.",
   disabled = false,
   maxResults = 40,
+  bare = false,
 }: {
   label: string;
   required?: boolean;
@@ -50,6 +51,8 @@ export function GoldCombobox({
   emptyText?: string;
   disabled?: boolean;
   maxResults?: number;
+  /** Drop the outer card (border/bg/padding) — for use inline among plain form fields */
+  bare?: boolean;
 }) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -133,7 +136,7 @@ export function GoldCombobox({
   return (
     <div
       ref={wrapRef}
-      className={`rounded-xl border bg-black/30 p-4 ${showError ? 'border-red-500/40' : 'border-neutral-800'}`}
+      className={bare ? '' : `rounded-xl border bg-black/30 p-4 ${showError ? 'border-red-500/40' : 'border-neutral-800'}`}
     >
       <div className="mb-1 text-sm font-semibold text-neutral-100">
         {label}

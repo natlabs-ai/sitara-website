@@ -694,6 +694,7 @@ function OwnerModal({
                 value={draft.entity_jurisdiction}
                 onChange={(v) => setDraft({ ...draft, entity_jurisdiction: v })}
                 placeholder="Select country..."
+                bare
               />
 
               <FormField label="Registration Number" htmlFor="entity_registration_number">

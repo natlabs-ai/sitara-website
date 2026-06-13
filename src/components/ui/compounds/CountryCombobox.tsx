@@ -16,6 +16,8 @@ interface CountryComboboxProps {
   error?: string;
   valueAs?: "name" | "code"; // default: "name"
   placeholder?: string;
+  /** Drop the outer card (border/bg/padding) — for use inline among plain form fields */
+  bare?: boolean;
 }
 
 export function CountryCombobox({
@@ -27,6 +29,7 @@ export function CountryCombobox({
   error,
   valueAs = "name",
   placeholder,
+  bare,
 }: CountryComboboxProps) {
   const options = valueAs === "code" ? codeOptions : nameOptions;
   return (
@@ -39,6 +42,7 @@ export function CountryCombobox({
       onChange={onChange}
       options={options}
       placeholder={placeholder ?? "Start typing to search…"}
+      bare={bare}
     />
   );
 }
