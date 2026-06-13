@@ -112,8 +112,8 @@ export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
       // Uploading state: muted, disabled look
       'border-neutral-700 bg-neutral-800 text-neutral-400 cursor-not-allowed opacity-70':
         isUploading,
-      // Success state: same neutral bg, gold text only
-      'border-neutral-700 bg-black/70 text-[#bfa76f] hover:border-[#bfa76f]':
+      // Success state: gold-accent token (border + faint tint + gold text)
+      'border-[#bfa76f]/40 bg-[#bfa76f]/[0.08] text-[#bfa76f]':
         isSuccess,
       // Error state: error styling
       'border-red-500/50 bg-red-900/20 text-red-300 hover:border-red-500':
