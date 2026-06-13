@@ -56,7 +56,7 @@ function OnboardPageInner() {
             accountType: data.account_type,
             _passedLogin: true,
             _applicationSubmitted: isSubmitted,
-            ...(data.applicant_email ? { email: data.applicant_email } : {}),
+            ...(data.applicant_email ? { koraEmail: data.applicant_email } : {}),
           });
           setInitialStepId(isSubmitted ? "submit" : (data.current_step_id || null));
           setIsReadOnly(!data.can_edit);
@@ -90,7 +90,7 @@ function OnboardPageInner() {
                 accountType: data.account_type,
                 _passedLogin: true,
                 _applicationSubmitted: data.status === "submitted",
-                ...(data.applicant_email ? { email: data.applicant_email } : {}),
+                ...(data.applicant_email ? { koraEmail: data.applicant_email } : {}),
               });
               setInitialStepId(data.current_step_id || "identity");
               setIsReadOnly(!data.can_edit);
