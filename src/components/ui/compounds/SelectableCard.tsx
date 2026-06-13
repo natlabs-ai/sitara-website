@@ -9,6 +9,8 @@ export interface SelectableCardProps {
   /** Card content (usually the option label) */
   children: React.ReactNode;
   disabled?: boolean;
+  /** When true and not selected, render dimmed (out of focus) — used when a sibling is selected */
+  dimmed?: boolean;
   className?: string;
   /** Optional test identifier for E2E testing */
   testId?: string;
@@ -19,6 +21,7 @@ export const SelectableCard: React.FC<SelectableCardProps> = ({
   onSelect,
   children,
   disabled = false,
+  dimmed = false,
   className,
   testId,
 }) => {
@@ -37,6 +40,7 @@ export const SelectableCard: React.FC<SelectableCardProps> = ({
         selected
           ? 'border-[#bfa76f]/40 bg-[#bfa76f]/[0.08] text-[#bfa76f]'
           : 'border-neutral-800 bg-black/30 text-neutral-200 hover:border-neutral-600 hover:text-neutral-100',
+        !selected && dimmed && 'opacity-50 hover:opacity-100',
         className,
       )}
     >

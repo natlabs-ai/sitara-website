@@ -1220,7 +1220,7 @@ export default function OnboardingRenderer({
     // Step 4: Business model (orientation + country + deterministic questions)
     if (step.id === "corporateSetup") {
       return (
-        <div className="space-y-6">
+        <div className="rounded-2xl border border-neutral-800 bg-black/30 p-5 space-y-6">
           {/* Business relationship (UX only; no logic) */}
           <div>
             <p className="text-sm font-medium text-neutral-100">
@@ -1247,6 +1247,7 @@ export default function OnboardingRenderer({
                   key={opt.value}
                   testId={`orientation-${opt.value}`}
                   selected={answers.biz_orientation === opt.value}
+                  dimmed={answers.biz_orientation != null && answers.biz_orientation !== opt.value}
                   onSelect={() => setValue("biz_orientation", opt.value)}
                 >
                   {opt.label}
