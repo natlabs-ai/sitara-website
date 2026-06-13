@@ -22,6 +22,7 @@ import {
   Button,
   Alert,
   DocumentUploadControl,
+  SelectableCard,
   type DocumentUploadStatus,
 } from "@/components/ui";
 
@@ -1119,40 +1120,31 @@ export const BusinessDocumentsStep: React.FC<BusinessDocumentsStepProps> = ({
               />
 
               {/* Address classification selector */}
-              <div className="rounded-lg border border-neutral-700 bg-neutral-900/70 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                  <p className="text-sm font-medium text-neutral-200 shrink-0">
-                    This address is:
-                    {showValidationErrors && !hasAddressClassification && (
-                      <span className="ml-2 text-xs font-normal text-red-400">Required</span>
-                    )}
-                  </p>
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="addressClassification"
-                      value="registered"
-                      checked={addressClassification === "registered"}
-                      onChange={(e) => handleAddressClassification(e.target.value)}
-                      className="h-4 w-4 border-neutral-600 bg-neutral-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-neutral-900"
-                    />
-                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors whitespace-nowrap">
-                      Registered business address
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="addressClassification"
-                      value="operating"
-                      checked={addressClassification === "operating"}
-                      onChange={(e) => handleAddressClassification(e.target.value)}
-                      className="h-4 w-4 border-neutral-600 bg-neutral-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-neutral-900"
-                    />
-                    <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors whitespace-nowrap">
-                      Operating address (different from registered)
-                    </span>
-                  </label>
+              <div>
+                <p className="text-sm font-medium text-neutral-200 mb-3">
+                  This address is:
+                  {showValidationErrors && !hasAddressClassification && (
+                    <span className="ml-2 text-xs font-normal text-red-400">Required</span>
+                  )}
+                </p>
+                <div
+                  role="radiogroup"
+                  aria-label="This address is"
+                  className="space-y-2"
+                >
+                  {[
+                    { value: "registered", label: "Registered business address" },
+                    { value: "operating", label: "Operating address (different from registered)" },
+                  ].map((opt) => (
+                    <SelectableCard
+                      key={opt.value}
+                      selected={addressClassification === opt.value}
+                      dimmed={!!addressClassification && addressClassification !== opt.value}
+                      onSelect={() => handleAddressClassification(opt.value)}
+                    >
+                      {opt.label}
+                    </SelectableCard>
+                  ))}
                 </div>
               </div>
             </div>
