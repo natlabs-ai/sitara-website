@@ -33,3 +33,6 @@ export { DocumentUploadControl } from './DocumentUploadControl';
 export type { DocumentUploadControlProps, DocumentUploadStatus } from './DocumentUploadControl';
 
 export { CountryCombobox } from './CountryCombobox';
+
+export { SelectableCard } from './SelectableCard';
+export type { SelectableCardProps } from './SelectableCard';
