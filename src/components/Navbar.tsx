@@ -40,7 +40,7 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
   if (variant === "focus") {
     return (
       <header className={shellCls} style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className={innerCls}>
+        <div className={`${innerCls} relative`}>
           <Link
             href="/"
             className="flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-200 transition"
@@ -48,16 +48,14 @@ export default function Navbar({ variant }: { variant: NavbarVariant }) {
             <span>←</span>
             <span>Back to site</span>
           </Link>
-          <div className="flex items-center gap-3">
-            {user?.email && (
-              <span className="text-xs text-neutral-400 truncate max-w-[200px]">
-                {user.email}
-              </span>
-            )}
-            <Link href="/" className={wordmarkCls} aria-label="Sitara home">
-              SITARA
-            </Link>
-          </div>
+          {user?.email && (
+            <span className="absolute left-1/2 -translate-x-1/2 text-xs text-neutral-400 truncate max-w-[40vw] text-center pointer-events-none">
+              {user.email}
+            </span>
+          )}
+          <Link href="/" className={wordmarkCls} aria-label="Sitara home">
+            SITARA
+          </Link>
         </div>
       </header>
     );
