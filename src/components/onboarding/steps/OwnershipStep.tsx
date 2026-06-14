@@ -520,7 +520,7 @@ function OwnerModal({
         {extractionInfo && <Alert variant="success">{extractionInfo}</Alert>}
 
           {/* Owner type selection */}
-        <FormField label="Owner Type" required htmlFor="owner_type">
+        <FormField label="Owner Type" required htmlFor="owner_type" inline>
           <Select
             id="owner_type"
             value={draft.owner_type}
@@ -542,6 +542,7 @@ function OwnerModal({
           <FormField
             label="Ownership Percentage (%)"
             required
+            inline
             htmlFor="ownership_percentage"
             error={
               draft.ownership_percentage !== "" && Number(draft.ownership_percentage) < 25
