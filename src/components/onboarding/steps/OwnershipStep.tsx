@@ -118,6 +118,8 @@ interface OwnerDocUploaderProps {
   applicantId?: string | null;
   onUploaded?: (args: { documentId: string; extracted?: any }) => void | Promise<void>;
   testId?: string;
+  /** Drop the outer card (border/bg/padding) so it sits flat among plain fields */
+  bare?: boolean;
 }
 
 const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
@@ -131,6 +133,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
   applicantId,
   onUploaded,
   testId,
+  bare = false,
 }) => {
   const [uploadStatus, setUploadStatus] = React.useState<DocumentUploadStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -221,7 +224,7 @@ const OwnerDocumentUploader: React.FC<OwnerDocUploaderProps> = ({
   };
 
   return (
-    <div className="rounded-lg border border-neutral-800 bg-black/20 p-3">
+    <div className={bare ? "" : "rounded-lg border border-neutral-800 bg-black/20 p-3"}>
       <FormField label={label} helperText={description} required={required}>
         <DocumentUploadControl
           status={uploadStatus}
@@ -576,10 +579,6 @@ function OwnerModal({
           {/* Individual fields */}
         {isIndividual && (
           <Section>
-            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-4">
-              Individual Information
-            </div>
-
             {/* 1. ID Document upload — auto-fills the fields below */}
             <div className="mb-4">
               <OwnerDocumentUploader
@@ -592,6 +591,7 @@ function OwnerModal({
                 applicantId={applicantId}
                 onUploaded={handleIndividualIdUploaded}
                 testId="owner-id-doc"
+                bare
               />
             </div>
 
@@ -613,6 +613,7 @@ function OwnerModal({
                 value={draft.individual_nationality}
                 onChange={(v) => setDraft({ ...draft, individual_nationality: v })}
                 placeholder="Select country..."
+                bare
               />
 
               <FormField label="Date of Birth" htmlFor="individual_date_of_birth">
@@ -639,6 +640,7 @@ function OwnerModal({
               applicantId={applicantId}
               onUploaded={handleIndividualAddressUploaded}
               testId="owner-address-doc"
+              bare
             />
           </Section>
         )}
@@ -646,10 +648,6 @@ function OwnerModal({
           {/* Entity fields */}
         {isEntity && (
           <Section>
-            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-4">
-              Entity Information
-            </div>
-
             {/* Document uploads for entities */}
             <div className="grid gap-3 md:grid-cols-2 mb-4">
               <OwnerDocumentUploader
@@ -662,6 +660,7 @@ function OwnerModal({
                 applicantId={applicantId}
                 onUploaded={handleEntityLegalExistenceUploaded}
                 testId="entity-reg-cert"
+                bare
               />
 
               <OwnerDocumentUploader
@@ -674,6 +673,7 @@ function OwnerModal({
                 applicantId={applicantId}
                 onUploaded={handleEntityOwnershipProofUploaded}
                 testId="entity-shareholding"
+                bare
               />
             </div>
 
