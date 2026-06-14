@@ -247,13 +247,6 @@ const PersonModal: React.FC<{
     }
   };
 
-  const handleAddressDocUploaded = async ({ documentId }: { documentId: string; extracted?: any }) => {
-    setDraft((prev) => {
-      if (!prev) return prev;
-      return { ...prev, address_document_id: documentId };
-    });
-  };
-
   const handleSave = async () => {
     if (!draft) return;
 
@@ -364,7 +357,7 @@ const PersonModal: React.FC<{
 
       {/* Documents */}
       <Section title="Documents" titleColor="gold">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div>
           <PersonDocumentUploader
             fieldId="id_doc"
             label="Identity Document (Passport or National ID)"
@@ -375,18 +368,6 @@ const PersonModal: React.FC<{
             applicantId={applicantId}
             testId="ap-id-doc"
             onUploaded={handleIdDocUploaded}
-          />
-
-          <PersonDocumentUploader
-            fieldId="address_doc"
-            label="Proof of Address (Optional)"
-            description="Utility bill, bank statement, or government letter (within 3 months)"
-            category="person_address_proof"
-            tenantId={tenantId}
-            applicationId={applicationId}
-            applicantId={applicantId}
-            testId="ap-address-doc"
-            onUploaded={handleAddressDocUploaded}
           />
         </div>
       </Section>

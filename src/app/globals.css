@@ -111,4 +111,19 @@ body {
     transition: background-color 9999s ease-out 0s;
     caret-color: #f5f5f5;
   }
+
+  /* Global dark-theme autofill override — kills the "sky blue" on dark inputs
+     (onboarding modals/forms). The more specific .sitara-contact rule above
+     still wins for the contact form. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: #f5f5f5 !important;
+    box-shadow: 0 0 0px 1000px #050505 inset !important;
+    -webkit-box-shadow: 0 0 0px 1000px #050505 inset !important;
+    transition: background-color 9999s ease-out 0s;
+    caret-color: #f5f5f5;
+  }
 }

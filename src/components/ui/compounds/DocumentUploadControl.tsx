@@ -103,7 +103,7 @@ export const DocumentUploadControl: React.FC<DocumentUploadControlProps> = ({
 
   // Build button classes based on state
   const buttonClasses = cn(
-    'inline-flex items-center justify-center gap-2 rounded-full border font-medium transition',
+    'inline-flex items-center justify-center gap-2 rounded-lg border font-medium transition',
     sizeClasses,
     {
       // Idle state: neutral styling with gold hover
