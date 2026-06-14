@@ -28,6 +28,7 @@ import {
   Alert,
   DocumentUploadControl,
   CountryCombobox,
+  YesNoToggle,
   type DocumentUploadStatus,
 } from "@/components/ui";
 
@@ -741,26 +742,11 @@ function OwnerModal({
               htmlFor="is_pep"
               helperText="A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer)."
             >
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="owner_is_pep"
-                    checked={draft.is_pep === true}
-                    onChange={() => setDraft({ ...draft, is_pep: true })}
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="owner_is_pep"
-                    checked={draft.is_pep === false}
-                    onChange={() => setDraft({ ...draft, is_pep: false })}
-                  />
-                  No
-                </label>
-              </div>
+              <YesNoToggle
+                testId="owner-is-pep"
+                value={draft.is_pep === true ? "yes" : draft.is_pep === false ? "no" : null}
+                onChange={(v) => setDraft({ ...draft, is_pep: v === "yes" })}
+              />
             </FormField>
 
             <FormField
@@ -768,26 +754,11 @@ function OwnerModal({
               required
               htmlFor="is_sanctioned"
             >
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="owner_is_sanctioned"
-                    checked={draft.is_sanctioned === true}
-                    onChange={() => setDraft({ ...draft, is_sanctioned: true })}
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="owner_is_sanctioned"
-                    checked={draft.is_sanctioned === false}
-                    onChange={() => setDraft({ ...draft, is_sanctioned: false })}
-                  />
-                  No
-                </label>
-              </div>
+              <YesNoToggle
+                testId="owner-is-sanctioned"
+                value={draft.is_sanctioned === true ? "yes" : draft.is_sanctioned === false ? "no" : null}
+                onChange={(v) => setDraft({ ...draft, is_sanctioned: v === "yes" })}
+              />
             </FormField>
           </div>
         )}
