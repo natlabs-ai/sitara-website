@@ -25,6 +25,7 @@ import {
   Button,
   Alert,
   DocumentUploadControl,
+  YesNoToggle,
   type DocumentUploadStatus,
 } from "@/components/ui";
 import { isValidEmail } from "../validationUtils";
@@ -363,7 +364,7 @@ const PersonModal: React.FC<{
 
       {/* Documents */}
       <Section title="Documents" titleColor="gold">
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <PersonDocumentUploader
             fieldId="id_doc"
             label="Identity Document (Passport or National ID)"
@@ -397,26 +398,11 @@ const PersonModal: React.FC<{
         htmlFor="signatory_is_pep"
         helperText="A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer)."
       >
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="radio"
-              name="signatory_is_pep"
-              checked={draft.is_pep === true}
-              onChange={() => setDraft((prev) => prev && { ...prev, is_pep: true })}
-            />
-            Yes
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="radio"
-              name="signatory_is_pep"
-              checked={draft.is_pep === false}
-              onChange={() => setDraft((prev) => prev && { ...prev, is_pep: false })}
-            />
-            No
-          </label>
-        </div>
+        <YesNoToggle
+          testId="ap-is-pep"
+          value={draft.is_pep === true ? "yes" : draft.is_pep === false ? "no" : null}
+          onChange={(v) => setDraft((prev) => prev && { ...prev, is_pep: v === "yes" })}
+        />
       </FormField>
 
       {/* Sanctions declaration */}
@@ -425,26 +411,11 @@ const PersonModal: React.FC<{
         required
         htmlFor="signatory_is_sanctioned"
       >
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="radio"
-              name="signatory_is_sanctioned"
-              checked={draft.is_sanctioned === true}
-              onChange={() => setDraft((prev) => prev && { ...prev, is_sanctioned: true })}
-            />
-            Yes
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="radio"
-              name="signatory_is_sanctioned"
-              checked={draft.is_sanctioned === false}
-              onChange={() => setDraft((prev) => prev && { ...prev, is_sanctioned: false })}
-            />
-            No
-          </label>
-        </div>
+        <YesNoToggle
+          testId="ap-is-sanctioned"
+          value={draft.is_sanctioned === true ? "yes" : draft.is_sanctioned === false ? "no" : null}
+          onChange={(v) => setDraft((prev) => prev && { ...prev, is_sanctioned: v === "yes" })}
+        />
       </FormField>
 
       {/* Notes */}
