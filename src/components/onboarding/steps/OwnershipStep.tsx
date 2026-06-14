@@ -740,30 +740,32 @@ function OwnerModal({
           {/* PEP / Sanctions — individual owners only */}
         {isIndividual && (
           <div className="space-y-4">
-            <FormField
-              label="Is this individual a Politically Exposed Person (PEP)?"
-              required
-              htmlFor="is_pep"
-              helperText="A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer)."
-            >
-              <YesNoToggle
-                testId="owner-is-pep"
-                value={draft.is_pep === true ? "yes" : draft.is_pep === false ? "no" : null}
-                onChange={(v) => setDraft({ ...draft, is_pep: v === "yes" })}
-              />
-            </FormField>
+            <div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="min-w-0 text-sm font-semibold text-neutral-100">
+                  Is this individual a Politically Exposed Person (PEP)?
+                </span>
+                <YesNoToggle
+                  testId="owner-is-pep"
+                  value={draft.is_pep === true ? "yes" : draft.is_pep === false ? "no" : null}
+                  onChange={(v) => setDraft({ ...draft, is_pep: v === "yes" })}
+                />
+              </div>
+              <p className="mt-1 text-xs text-neutral-400">
+                A PEP holds or has held a prominent public function (e.g. head of state, senior official, judge, military officer).
+              </p>
+            </div>
 
-            <FormField
-              label="Is this individual subject to any international sanctions?"
-              required
-              htmlFor="is_sanctioned"
-            >
+            <div className="flex items-center justify-between gap-4">
+              <span className="min-w-0 text-sm font-semibold text-neutral-100">
+                Is this individual subject to any international sanctions?
+              </span>
               <YesNoToggle
                 testId="owner-is-sanctioned"
                 value={draft.is_sanctioned === true ? "yes" : draft.is_sanctioned === false ? "no" : null}
                 onChange={(v) => setDraft({ ...draft, is_sanctioned: v === "yes" })}
               />
-            </FormField>
+            </div>
           </div>
         )}
 
