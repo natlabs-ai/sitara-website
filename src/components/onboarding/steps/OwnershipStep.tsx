@@ -578,7 +578,7 @@ function OwnerModal({
 
           {/* Individual fields */}
         {isIndividual && (
-          <Section>
+          <div>
             {/* 1. ID Document upload — auto-fills the fields below */}
             <div className="mb-4">
               <OwnerDocumentUploader
@@ -642,12 +642,12 @@ function OwnerModal({
               testId="owner-address-doc"
               bare
             />
-          </Section>
+          </div>
         )}
 
           {/* Entity fields */}
         {isEntity && (
-          <Section>
+          <div>
             {/* Document uploads for entities */}
             <div className="grid gap-3 md:grid-cols-2 mb-4">
               <OwnerDocumentUploader
@@ -730,7 +730,7 @@ function OwnerModal({
                 />
               </FormField>
             </div>
-          </Section>
+          </div>
         )}
 
           {/* PEP / Sanctions — individual owners only */}
