@@ -541,41 +541,9 @@ function OwnerModal({
           />
         </FormField>
 
-          {/* Ownership percentage */}
-        <div>
-          <FormField
-            label="Ownership Percentage (%)"
-            required
-            inline
-            htmlFor="ownership_percentage"
-            error={
-              draft.ownership_percentage !== "" && Number(draft.ownership_percentage) < 25
-                ? "Ownership must be 25% or more to qualify as a beneficial owner"
-                : undefined
-            }
-          >
-            <Input
-              id="ownership_percentage"
-              type="number"
-              value={draft.ownership_percentage}
-              onChange={(value) => {
-                const numValue = value === "" ? "" : Number(value);
-                const isUbo = typeof numValue === "number" && numValue >= 25;
-                setDraft({
-                  ...draft,
-                  ownership_percentage: numValue,
-                  is_ubo: isUbo,
-                });
-              }}
-              placeholder="Must be 25% or more"
-            />
-          </FormField>
-          {Number(draft.ownership_percentage || 0) >= 25 && (
-            <p className="mt-1 text-xs text-emerald-300">
-              ✓ Qualifies as UBO (Ultimate Beneficial Owner)
-            </p>
-          )}
-        </div>
+        {/* Everything below appears only once an owner type is selected */}
+        {draft.owner_type && (
+          <>
 
           {/* Individual fields */}
         {isIndividual && (
@@ -733,6 +701,42 @@ function OwnerModal({
           </div>
         )}
 
+          {/* Ownership percentage */}
+        <div>
+          <FormField
+            label="Ownership Percentage (%)"
+            required
+            inline
+            htmlFor="ownership_percentage"
+            error={
+              draft.ownership_percentage !== "" && Number(draft.ownership_percentage) < 25
+                ? "Ownership must be 25% or more to qualify as a beneficial owner"
+                : undefined
+            }
+          >
+            <Input
+              id="ownership_percentage"
+              type="number"
+              value={draft.ownership_percentage}
+              onChange={(value) => {
+                const numValue = value === "" ? "" : Number(value);
+                const isUbo = typeof numValue === "number" && numValue >= 25;
+                setDraft({
+                  ...draft,
+                  ownership_percentage: numValue,
+                  is_ubo: isUbo,
+                });
+              }}
+              placeholder="Must be 25% or more"
+            />
+          </FormField>
+          {Number(draft.ownership_percentage || 0) >= 25 && (
+            <p className="mt-1 text-xs text-emerald-300">
+              ✓ Qualifies as UBO (Ultimate Beneficial Owner)
+            </p>
+          )}
+        </div>
+
           {/* PEP / Sanctions — individual owners only */}
         {isIndividual && (
           <div className="space-y-4">
@@ -773,6 +777,8 @@ function OwnerModal({
             placeholder="Any additional information..."
           />
         </FormField>
+          </>
+        )}
       </div>
     </Modal>
   );
