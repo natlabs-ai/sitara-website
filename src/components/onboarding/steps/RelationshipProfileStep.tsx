@@ -5,7 +5,7 @@
 
 import React from "react";
 import { GOLD, GOLD_BG_SOFT } from "../onboardingShared";
-import { Section, FormField, Select } from "@/components/ui";
+import { Section, FormField, Select, YesNoToggle } from "@/components/ui";
 
 type Props = {
   answers: Record<string, any>;
@@ -273,20 +273,26 @@ export default function RelationshipProfileStep({ answers, setValue, showValidat
               Cash transactions in the precious metals sector are subject to enhanced regulatory scrutiny.
             </p>
 
-            <label className="mt-3 flex cursor-pointer items-start gap-2">
-              <input
-                type="checkbox"
-                className="mt-[2px] h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-[#bfa76f] focus:ring-[#bfa76f]"
-                checked={cashAck}
-                onChange={(e) => setValue("relationship_cash_ack", e.target.checked)}
-              />
-              <span className="text-xs text-neutral-200">
-                I acknowledge that cash transactions may be subject to enhanced regulatory review and reporting requirements, depending on applicable laws.
-                <div className="mt-1 text-[11px] text-neutral-500">
-                  This does not imply that all cash transactions are reported.
-                </div>
-              </span>
-            </label>
+            <div className="mt-3">
+              <p className="text-xs text-neutral-200">
+                Do you acknowledge that cash transactions may be subject to enhanced regulatory review and reporting requirements, depending on applicable laws?
+              </p>
+              <p className="mt-1 text-[11px] text-neutral-500">
+                This does not imply that all cash transactions are reported.
+              </p>
+              <div className="mt-3">
+                <YesNoToggle
+                  testId="relationship-cash-ack"
+                  value={cashAck ? "yes" : answers.relationship_cash_ack === false ? "no" : null}
+                  onChange={(v) => setValue("relationship_cash_ack", v === "yes")}
+                />
+              </div>
+              {showValidationErrors && !cashAck && (
+                <p className="mt-2 text-xs text-red-400">
+                  You must acknowledge this to continue.
+                </p>
+              )}
+            </div>
           </div>
         ) : null}
       </Section>
