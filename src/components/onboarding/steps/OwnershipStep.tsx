@@ -579,8 +579,8 @@ function OwnerModal({
           {/* Individual fields */}
         {isIndividual && (
           <div>
-            {/* 1. ID Document upload — auto-fills the fields below */}
-            <div className="mb-4">
+            {/* Documents side-by-side — ID auto-fills the fields below */}
+            <div className="grid gap-4 md:grid-cols-2 mb-4">
               <OwnerDocumentUploader
                 fieldId={`owner_${draft.id || "temp"}_id_doc`}
                 label="Passport / ID Document"
@@ -593,10 +593,24 @@ function OwnerModal({
                 testId="owner-id-doc"
                 bare
               />
+
+              <OwnerDocumentUploader
+                fieldId={`owner_${draft.id || "temp"}_address_doc`}
+                label="Proof of Address"
+                description="Bank statement, utility bill, or lease agreement"
+                required
+                category={`owner_address_${draft.id || Date.now()}`}
+                tenantId={tenantId}
+                applicationId={applicationId}
+                applicantId={applicantId}
+                onUploaded={handleIndividualAddressUploaded}
+                testId="owner-address-doc"
+                bare
+              />
             </div>
 
-            {/* 2. Personal details — auto-filled from ID or entered manually */}
-            <div className="grid gap-4 md:grid-cols-2 mb-4">
+            {/* Personal details — auto-filled from ID or entered manually */}
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField label="Full Name" required htmlFor="individual_full_name" className="md:col-span-2">
                 <Input
                   id="individual_full_name"
@@ -627,21 +641,6 @@ function OwnerModal({
                 />
               </FormField>
             </div>
-
-            {/* 3. Proof of Address — required, separate from ID */}
-            <OwnerDocumentUploader
-              fieldId={`owner_${draft.id || "temp"}_address_doc`}
-              label="Proof of Address"
-              description="Bank statement, utility bill, or lease agreement"
-              required
-              category={`owner_address_${draft.id || Date.now()}`}
-              tenantId={tenantId}
-              applicationId={applicationId}
-              applicantId={applicantId}
-              onUploaded={handleIndividualAddressUploaded}
-              testId="owner-address-doc"
-              bare
-            />
           </div>
         )}
 
