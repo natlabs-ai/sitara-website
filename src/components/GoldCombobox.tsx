@@ -143,7 +143,7 @@ export function GoldCombobox({
         {showAsterisk && <span className="text-red-400"> *</span>}
       </div>
 
-      <div className="relative mt-2">
+      <div className={bare ? "relative" : "relative mt-2"}>
         <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
           <Search className="h-4 w-4" />
         </div>
@@ -175,7 +175,7 @@ export function GoldCombobox({
           }}
           placeholder={placeholder}
           className={
-            "w-full rounded-lg border border-neutral-800 bg-black/40 text-neutral-100 placeholder:text-neutral-500 " +
+            "w-full rounded-lg border border-neutral-800 bg-black/40 text-sm text-neutral-100 placeholder:text-neutral-500 " +
             "pl-10 pr-10 px-3 py-2 focus:outline-none focus:ring-1 focus:border-[--gold-color] focus:ring-[--gold-color] transition"
           }
         />
