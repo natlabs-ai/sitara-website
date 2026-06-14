@@ -1177,25 +1177,17 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
       </Section>
 
       {/* Declaration */}
-      <label
-        className={`flex items-center gap-3 rounded-2xl border p-4 text-sm cursor-pointer transition ${
-          answers.ownershipDeclaration === "agree"
-            ? "border-[#bfa76f]/40 bg-[#bfa76f]/[0.08] text-[#bfa76f]"
-            : "border-neutral-800 bg-black/30 text-neutral-200 hover:border-neutral-600"
-        }`}
-      >
-        <input
-          type="checkbox"
-          style={{ accentColor: GOLD }}
-          className="h-4 w-4 shrink-0"
-          checked={answers.ownershipDeclaration === "agree"}
-          onChange={(e) => setValue("ownershipDeclaration", e.target.checked ? "agree" : null)}
-        />
-        <span className="font-medium">
-          Ownership structure is complete and accurate.
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-800 bg-black/30 p-4">
+        <span className="text-sm font-medium text-neutral-100">
+          Is the ownership structure complete and accurate?
           {showValidationErrors && answers.ownershipDeclaration !== "agree" && <span className="text-red-400"> *</span>}
         </span>
-      </label>
+        <YesNoToggle
+          testId="ownership-declaration"
+          value={answers.ownershipDeclaration === "agree" ? "yes" : answers.ownershipDeclaration === "no" ? "no" : null}
+          onChange={(v) => setValue("ownershipDeclaration", v === "yes" ? "agree" : "no")}
+        />
+      </div>
 
       {/* Modal */}
       <OwnerModal
