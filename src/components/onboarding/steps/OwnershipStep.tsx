@@ -1216,7 +1216,7 @@ export function OwnershipStep({ answers, setValue, isResuming = false, showValid
           onChange={(e) => setValue("ownershipDeclaration", e.target.checked ? "agree" : null)}
         />
         <span className="font-medium">
-          I confirm the ownership structure is complete and accurate.
+          Ownership structure is complete and accurate.
           {showValidationErrors && answers.ownershipDeclaration !== "agree" && <span className="text-red-400"> *</span>}
         </span>
       </label>
