@@ -101,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[10vh]"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -110,7 +110,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalRef}
         className={cn(
-          'max-h-[90vh] w-full overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-950 p-6',
+          'max-h-[85vh] w-full overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-950 p-6',
           sizeClasses[size],
           className
         )}
